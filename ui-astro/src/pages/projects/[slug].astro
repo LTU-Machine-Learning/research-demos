@@ -1,0 +1,147 @@
+---
+import projects from '../../data/projects.js';
+
+export async function getStaticPaths() {
+  return projects.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const project = projects.find(p => p.slug === slug);
+if (!project) throw new Error('Project not found');
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{project.title} – Vision Hub</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+  </head>
+  <body>
+    <style>
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, #0b0d12 0%, #1a2236 100%);
+        color: #e8eefc;
+        font: 18px/1.6 system-ui, Segoe UI, Roboto, Arial;
+      }
+      .project-detail-wrap {
+        max-width: 900px;
+        margin: 48px auto 0 auto;
+        padding: 0 16px 48px 16px;
+        background: rgba(20,24,36,0.97);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px #0005;
+      }
+      .project-detail-links {
+        text-align: center;
+        margin-top: 32px;
+      }
+      .project-detail-links a {
+        color: #5aa4ff;
+        font-weight: 600;
+        text-decoration: none;
+        margin: 0 18px;
+        font-size: 1.1rem;
+        transition: color .18s;
+      }
+      .project-detail-links a:hover {
+        color: #27d07d;
+        text-decoration: underline;
+      }
+      .project-detail-title {
+        text-align: center;
+        font-size: 2.2rem;
+        margin: 0 0 8px 0;
+        letter-spacing: -1px;
+      }
+      .project-detail-img {
+        display: block;
+        margin: 24px auto 18px auto;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px #0003;
+      }
+      .project-detail-desc {
+        text-align: center;
+        color: #b0bedc;
+        margin-bottom: 24px;
+        font-size: 1.15rem;
+      }
+      .project-detail-section {
+        margin: 32px 0 18px 0;
+      }
+      .project-detail-section h3 {
+        color: #5aa4ff;
+        font-size: 1.15rem;
+        margin-bottom: 10px;
+      }
+      .project-detail-video {
+        display: block;
+        margin: 0 auto 18px auto;
+        width: 100%;
+        max-width: 600px;
+        border-radius: 14px;
+        box-shadow: 0 2px 12px #0003;
+      }
+      .project-detail-list {
+        background: #181c28;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin: 0 auto 18px auto;
+        max-width: 600px;
+        color: #b0bedc;
+        font-size: 1rem;
+      }
+      .project-detail-list b {
+        color: #5aa4ff;
+      }
+      .project-detail-demo {
+        text-align: center;
+        margin-top: 32px;
+      }
+      .project-detail-demo a {
+        color: #27d07d;
+        font-weight: bold;
+        font-size: 1.15rem;
+        text-decoration: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        background: #132342;
+        box-shadow: 0 2px 12px #0002;
+        transition: background .18s, color .18s;
+      }
+      .project-detail-demo a:hover {
+        background: #27d07d;
+        color: #081120;
+      }
+    </style>
+    <div class="project-detail-wrap">
+      <div class="project-detail-links">
+        <a href="/projects">← Back to all projects</a>
+        <a href={project.repo} target="_blank">Source code on GitHub</a>
+      </div>
+      <h1 class="project-detail-title">{project.title}</h1>
+      <img src={project.image} alt={project.title} class="project-detail-img" />
+      <div class="project-detail-desc">{project.description}</div>
+      <div class="project-detail-section">
+        <h3>Demo video</h3>
+        <video src={project.video} controls class="project-detail-video"></video>
+      </div>
+      <div class="project-detail-section">
+        <h3>Contributors</h3>
+        <ul class="project-detail-list">
+          {project.contributors.map(c => <li>{c}</li>)}
+        </ul>
+      </div>
+      <div class="project-detail-section">
+        <h3>History</h3>
+        <ul class="project-detail-list">
+          {project.history.map(h => <li><b>{h.date}:</b> {h.event}</li>)}
+        </ul>
+      </div>
+      <div class="project-detail-demo">
+        <a href={project.demoUrl}>Try the live demo →</a>
+      </div>
+    </div>
+  </body>
+</html>

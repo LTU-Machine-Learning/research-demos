@@ -1,0 +1,284 @@
+---
+const TITLE = 'Vision Hub – Démos';
+const NOTE = 'Aperçu faible latence (WebRTC) + annotation (MJPEG).';
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{TITLE}</title>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      :root{ --bg:#0b0d12; --card:#11151c; --ink:#e8eefc; --muted:#91a0b6; --pri:#5aa4ff; --ok:#27d07d; --warn:#ffb000; --br:16px }
+      *{box-sizing:border-box}
+      body{margin:0;background:linear-gradient(180deg,#0b0d12,#0f1320);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,Arial}
+      .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+      h1{font-size:24px;margin:8px 0 4px}
+      p.sub{color:var(--muted);margin:0 0 16px}
+      .grid{display:grid;gap:16px;grid-template-columns:1fr;align-items:start}
+      @media(min-width:1100px){ .grid{grid-template-columns:1fr 1fr} }
+      .card{background:var(--card);border:1px solid #1c2230;border-radius:var(--br);padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+      .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+      label{color:var(--muted);font-weight:600;font-size:13px}
+      select, input[type=text]{background:#0c1220;color:var(--ink);border:1px solid #1e2740;border-radius:10px;padding:8px 10px}
+      button{background:#132342;color:var(--ink);border:1px solid #25406e;border-radius:12px;padding:8px 12px;cursor:pointer}
+      button.primary{background:var(--pri);border-color:#4a8ee0;color:#081120;font-weight:700}
+      button.ghost{background:transparent;border:1px dashed #2a3550}
+      .stat{font-variant-numeric:tabular-nums;color:var(--muted)}
+      iframe,img{
+        border:1px solid #202940;
+        border-radius:12px;
+        background:#000;
+        width:100%;
+        max-width:640px;
+        height:360px;
+        object-fit:contain;
+        display:block;
+        margin:0 auto;
+      }
+      .title{display:flex;justify-content:space-between;align-items:center;gap:8px}
+      .dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+      .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)}
+      .note{font-size:12px;color:var(--muted)}
+      .kvs{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:13px;color:#cbd7ef}
+      .kvs b{color:#9fb3d6}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="title">
+        <div>
+          <h1>{TITLE}</h1>
+          <p class="sub">{NOTE}</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3 style="margin:6px 0 12px">Contrôles</h3>
+          <div class="row" style="gap:12px">
+            <label for="demo">Démo (annotation)</label>
+            <select id="demo">
+              <option value="yolo">YOLO (objets)</option>
+              <option value="pose">Pose Estimation</option>
+            </select>
+
+            <button id="start" class="primary">Lancer</button>
+            <button id="stop" class="ghost">Stop</button>
+            <button id="snap">Snapshot</button>
+            <span class="stat" id="stats">—</span>
+          </div>
+          <div class="row" style="margin-top:10px;gap:12px">
+            <label>Endpoints</label>
+            <input id="annotUrl" type="text" size="42" placeholder="/stream?demo=yolo" />
+            <input id="webrtcUrl" type="text" size="42" placeholder="/cam (proxy) ou http://localhost:8889/cam" />
+          </div>
+          <p class="note">Astuce : si tu mets un reverse-proxy (Caddy/Nginx), utilise des chemins same-origin (<code>/cam</code>, <code>/stream</code>) pour éviter le mixed-content.</p>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:6px 0 12px">Infos</h3>
+          <div class="kvs">
+            <b>MJPEG FPS</b><span id="fps">—</span>
+            <b>MJPEG Latence approx</b><span id="lat">—</span>
+            <b>WebRTC état</b><span id="rtc">—</span>
+            <b>WebRTC FPS</b><span id="rtcFps">—</span>
+          </div>
+        </div>
+
+        <div class="card">
+      </div>
+    </div>
+
+    <script type="module">
+      const sel = id => document.getElementById(id);
+      const demoEl = sel('demo'), startBtn = sel('start'), stopBtn = sel('stop'), snapBtn = sel('snap');
+      const annotImg = sel('annot'), webrtcFrame = sel('webrtc');
+      const annotUrl = sel('annotUrl'), webrtcUrl = sel('webrtcUrl');
+      const fpsEl = sel('fps'), latEl = sel('lat'), rtcEl = sel('rtc'), statsEl = sel('stats');
+      const rtcFpsEl = sel('rtcFps');
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'webrtc-fps' && e.data.fps) {
+          rtcFpsEl.textContent = e.data.fps + ' fps';
+        }
+      });
+
+
+      const DEFAULT_ANNOT = `http://${location.hostname}:8080/stream?demo=yolo`;
+      console.log('Annot URL =', DEFAULT_ANNOT);
+      const DEFAULT_WEBRTC = 'http://localhost:8080/cam';
+
+      // init fields smartly (fallback to localhost if no proxy)
+      webrtcUrl.value = 'http://localhost:8080/cam';
+      annotUrl.value = DEFAULT_ANNOT;
+
+      function start(){
+        const demo = demoEl.value;
+        const a = new URL(annotUrl.value || DEFAULT_ANNOT, location.href);
+        if(a.pathname === '/stream') a.searchParams.set('demo', demo);
+        a.searchParams.set('t', Date.now());
+        annotImg.src = a.toString();
+
+        const w = webrtcUrl.value || DEFAULT_WEBRTC;
+        webrtcFrame.src = w;
+        rtcEl.textContent = 'connecting…';
+      }
+      function stop(){
+        annotImg.src = '';
+        webrtcFrame.src = '';
+        rtcEl.textContent = 'stopped';
+        fpsEl.textContent = '—';
+        latEl.textContent = '—';
+        rtcFpsEl.textContent = '—';
+      }
+      startBtn.onclick = start;
+      stopBtn.onclick = stop;
+
+      const params = new URLSearchParams(location.search);
+      demoEl.value = params.get('demo') || 'yolo';
+      start();
+
+      // snapshot
+      snapBtn.onclick = () => {
+        if(!annotImg.complete) return;
+        const a = document.createElement('a');
+        a.href = annotImg.src;
+        a.download = `snapshot-${Date.now()}.jpg`;
+        a.click();
+      };
+
+      // FPS/latency estimator (simple): deltas entre onload successifs
+      const ts = [];
+      annotImg.addEventListener('load', () => {
+        const now = performance.now();
+        ts.push(now);
+        while(ts.length > 30) ts.shift();
+        if(ts.length >= 2){
+          const diffs = ts.slice(1).map((t,i)=>t - ts[i]);
+          const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+          const fps = (1000/avg).toFixed(1);
+          fpsEl.textContent = fps + ' fps';
+          latEl.textContent = Math.max(0, avg|0) + ' ms (approx)';
+        }
+      });
+
+
+      // WebRTC status polling (iframe origin might differ)
+      const rtcTimer = setInterval(()=>{
+        // Best-effort: if iframe loaded and not empty, mark OK
+        if(webrtcFrame.src) rtcEl.textContent = 'actif';
+      }, 1000);
+
+      // small UX: show current endpoints
+      function refreshStats(){
+        statsEl.textContent = `MJPEG: ${annotImg.src || '—'} | WebRTC: ${webrtcFrame.src || '—'}`;
+      }
+      setInterval(refreshStats, 1500);
+    </script>
+  </body>
+</html>
+          <h3 style="margin:6px 10px">Preview (WebRTC)</h3>
+          <iframe id="webrtc" src="" width="640" height="360" allow="autoplay; fullscreen"></iframe>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:6px 10px">Annotation (MJPEG)</h3>
+          <img id="annot" src="" width="640" />
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      const sel = id => document.getElementById(id);
+      const demoEl = sel('demo'), startBtn = sel('start'), stopBtn = sel('stop'), snapBtn = sel('snap');
+      const annotImg = sel('annot'), webrtcFrame = sel('webrtc');
+      const annotUrl = sel('annotUrl'), webrtcUrl = sel('webrtcUrl');
+      const fpsEl = sel('fps'), latEl = sel('lat'), rtcEl = sel('rtc'), statsEl = sel('stats');
+      const rtcFpsEl = sel('rtcFps');
+
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'webrtc-fps' && e.data.fps) {
+          rtcFpsEl.textContent = e.data.fps + ' fps';
+        }
+      });
+
+
+      const DEFAULT_ANNOT = `http://${location.hostname}:8080/stream?demo=yolo`;
+      console.log('Annot URL =', DEFAULT_ANNOT);
+  const DEFAULT_WEBRTC = 'http://localhost:8080/cam';
+
+  webrtcUrl.value = 'http://localhost:8080/cam';
+      annotUrl.value = DEFAULT_ANNOT;
+
+      function start(){
+        const demo = demoEl.value;
+        const a = new URL(annotUrl.value || DEFAULT_ANNOT, location.href);
+        if(a.pathname === '/stream') a.searchParams.set('demo', demo);
+        a.searchParams.set('t', Date.now());
+        annotImg.src = a.toString();
+
+        const w = webrtcUrl.value || DEFAULT_WEBRTC;
+        webrtcFrame.src = w;
+        rtcEl.textContent = 'connecting…';
+      }
+      function stop(){
+        annotImg.src = '';
+        webrtcFrame.src = '';
+        rtcEl.textContent = 'stopped';
+        fpsEl.textContent = '—';
+        latEl.textContent = '—';
+        rtcFpsEl.textContent = '—';
+      }
+      startBtn.onclick = start;
+      stopBtn.onclick = stop;
+
+      const params = new URLSearchParams(location.search);
+      demoEl.value = params.get('demo') || 'yolo';
+      start();
+
+      snapBtn.onclick = () => {
+        if(!annotImg.complete) return;
+        const a = document.createElement('a');
+        a.href = annotImg.src;
+        a.download = `snapshot-${Date.now()}.jpg`;
+        a.click();
+      };
+
+      const ts = [];
+      annotImg.addEventListener('load', () => {
+        const now = performance.now();
+        ts.push(now);
+        while(ts.length > 30) ts.shift();
+        if(ts.length >= 2){
+          const diffs = ts.slice(1).map((t,i)=>t - ts[i]);
+          const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+          const fps = (1000/avg).toFixed(1);
+          fpsEl.textContent = fps + ' fps';
+          // lat approx: temps réseau + encodage → ici on approx = 1 frame period
+          latEl.textContent = Math.max(0, avg|0) + ' ms (approx)';
+        }
+      });
+
+
+      // WebRTC status polling (iframe origin might differ)
+      const rtcTimer = setInterval(()=>{
+        // Best-effort: if iframe loaded and not empty, mark OK
+        if(webrtcFrame.src) rtcEl.textContent = 'actif';
+      }, 1000);
+
+      // Ajout : écoute les FPS WebRTC envoyés par l'iframe
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'webrtc-fps' && e.data.fps) {
+          rtcFpsEl.textContent = e.data.fps + ' fps';
+        }
+      });
+
+      // small UX: show current endpoints
+      function refreshStats(){
+        statsEl.textContent = `MJPEG: ${annotImg.src || '—'} | WebRTC: ${webrtcFrame.src || '—'}`;
+      }
+      setInterval(refreshStats, 1500);
+    </script>
+  </body>
+</html>

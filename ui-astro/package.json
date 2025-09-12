@@ -1,0 +1,15 @@
+{
+  "name": "vision-hub-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^4.10.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

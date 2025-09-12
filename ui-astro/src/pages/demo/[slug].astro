@@ -1,0 +1,125 @@
+---
+import projects from '../../data/projects.js';
+export async function getStaticPaths() {
+  return projects.map((p) => ({ params: { slug: p.slug } }));
+}
+const { slug } = Astro.params;
+const project = projects.find(p => p.slug === slug);
+if (!project) throw new Error('Project not found');
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{project.title} Live Demo – Vision Hub</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+  </head>
+  <body>
+    <div class="demo-wrap">
+      <div class="demo-links">
+        <a href={"/projects/" + project.slug}>← Back to project page</a>
+        <a href="/projects">Browse all projects</a>
+      </div>
+      <h1 class="demo-title">{project.title} <span style="font-size:1.1rem;font-weight:400;color:#b0bedc">Live Demo</span></h1>
+      <div class="demo-desc">{project.description}</div>
+      <div class="streams">
+        <div class="stream-card main-annot">
+          <h3 style="font-size:1.3rem;color:#5aa4ff;margin-bottom:18px;">Live Annotated Stream</h3>
+          <img id="annot" src="" alt={project.title + ' annotated stream'} />
+        </div>
+      </div>
+      <div class="demo-desc" style="margin-top:18px;font-size:1rem;">If you see a black screen, ensure the backend is running and the streams are accessible.</div>
+    </div>
+    <style>
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, #0b0d12 0%, #1a2236 100%);
+        color: #e8eefc;
+        font: 18px/1.6 system-ui, Segoe UI, Roboto, Arial;
+      }
+      .demo-wrap {
+        max-width: 900px;
+        margin: 48px auto 0 auto;
+        padding: 0 16px 48px 16px;
+        background: rgba(20,24,36,0.97);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px #0005;
+      }
+      .demo-title {
+        text-align: center;
+        font-size: 2.2rem;
+        margin: 0 0 8px 0;
+        letter-spacing: -1px;
+      }
+      .demo-desc {
+        text-align: center;
+        color: #b0bedc;
+        margin-bottom: 24px;
+      }
+      .streams {
+        display: flex;
+        justify-content: center;
+        margin: 32px 0;
+      }
+      .main-annot {
+        background: #181c28;
+        border-radius: 22px;
+        box-shadow: 0 6px 32px #0005;
+        padding: 32px 24px 28px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 1100px;
+      }
+      .main-annot img {
+        border: 2px solid #27d07d;
+        border-radius: 18px;
+        background: #000;
+        width: 100%;
+        max-width: 900px;
+        height: auto;
+        aspect-ratio: 16/9;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto 8px auto;
+        box-shadow: 0 4px 24px #0004;
+      }
+      .demo-links {
+        text-align: center;
+        margin-top: 32px;
+      }
+      .demo-links a {
+        color: #5aa4ff;
+        font-weight: 600;
+        text-decoration: none;
+        margin: 0 18px;
+        font-size: 1.1rem;
+        transition: color .18s;
+      }
+      .demo-links a:hover {
+        color: #27d07d;
+        text-decoration: underline;
+      }
+      @media (max-width: 1200px) {
+        .main-annot img { max-width: 98vw; min-height: 220px; }
+      }
+      @media (max-width: 700px) {
+        .main-annot { padding: 12px 2vw; }
+        .main-annot img { max-width: 100vw; min-height: 120px; }
+      }
+    </style>
+    <script type="module">
+      // Set MJPEG stream src on client, matching debug page logic
+      const annot = document.getElementById('annot');
+      if (annot) {
+        const hostname = window.location.hostname;
+        const params = new URLSearchParams(window.location.search);
+        // Use the slug from the URL path, not from search params
+        let slug = window.location.pathname.split('/').pop();
+        if (!slug) slug = 'yolo';
+        // Add timestamp to avoid caching
+        annot.src = `http://${hostname}:8080/stream?demo=${encodeURIComponent(slug)}&t=${Date.now()}`;
+      }
+    </script>
+  </body>
+</html>

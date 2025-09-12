@@ -1,0 +1,90 @@
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: vision-hub-mediamtx
+    ports:
+      - "8554:8554"
+      - "8889:8889" 
+    restart: unless-stopped
+  ui-astro:
+    build:
+      context: ./ui-astro
+    container_name: vision-hub-ui-astro
+    ports:
+      - "4321:4321"
+    restart: unless-stopped
+    depends_on: [web, yolo, pose]
+
+  capture:
+    image: jrottenberg/ffmpeg:6.1-ubuntu
+    container_name: vision-hub-capture
+    devices:
+      - "${CAMERA_DEVICE:-/dev/v4l/by-id/usb-webcam_webcam_AN20200825001-video-index0}:/dev/video10"
+    command: >
+      -hide_banner -loglevel warning
+      -fflags nobuffer -flags low_delay -thread_queue_size 2048
+      -f v4l2 -video_size 1280x720 -framerate 30 -i /dev/video10
+      -vf "format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='%{fps} FPS':x=10:y=10:fontsize=36:fontcolor=white:box=1:boxcolor=0x00000099"
+      -c:v libx264 -preset veryfast -tune zerolatency -profile:v baseline -level 4.2
+      -g 30 -keyint_min 30 -sc_threshold 0 -bf 0
+      -b:v 5M -maxrate 8M -bufsize 16M
+      -f rtsp -rtsp_transport udp rtsp://mediamtx:8554/cam
+      -probesize 32000 -analyzeduration 0
+
+    restart: unless-stopped
+
+  yolo:
+    build: ./yolo
+    container_name: vision-hub-yolo
+    devices:
+      - "nvidia.com/gpu=all"
+    environment:
+    - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
+    - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
+    - NVIDIA_VISIBLE_DEVICES=all
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - IMG_SIZE=${IMG_SIZE:-640}
+    - DRAW_LABELS=1
+    - MODEL=${MODEL:-yolov8n.pt}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    restart: unless-stopped
+    depends_on: [mediamtx, capture]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  pose:
+    build: ./pose
+    container_name: vision-hub-pose
+    devices:
+      - "nvidia.com/gpu=all"
+    environment:
+    - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
+    - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
+    - MODEL=${MODEL_POSE:-yolov8n-pose.pt}
+    - NVIDIA_VISIBLE_DEVICES=all
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - RTSP_URL=${RTSP_URL:-rtsp://mediamtx:8554/cam}
+    - IMG_SIZE=${IMG_SIZE:-640}
+    restart: unless-stopped
+    depends_on: [mediamtx, capture]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  web:
+    build: ./web
+    container_name: vision-hub-web
+    ports: ["8080:8080"]
+    restart: unless-stopped
+    depends_on: [yolo, pose]

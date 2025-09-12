@@ -1,0 +1,143 @@
+---
+import projects from '../data/projects.js';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Vision Hub – Welcome</title>
+    <style>
+      body{margin:0;background:linear-gradient(180deg,#0b0d12,#0f1320);color:#e8eefc;font:18px/1.6 system-ui,Segoe UI,Roboto,Arial}
+      .hero{max-width:700px;margin:60px auto 32px auto;padding:32px 24px;background:#11151c;border-radius:24px;box-shadow:0 8px 32px #0005;text-align:center}
+      h1{font-size:2.5rem;margin-bottom:12px;letter-spacing:-1px}
+      .cta{display:inline-block;margin:24px 0 0 0;padding:14px 32px;background:#5aa4ff;color:#081120;font-weight:700;font-size:1.2rem;border-radius:14px;text-decoration:none;transition:background .2s}
+      .cta:hover{background:#338be6}
+      .projects-preview{max-width:1100px;margin:0 auto 48px auto;display:flex;gap:32px;flex-wrap:wrap;justify-content:center}
+      .proj-card{background:#181c28;border-radius:16px;box-shadow:0 4px 16px #0003;padding:18px;width:320px;display:flex;flex-direction:column;align-items:center}
+      .proj-card img{width:100%;border-radius:12px;margin-bottom:10px}
+      .proj-card h2{font-size:1.2rem;margin:8px 0 4px 0}
+      .proj-card p{font-size:1rem;color:#b0bedc}
+      .proj-card a{margin-top:10px;color:#27d07d;font-weight:bold;text-decoration:none}
+      .proj-card a:hover{text-decoration:underline}
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <h1>Vision Hub</h1>
+      <p>Welcome to Vision Hub, a platform to discover and interact with cutting-edge AI research demos.<br />
+      Explore real-time computer vision projects, learn about their contributors, and try live video demos directly in your browser.</p>
+      <a href="/projects" class="cta">Browse all projects</a>
+    </div>
+    <div class="projects-preview">
+      {projects.map((p) => (
+        <div class="proj-card">
+          <img src={p.image} alt={p.title} />
+          <h2>{p.title}</h2>
+          <p>{p.description}</p>
+          <a href={"/projects/" + p.slug}>See details & demo →</a>
+        </div>
+      ))}
+    </div>
+  </body>
+</html>
+          <h3 style="margin:6px 10px">Preview (WebRTC)</h3>
+          <iframe id="webrtc" src="" width="640" height="360" allow="autoplay; fullscreen"></iframe>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:6px 10px">Annotation (MJPEG)</h3>
+          <img id="annot" src="" width="640" />
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      const sel = id => document.getElementById(id);
+      const demoEl = sel('demo'), startBtn = sel('start'), stopBtn = sel('stop'), snapBtn = sel('snap');
+      const annotImg = sel('annot'), webrtcFrame = sel('webrtc');
+      const annotUrl = sel('annotUrl'), webrtcUrl = sel('webrtcUrl');
+      const fpsEl = sel('fps'), latEl = sel('lat'), rtcEl = sel('rtc'), statsEl = sel('stats');
+      const rtcFpsEl = sel('rtcFps');
+
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'webrtc-fps' && e.data.fps) {
+          rtcFpsEl.textContent = e.data.fps + ' fps';
+        }
+      });
+
+
+      const DEFAULT_ANNOT = `http://${location.hostname}:8080/stream?demo=yolo`;
+      console.log('Annot URL =', DEFAULT_ANNOT);
+  const DEFAULT_WEBRTC = 'http://localhost:8080/cam';
+
+  webrtcUrl.value = 'http://localhost:8080/cam';
+      annotUrl.value = DEFAULT_ANNOT;
+
+      function start(){
+        const demo = demoEl.value;
+        const a = new URL(annotUrl.value || DEFAULT_ANNOT, location.href);
+        if(a.pathname === '/stream') a.searchParams.set('demo', demo);
+        a.searchParams.set('t', Date.now());
+        annotImg.src = a.toString();
+
+        const w = webrtcUrl.value || DEFAULT_WEBRTC;
+        webrtcFrame.src = w;
+        rtcEl.textContent = 'connecting…';
+      }
+      function stop(){
+        annotImg.src = '';
+        webrtcFrame.src = '';
+        rtcEl.textContent = 'stopped';
+        fpsEl.textContent = '—';
+        latEl.textContent = '—';
+        rtcFpsEl.textContent = '—';
+      }
+      startBtn.onclick = start;
+      stopBtn.onclick = stop;
+
+      const params = new URLSearchParams(location.search);
+      demoEl.value = params.get('demo') || 'yolo';
+      start();
+
+      // snapshot
+      snapBtn.onclick = () => {
+        if(!annotImg.complete) return;
+        const a = document.createElement('a');
+        a.href = annotImg.src;
+        a.download = `snapshot-${Date.now()}.jpg`;
+        a.click();
+      };
+
+      const ts = [];
+      annotImg.addEventListener('load', () => {
+        const now = performance.now();
+        ts.push(now);
+        while(ts.length > 30) ts.shift();
+        if(ts.length >= 2){
+          const diffs = ts.slice(1).map((t,i)=>t - ts[i]);
+          const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+          const fps = (1000/avg).toFixed(1);
+          fpsEl.textContent = fps + ' fps';
+          latEl.textContent = Math.max(0, avg|0) + ' ms (approx)';
+        }
+      });
+
+
+      const rtcTimer = setInterval(()=>{
+        if(webrtcFrame.src) rtcEl.textContent = 'actif';
+      }, 1000);
+
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'webrtc-fps' && e.data.fps) {
+          rtcFpsEl.textContent = e.data.fps + ' fps';
+        }
+      });
+
+      function refreshStats(){
+        statsEl.textContent = `MJPEG: ${annotImg.src || '—'} | WebRTC: ${webrtcFrame.src || '—'}`;
+      }
+      setInterval(refreshStats, 1500);
+    </script>
+  </body>
+</html>

@@ -67,11 +67,11 @@ import projects from '../data/projects.js';
       });
 
 
-      const DEFAULT_ANNOT = `http://${location.hostname}:8080/stream?demo=yolo`;
+      const DEFAULT_ANNOT = `http://localhost:8889/annot;
       console.log('Annot URL =', DEFAULT_ANNOT);
   const DEFAULT_WEBRTC = 'http://localhost:8080/cam';
 
-  webrtcUrl.value = 'http://localhost:8080/cam';
+  webrtcUrl.value = 'http://localhost:8889/cam';
       annotUrl.value = DEFAULT_ANNOT;
 
       function start(){

@@ -5,6 +5,7 @@ services:
     ports:
       - "8554:8554"
       - "8889:8889" 
+      - "8189:8189/udp" 
     restart: unless-stopped
   ui-astro:
     build:
@@ -22,20 +23,19 @@ services:
       - "${CAMERA_DEVICE:-/dev/v4l/by-id/usb-webcam_webcam_AN20200825001-video-index0}:/dev/video10"
     command: >
       -hide_banner -loglevel warning
-      -fflags nobuffer -flags low_delay -thread_queue_size 2048
-      -f v4l2 -video_size 1280x720 -framerate 30 -i /dev/video10
-      -vf "format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='%{fps} FPS':x=10:y=10:fontsize=36:fontcolor=white:box=1:boxcolor=0x00000099"
-      -c:v libx264 -preset veryfast -tune zerolatency -profile:v baseline -level 4.2
-      -g 30 -keyint_min 30 -sc_threshold 0 -bf 0
-      -b:v 5M -maxrate 8M -bufsize 16M
-      -f rtsp -rtsp_transport udp rtsp://mediamtx:8554/cam
-      -probesize 32000 -analyzeduration 0
-
+      -fflags nobuffer -flags low_delay -thread_queue_size 64
+      -use_wallclock_as_timestamps 1
+      -f v4l2 -input_format h264 -framerate 30 -video_size 1280x720 -i /dev/video10
+      -c:v copy
+      -f rtsp -rtsp_transport udp -flush_packets 1 -max_interleave_delta 0
+      rtsp://mediamtx:8554/cam
     restart: unless-stopped
 
   yolo:
     build: ./yolo
     container_name: vision-hub-yolo
+    ports:
+      - "5000:5000"
     devices:
       - "nvidia.com/gpu=all"
     environment:

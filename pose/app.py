@@ -9,13 +9,13 @@ app = Flask(__name__)
 from ultralytics import YOLO
 
 RTSP_URL = os.environ.get("RTSP_URL", "rtsp://mediamtx:8554/cam")
-AV_OPEN_OPTS = {"rtsp_transport": "tcp", "stimeout": "5000000"}  # force TCP
+AV_OPEN_OPTS = {"rtsp_transport": "tcp", "stimeout": "5000000"}  # force TCP (not using UDP because of frame drops)
 IMG_SIZE = int(os.environ.get("IMG_SIZE", "640"))
 CONF = float(os.environ.get("CONF", "0.25"))
 IOU  = float(os.environ.get("IOU", "0.50"))
 MAX_DET = int(os.environ.get("MAX_DET", "100"))
 JPEG_QUALITY = int(os.environ.get("JPEG_QUALITY", "80"))
-DRAW_LABELS = False  # pose: often cleaner without labels
+DRAW_LABELS = False  
 
 SKELETON = [
     (5, 6),      # shoulders
@@ -87,7 +87,7 @@ threading.Thread(target=grabber, daemon=True).start()
 # simple keypoint draw
 def draw_keypoints(img, r):
     if r.keypoints is None: return
-    kpts = r.keypoints.xy  # [n, num_kpts, 2]
+    kpts = r.keypoints.xy 
     if kpts is None: return
     k = kpts.detach().cpu().numpy()
     for person in k:
@@ -142,7 +142,6 @@ def frames():
                 source=frame, imgsz=IMG_SIZE, conf=CONF, iou=IOU,
                 device=device, half=half, verbose=False, max_det=MAX_DET
             )[0]
-            # draw keypoints (faster than .plot())
             draw_pose(frame, r, kp_thr=0.2)
 
             ok, buf = cv2.imencode(".jpg", frame, jpeg_params)

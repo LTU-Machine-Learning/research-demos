@@ -1,0 +1,15 @@
+---
+export interface Props {
+  image: string;
+  title: string;
+  description: string;
+  href: string;
+}
+const { image, title, description, href } = Astro.props;
+---
+<article class="proj-card">
+  <img src={image} alt={title} loading="lazy" />
+  <h2>{title}</h2>
+  <p>{description}</p>
+  <a href={href} aria-label={`See details & demo for ${title}`}>See details & demo →</a>
+</article>

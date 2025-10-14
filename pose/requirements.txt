@@ -6,3 +6,5 @@ opencv-python-headless==4.10.0.84
 numpy==1.26.4
 av==12.3.0
 Flask==3.0.3
+flask-sock==0.7.0
+simple-websocket==1.0.0

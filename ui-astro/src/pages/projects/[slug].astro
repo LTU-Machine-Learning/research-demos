@@ -1,5 +1,7 @@
 ---
 import projects from '../../data/projects.js';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import ConsentModal from '../../components/ConsentModal.astro';
 
 export async function getStaticPaths() {
   return projects.map((p) => ({ params: { slug: p.slug } }));
@@ -8,140 +10,276 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const project = projects.find(p => p.slug === slug);
 if (!project) throw new Error('Project not found');
+
+// this is the demo id your orchestrator expects ("yolo", "pose", …)
+const demoId = slug;
+
+const title = `${project.title} – Vision Hub`;
+const description = project.description ?? 'Real-time AI demo';
+const isHttpUrl = (u: unknown): u is string =>
+  typeof u === 'string' && /^https?:\/\//i.test(u);
 ---
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>{project.title} – Vision Hub</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-  </head>
-  <body>
-    <style>
-      body {
-        margin: 0;
-        background: linear-gradient(135deg, #0b0d12 0%, #1a2236 100%);
-        color: #e8eefc;
-        font: 18px/1.6 system-ui, Segoe UI, Roboto, Arial;
-      }
-      .project-detail-wrap {
-        max-width: 900px;
-        margin: 48px auto 0 auto;
-        padding: 0 16px 48px 16px;
-        background: rgba(20,24,36,0.97);
-        border-radius: 24px;
-        box-shadow: 0 8px 32px #0005;
-      }
-      .project-detail-links {
-        text-align: center;
-        margin-top: 32px;
-      }
-      .project-detail-links a {
-        color: #5aa4ff;
-        font-weight: 600;
-        text-decoration: none;
-        margin: 0 18px;
-        font-size: 1.1rem;
-        transition: color .18s;
-      }
-      .project-detail-links a:hover {
-        color: #27d07d;
-        text-decoration: underline;
-      }
-      .project-detail-title {
-        text-align: center;
-        font-size: 2.2rem;
-        margin: 0 0 8px 0;
-        letter-spacing: -1px;
-      }
-      .project-detail-img {
-        display: block;
-        margin: 24px auto 18px auto;
-        width: 100%;
-        max-width: 480px;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px #0003;
-      }
-      .project-detail-desc {
-        text-align: center;
-        color: #b0bedc;
-        margin-bottom: 24px;
-        font-size: 1.15rem;
-      }
-      .project-detail-section {
-        margin: 32px 0 18px 0;
-      }
-      .project-detail-section h3 {
-        color: #5aa4ff;
-        font-size: 1.15rem;
-        margin-bottom: 10px;
-      }
-      .project-detail-video {
-        display: block;
-        margin: 0 auto 18px auto;
-        width: 100%;
-        max-width: 600px;
-        border-radius: 14px;
-        box-shadow: 0 2px 12px #0003;
-      }
-      .project-detail-list {
-        background: #181c28;
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin: 0 auto 18px auto;
-        max-width: 600px;
-        color: #b0bedc;
-        font-size: 1rem;
-      }
-      .project-detail-list b {
-        color: #5aa4ff;
-      }
-      .project-detail-demo {
-        text-align: center;
-        margin-top: 32px;
-      }
-      .project-detail-demo a {
-        color: #27d07d;
-        font-weight: bold;
-        font-size: 1.15rem;
-        text-decoration: none;
-        padding: 10px 24px;
-        border-radius: 12px;
-        background: #132342;
-        box-shadow: 0 2px 12px #0002;
-        transition: background .18s, color .18s;
-      }
-      .project-detail-demo a:hover {
-        background: #27d07d;
-        color: #081120;
-      }
-    </style>
-    <div class="project-detail-wrap">
-      <div class="project-detail-links">
-        <a href="/projects">← Back to all projects</a>
-        <a href={project.repo} target="_blank">Source code on GitHub</a>
-      </div>
-      <h1 class="project-detail-title">{project.title}</h1>
-      <img src={project.image} alt={project.title} class="project-detail-img" />
-      <div class="project-detail-desc">{project.description}</div>
+
+<SiteLayout {title} {description}>
+  <ConsentModal demoId={demoId} />
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0b0d12 0%, #1a2236 100%);
+      color: #e8eefc;
+      font: 18px/1.6 system-ui, Segoe UI, Roboto, Arial;
+    }
+    .project-detail-wrap {
+      max-width: 900px;
+      margin: 48px auto 0 auto;
+      padding: 0 16px 48px 16px;
+      background: rgba(20,24,36,0.97);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px #0005;
+    }
+    .project-detail-links { text-align: center; margin-top: 32px; }
+    .project-detail-links a {
+      color: #5aa4ff; font-weight: 600; text-decoration: none;
+      margin: 0 18px; font-size: 1.1rem; transition: color .18s;
+    }
+    .project-detail-links a:hover { color: #27d07d; text-decoration: underline; }
+    .project-detail-title { text-align: center; font-size: 2.2rem; margin: 0 0 8px 0; letter-spacing: -1px; }
+    .project-detail-img {
+      display: block; margin: 24px auto 18px auto; width: 100%; max-width: 480px;
+      border-radius: 16px; box-shadow: 0 2px 12px #0003;
+    }
+    .project-detail-desc { text-align: center; color: #b0bedc; margin-bottom: 24px; font-size: 1.15rem; }
+    .project-detail-section { margin: 32px 0 18px 0; }
+    .project-detail-section h3 { color: #5aa4ff; font-size: 1.15rem; margin-bottom: 10px; }
+    .project-detail-video {
+      display: block; margin: 0 auto 18px auto; width: 100%; max-width: 600px;
+      border-radius: 14px; box-shadow: 0 2px 12px #0003;
+    }
+    .project-detail-list {
+      background: #181c28; border-radius: 12px; padding: 16px 20px; margin: 0 auto 18px auto;
+      max-width: 600px; color: #b0bedc; font-size: 1rem;
+    }
+    .project-detail-list b { color: #5aa4ff; }
+    .project-detail-demo { text-align: center; margin-top: 32px; }
+    .project-detail-demo a {
+      color: #27d07d; font-weight: bold; font-size: 1.15rem; text-decoration: none;
+      padding: 10px 24px; border-radius: 12px; background: #132342;
+      box-shadow: 0 2px 12px #0002; transition: background .18s, color .18s;
+    }
+    .project-detail-demo a[aria-busy="true"] { opacity: .7; pointer-events: none; }
+    .project-detail-demo a:hover { background: #27d07d; color: #081120; }
+  </style>
+
+  <div class="project-detail-wrap">
+    <div class="project-detail-links">
+      <a href="/projects">← Back to all projects</a>
+      {project.repo && (
+        <a href={project.repo} target="_blank" rel="noreferrer noopener">
+          Source code on GitHub
+        </a>
+      )}
+    </div>
+
+    <h1 class="project-detail-title">{project.title}</h1>
+
+    {project.author && (
+      <p style="text-align:center;color:#9cb0d8;margin:4px 0 8px 0;">
+        Built by
+        {isHttpUrl(project.author.url)
+          ? <a href={project.author.url} target="_blank" rel="noreferrer noopener" style="color:#5aa4ff;text-decoration:none;"> {project.author.name}</a>
+          : ` ${project.author.name}`
+        }
+        {project.author.role ? ` — ${project.author.role}` : ''}
+      </p>
+    )}
+
+    <img src={project.image} alt={project.title} class="project-detail-img" />
+    <div class="project-detail-desc">{project.description}</div>
+
+    <div class="project-detail-section">
+      <h3>Demo video</h3>
+      <video src={project.video} controls class="project-detail-video"></video>
+    </div>
+
+    {project.author && (
       <div class="project-detail-section">
-        <h3>Demo video</h3>
-        <video src={project.video} controls class="project-detail-video"></video>
+        <h3>Author</h3>
+        <ul class="project-detail-list">
+          <li>
+            {project.author.url && isHttpUrl(project.author.url)
+              ? <a href={project.author.url} target="_blank" rel="noreferrer noopener">{project.author.name}</a>
+              : project.author.name}
+            {project.author.role ? ` — ${project.author.role}` : ''}
+          </li>
+        </ul>
       </div>
+    )}
+
+    {Array.isArray(project.upstreams) && project.upstreams.length > 0 && (
+      <div class="project-detail-section">
+        <h3>Upstream projects & credits</h3>
+        <ul class="project-detail-list">
+          {project.upstreams.map(u => (
+            <li>
+              {u.url && isHttpUrl(u.url)
+                ? <a href={u.url} target="_blank" rel="noreferrer noopener">{u.name}</a>
+                : u.name}
+              {u.role ? ` — ${u.role}` : ''}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {Array.isArray(project.contributors) && project.contributors.length > 0 && (
       <div class="project-detail-section">
         <h3>Contributors</h3>
         <ul class="project-detail-list">
           {project.contributors.map(c => <li>{c}</li>)}
         </ul>
       </div>
+    )}
+
+    {Array.isArray(project.history) && project.history.length > 0 && (
       <div class="project-detail-section">
         <h3>History</h3>
         <ul class="project-detail-list">
           {project.history.map(h => <li><b>{h.date}:</b> {h.event}</li>)}
         </ul>
       </div>
-      <div class="project-detail-demo">
-        <a href={project.demoUrl}>Try the live demo →</a>
-      </div>
+    )}
+
+    <div class="project-detail-demo">
+      <a id="live-demo-btn" href="#" role="button" data-demo={demoId}>Try the live demo →</a>
+      <span id="loader" style="margin-left:12px; display:none;">starting…</span>
     </div>
-  </body>
-</html>
+
+    <script type="module">
+      const btn    = document.getElementById('live-demo-btn');
+      const loader = document.getElementById('loader');
+      const demoId = btn.dataset.demo;
+
+      const absolutizeHttp = (endpoint) => {
+        if (!endpoint) return "";
+        if (/^https?:\/\//i.test(endpoint)) return endpoint;
+        if (endpoint.startsWith("//")) return `${location.protocol}${endpoint}`;
+        if (endpoint.startsWith("/"))  return `${location.protocol}//${location.hostname}${endpoint}`;
+        if (endpoint.startsWith(":"))  return `${location.protocol}//${location.hostname}${endpoint}`;
+        return `${location.protocol}//${location.hostname}/${endpoint.replace(/^\/+/, "")}`;
+      };
+
+      const ORCH       = absolutizeHttp(":8090");
+      const ORCH_TOKEN = "dev-token"; // ton token d'API existant
+
+      // ---------- Consent storage helpers ----------
+      const STORAGE_KEY = (id) => `vh_consent_${id}`;
+      function getConsent(id) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY(id));
+          if (!raw) return null;
+          const obj = JSON.parse(raw);
+          if (!obj?.token || !obj?.expiresAt) return null;
+          if (Date.now() >= obj.expiresAt) return null;
+          return obj;
+        } catch { return null; }
+      }
+      function setConsent(id, c) {
+        localStorage.setItem(STORAGE_KEY(id), JSON.stringify(c));
+      }
+      function clearConsent(id) {
+        localStorage.removeItem(STORAGE_KEY(id));
+      }
+
+      // ---------- Ask modal + fetch token from API ----------
+      async function ensureConsent(id) {
+        // 1) déjà un jeton valide ?
+        const existing = getConsent(id);
+        if (existing) return existing;
+
+        // 2) afficher la modale
+        const ask = window[`askConsent_${id}`];
+        const ok  = typeof ask === 'function' ? await ask() : true;
+        if (!ok) throw new Error("consent denied");
+
+        // 3) demander un jeton côté API (lié à la démo)
+        const resp = await fetch(`${ORCH}/consent?demo=${encodeURIComponent(id)}`, {
+          method: 'POST'
+        });
+        if (!resp.ok) {
+          throw new Error(`consent error: ${resp.status}`);
+        }
+        const data = await resp.json(); // { token, expiresAt }
+        setConsent(id, data);
+        return data;
+      }
+
+      // ---------- Fetch helpers avec headers ----------
+      function apiHeaders(consentToken) {
+        return {
+          "X-Consent-Token": consentToken,   // <-- jeton de consentement (expirable)
+          "x-token": ORCH_TOKEN              // <-- ton token d'orchestrateur existant
+        };
+      }
+
+      async function startDemo() {
+        btn.setAttribute('aria-busy', 'true');
+        btn.setAttribute('disabled', 'true');
+        loader.style.display = 'inline';
+        loader.textContent = 'starting…';
+
+        const statusURL = `${ORCH}/demos/${demoId}/status`;
+        const startURL  = `${ORCH}/demos/${demoId}/start?wait=1&timeout=90`;
+
+        try {
+          // s'assurer d'avoir un consent token valide
+          const consent = await ensureConsent(demoId);
+          const headers = apiHeaders(consent.token);
+
+          // (optionnel) ping status — utile si /status est protégé par consent aussi
+          try { await fetch(statusURL, { method: 'GET', headers }); } catch {}
+
+          // lancer la démo
+          let r = await fetch(startURL, { method: 'POST', headers });
+          if (r.status === 401) {
+            // expiré côté API: nettoyer et re-demander
+            clearConsent(demoId);
+            const fresh = await ensureConsent(demoId);
+            r = await fetch(startURL, { method: 'POST', headers: apiHeaders(fresh.token) });
+          }
+          if (!r.ok) {
+            const msg = await r.text().catch(()=> '');
+            throw new Error(msg || `HTTP ${r.status}`);
+          }
+
+          location.href = `/demo/${demoId}`;
+        } catch (err) {
+          alert('Failed to start demo: ' + (err?.message || err));
+          btn.removeAttribute('aria-busy');
+          btn.removeAttribute('disabled');
+          loader.style.display = 'none';
+        }
+      }
+
+      // ---------- Expiration passive : si le TTL passe, on efface le jeton ----------
+      setInterval(() => {
+        const c = getConsent(demoId);
+        if (!c) return;
+        if (Date.now() >= c.expiresAt) clearConsent(demoId);
+      }, 60_000);
+
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        // on (re)demande le consentement si besoin, puis on démarre
+        try {
+          const ask = window[`askConsent_${demoId}`];
+          const ok  = typeof ask === 'function' ? await ask() : true;
+          if (ok) startDemo();
+        } catch {}
+      });
+    </script>
+
+
+
+
+  </div>
+</SiteLayout>

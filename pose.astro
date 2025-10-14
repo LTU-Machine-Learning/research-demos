@@ -1,0 +1,57 @@
+---
+const host = Astro.request.headers.get('host')?.split(':')[0] || 'localhost';
+const MJPEG_BASE = import.meta.env.PUBLIC_MJPEG_BASE ?? `http://${host}:8080/stream`;
+const annotUrl = `${MJPEG_BASE}?demo=pose&t=${Date.now()}`;
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Demo – Pose (annoté)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="/styles/debug.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Demo – Pose</h1>
+      <p class="sub">Flux déjà annoté par le backend (MJPEG).</p>
+
+      <div class="card">
+        <div class="title">
+          <h3>Live (MJPEG annoté)</h3>
+          <div class="row">
+            <span class="stat">FPS: <b id="fps">—</b></span>
+            <span class="stat">URL: <b id="url">—</b></span>
+          </div>
+        </div>
+
+        <!-- Passe l'URL via data-attr (pas de <?js ... ?>) -->
+        <img id="annot" data-src={annotUrl}
+             alt="Pose annotated stream"
+             style="width:100%;max-width:900px;aspect-ratio:16/9;object-fit:contain;border-radius:12px;border:1px solid #202940;background:#000;display:block;margin:0 auto;" />
+      </div>
+    </div>
+
+    <script type="module">
+      const img   = document.getElementById('annot');
+      const fpsEl = document.getElementById('fps');
+      const urlEl = document.getElementById('url');
+
+      const URL0 = img.dataset.src;   // <-- URL correcte
+      img.src = URL0;
+      urlEl.textContent = URL0;
+
+      // FPS approx via 'load'
+      const ts = [];
+      img.addEventListener('load', () => {
+        const now = performance.now();
+        ts.push(now);
+        while (ts.length > 30) ts.shift();
+        if (ts.length >= 2) {
+          const diffs = ts.slice(1).map((t,i)=>t - ts[i]);
+          const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+          fpsEl.textContent = (1000/avg).toFixed(1);
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,546 @@
+---
+const host = Astro.request.headers.get('host')?.split(':')[0] || 'localhost';
+const CAM = import.meta.env.PUBLIC_WHEP_CAM ?? `http://${host}:8889/cam/whep`;
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Demo – YOLO (WebRTC + Canvas)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="/styles/debug.css" />
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, #0b0d12 0%, #1a2236 100%);
+        color: #e8eefc;
+        font: 18px/1.6 system-ui, Segoe UI, Roboto, Arial;
+      }
+      .wrap { max-width: 980px; margin: 40px auto; padding: 0 16px; }
+      .card {
+        margin-top: 16px; background: rgba(20,24,36,0.97); border-radius: 20px;
+        box-shadow: 0 8px 32px #0005; padding: 18px 18px 22px;
+      }
+      .title { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap: wrap; }
+      .title h3 { margin:0; color:#5aa4ff; font-size:1.15rem; }
+      .row { display:flex; gap:18px; font-size:.95rem; color:#b0bedc; align-items:center; flex-wrap: wrap; }
+      .stat b { color:#e8eefc; }
+      .actions { display:flex; gap:8px; flex-wrap: wrap; }
+      .actions button {
+        background:#223052; color:#e8eefc; border:1px solid #31456e; border-radius:10px; padding:6px 10px;
+        cursor:pointer; font: 14px/1.2 ui-sans-serif;
+      }
+      .actions button:hover { filter:brightness(1.1); }
+      .actions button:disabled { opacity:.5; cursor:not-allowed; }
+
+      /* video + overlay + loader */
+      #yolo-root { position: relative; }
+      #yolo-root video, #yolo-root canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+      #yolo-root.loading #yolo-video { filter: blur(8px) brightness(0.85); }
+      #yolo-root.ready   #yolo-video { filter: none; transition: filter .25s ease; }
+      #yolo-root.loading #yolo-canvas { opacity: 0; }
+      #yolo-root.ready   #yolo-canvas { opacity: 1; transition: opacity .25s ease; }
+      #yolo-loading { position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; gap:.75rem;
+        background: rgba(8,12,20,.25); backdrop-filter: blur(2px); color:#cfe2ff; font: 14px/1.2 ui-sans-serif; opacity:1; transition:opacity .25s; }
+      #yolo-root.ready #yolo-loading { opacity:0; pointer-events:none; }
+
+      /* stopped state (dark) */
+      #yolo-root.stopped #yolo-video { filter: brightness(0.05) grayscale(1); }
+      #yolo-root.stopped #yolo-canvas { opacity: 0; }
+
+      #yolo-loading .spinner {
+        width:18px; height:18px; border-radius:50%;
+        border:2px solid rgba(255,255,255,.25); border-top-color: #8ec5ff;
+        animation: spin .9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Demo – YOLO</h1>
+      <p class="sub">Flux base “cam” en WebRTC + overlay Canvas.</p>
+
+      <div class="card">
+        <div class="title">
+          <h3>Live (WebRTC + overlay)</h3>
+          <div class="row">
+            <span class="stat">État: <b id="state">—</b></span>
+            <span class="stat">FPS: <b id="fps">—</b></span>
+            <div class="actions">
+              <button id="btn-start"  type="button" title="Start the demo on server">Start</button>
+              <button id="btn-stop"   type="button" title="Stop the demo on server">Stop</button>
+              <button id="btn-reconn" type="button" title="Reconnect WebSocket only">Reconnect&nbsp;WS</button>
+              <button id="btn-restart" type="button" title="Stop then Start server and reconnect">Restart&nbsp;demo</button>
+              <button id="btn-reset-overlay" type="button" title="Clear drawn boxes if stuck">Reset&nbsp;overlay</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack" id="yolo-root" data-cam={CAM}>
+          <video id="yolo-video" autoplay playsinline muted></video>
+          <canvas id="yolo-canvas"></canvas>
+          <div id="yolo-loading" aria-hidden="true">
+            <div class="spinner"></div><span>Loading live stream…</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/scripts/overlay-classmap.js" is:inline></script>
+
+    <script type="module">
+      // ---------- imports ----------
+      import { connectWhep } from "/scripts/whep.js";
+      import { createContainOverlay } from "/scripts/overlay-contain.js";
+
+      // ---------- tiny logger ----------
+      const T0 = performance.now();
+      const ts = () => (performance.now() - T0).toFixed(1).padStart(6, ' ');
+      const log  = (...a) => console.log(`[demo/yolo +${ts()}ms]`, ...a);
+      const warn = (...a) => console.warn(`[demo/yolo +${ts()}ms]`, ...a);
+
+      // ---------- constants & elements ----------
+      const ORCH    = `${location.protocol}//${location.hostname}:8090`;
+      const TOKEN   = 'dev-token';
+      const DEMO_ID = 'yolo';
+
+      const root    = document.getElementById('yolo-root');
+      const camUrl  = (root.dataset && root.dataset.cam) || root.getAttribute('data-cam');
+      const video   = document.getElementById('yolo-video');
+      const canvas  = document.getElementById('yolo-canvas');
+      const stateEl = document.getElementById('state');
+      const fpsEl   = document.getElementById('fps');
+
+      // controls
+      const btnStart  = document.getElementById('btn-start');
+      const btnStop   = document.getElementById('btn-stop');
+      const btnReconn = document.getElementById('btn-reconn');
+      const btnRestart= document.getElementById('btn-restart');
+      const btnResetOverlay = document.getElementById('btn-reset-overlay');
+
+      // ---------- UI state helpers ----------
+      function setLoading(on) {
+        if (on) { root.classList.add('loading'); root.classList.remove('ready'); }
+        else    { root.classList.remove('loading'); root.classList.add('ready'); }
+      }
+      function setStopped(on) {
+        if (on) { root.classList.add('stopped'); }
+        else    { root.classList.remove('stopped'); }
+      }
+
+      // show loader / blur until we mark ready
+      setLoading(true);
+      setStopped(false);
+
+      // ---------- small utils ----------
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+      const nowMs = () => performance.now();
+
+      // Buttons: 3s cooldown + lock to serialize actions
+      const actionButtons = [btnStart, btnStop, btnReconn, btnRestart, btnResetOverlay];
+      let actionLocked = false;
+      function setButtonsEnabled(enabled) { for (const b of actionButtons) if (b) b.disabled = !enabled; }
+      async function withActionLock(fn, minCooldownMs = 5000) {
+        if (actionLocked) return;
+        actionLocked = true; setButtonsEnabled(false);
+        try { await fn(); } finally {
+          setTimeout(() => { actionLocked = false; setButtonsEnabled(true); }, minCooldownMs);
+        }
+      }
+
+      // ---------- orchestrator helpers ----------
+      async function ensureUp() {
+        const r = await fetch(`${ORCH}/demos/${DEMO_ID}/status`, { headers: { 'x-token': TOKEN }, credentials: 'omit' });
+        const st = await r.json().catch(()=> ({}));
+        if (!st?.running) {
+          const r2 = await fetch(`${ORCH}/demos/${DEMO_ID}/start?wait=1&timeout=90`, {
+            method:'POST', headers:{ 'x-token': TOKEN }, credentials:'omit'
+          });
+          if (!r2.ok) throw new Error(await r2.text().catch(()=>`HTTP ${r2.status}`));
+        }
+      }
+
+      async function ensureRunning(timeoutMs = 8000) {
+        const t0 = nowMs();
+        while (nowMs() - t0 < timeoutMs) {
+          try {
+            const st = await fetch(`${ORCH}/demos/${DEMO_ID}/status`, {
+              headers:{ 'x-token': TOKEN }, cache:'no-store'
+            }).then(r=>r.json());
+            if (st?.running) return true;
+          } catch {}
+          await sleep(350);
+        }
+        return false;
+      }
+
+      async function waitStopped(timeoutMs = 5000) {
+        const t0 = nowMs();
+        while (nowMs() - t0 < timeoutMs) {
+          try {
+            const st = await fetch(`${ORCH}/demos/${DEMO_ID}/status`, {
+              headers:{ 'x-token': TOKEN }, cache:'no-store'
+            }).then(r=>r.json());
+            if (!st?.running) return true;
+          } catch {}
+          await sleep(250);
+        }
+        return false;
+      }
+
+      function mountFps(v, out){
+        let last = performance.now(), n = 0;
+        const tick = () => {
+          n++;
+          const now = performance.now();
+          if (now - last >= 1000) { out.textContent = `${n}`; n = 0; last = now; }
+          (v.requestVideoFrameCallback ? v.requestVideoFrameCallback(tick) : setTimeout(tick, 33));
+        };
+        tick();
+      }
+
+      function whenVideoReady(v) {
+        if (v.readyState >= 1 && v.videoWidth && v.videoHeight) return Promise.resolve();
+        return new Promise(res => v.addEventListener('loadedmetadata', res, { once: true }));
+      }
+
+      async function whenCanvasReady(cnv) {
+        while (!(cnv.width > 0 && cnv.height > 0)) {
+          await new Promise(r => requestAnimationFrame(r));
+        }
+        await new Promise(r => requestAnimationFrame(r));
+      }
+
+      const after = (ms) => new Promise(r => setTimeout(r, ms));
+
+      // --- WHEP transport control ---
+      let whepConnecting = false;
+      async function ensureWhep(video, camUrl) {
+        const hasLive = !!video.srcObject && video.srcObject.getTracks?.().some(t => t.readyState === 'live');
+        if (hasLive) return;
+        if (whepConnecting) return;
+        whepConnecting = true;
+        try { await connectWhep(camUrl, video); } finally { whepConnecting = false; }
+      }
+      function waitVideoPlayable(v, timeoutMs = 8000) {
+        return new Promise((resolve, reject) => {
+          const t0 = performance.now();
+          let done = false;
+          const finish = (ok) => { if (!done) { done = true; ok ? resolve() : reject(new Error('video timeout')); } };
+          const onMeta = () => {
+            if (v.videoWidth && v.videoHeight) {
+              if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(() => finish(true));
+              else setTimeout(() => finish(true), 150);
+            }
+          };
+          if (v.readyState >= 1 && v.videoWidth && v.videoHeight) onMeta();
+          else v.addEventListener('loadedmetadata', onMeta, { once: true });
+          const tid = setInterval(() => {
+            if (performance.now() - t0 > timeoutMs) { clearInterval(tid); finish(false); }
+          }, 200);
+        });
+      }
+
+      // ---------- orchestrator boot ----------
+      try { log('ensureUp…'); await ensureUp(); log('ensureUp ok'); }
+      catch (e) { warn('ensureUp failed', e?.message || e); }
+
+      // ---------- FPS ----------
+      mountFps(video, fpsEl);
+
+      // ---------- WebRTC (WHEP) ----------
+      stateEl.textContent = 'connecting…';
+      log('connectWhep →', camUrl);
+      try { await connectWhep(camUrl, video); log('connectWhep ok'); }
+      catch (e) { warn('connectWhep failed', e?.message || e); }
+
+      await whenVideoReady(video);
+      log('video dims', video.videoWidth, 'x', video.videoHeight);
+
+      // ensure layout/stacking
+      root.style.position = root.style.position || 'relative';
+      Object.assign(video.style,  { position:'absolute', inset:'0', zIndex:'1' });
+      Object.assign(canvas.style, { position:'absolute', inset:'0', zIndex:'2', pointerEvents:'none' });
+
+      // initial canvas size
+      canvas.width  = video.clientWidth  || video.videoWidth  || 1280;
+      canvas.height = video.clientHeight || video.videoHeight || 720;
+
+      // ---------- overlay ----------
+      const overlay = createContainOverlay({ video, canvas });
+      overlay.setSourceSize(video.videoWidth || 1280, video.videoHeight || 720);
+      overlay.start();
+      stateEl.textContent = 'playing';
+      log('overlay started');
+
+      // throttle ResizeObserver to avoid bitmap wipes
+      let pendingResize=false, lastW=canvas.width, lastH=canvas.height;
+      const ro = new ResizeObserver(() => {
+        if (pendingResize) return;
+        pendingResize = true;
+        requestAnimationFrame(() => {
+          pendingResize = false;
+          const w = video.clientWidth  || video.videoWidth  || 1280;
+          const h = video.clientHeight || video.videoHeight || 720;
+          if (w !== lastW || h !== lastH) {
+            lastW = w; lastH = h;
+            canvas.width  = w;
+            canvas.height = h;
+          }
+        });
+      });
+      ro.observe(root);
+
+      // ---------- WS (detections) ----------
+      const WS_URL = `ws://${location.hostname}:5000/ws/dets`;
+      let ws;
+      let intent   = 'running'; // 'running' | 'stopped'
+      let stopSent = false;
+      let lastStopAt = 0;
+
+      // WS opened promise (reset per connect)
+      let wsOpenedResolve;
+      let wsOpened = new Promise(res => (wsOpenedResolve = res));
+      function resetWsOpened() { wsOpened = new Promise(res => (wsOpenedResolve = res)); }
+
+      const STORAGE_KEY = 'yolo:last-dets';
+
+      function onWSMessage(ev) {
+        try {
+          const data = JSON.parse(ev.data);
+          if (!data || !Array.isArray(data.boxes)) return;
+          try { sessionStorage.setItem(STORAGE_KEY, ev.data); } catch {}
+          const W = (data.w|0) || (video.videoWidth|0) || 1280;
+          const H = (data.h|0) || (video.videoHeight|0) || 720;
+          overlay.setSourceSize(W, H);
+          const boxes = data.boxes.map(b => {
+            const x1 = b.x1|0, y1 = b.y1|0, x2 = b.x2|0, y2 = b.y2|0;
+
+            // Prefer backend-provided label; else map cls -> name; else fallback to #id
+            const hasCls = b.cls !== undefined && b.cls !== null;
+            const nameFromMap = (hasCls && globalThis.overlayClassMap)
+              ? globalThis.overlayClassMap[b.cls]
+              : undefined;
+
+            const confPct = (b.conf !== undefined && b.conf !== null)
+              ? `${Math.round(b.conf * 100)}%`
+              : undefined;
+
+            const label =
+              b.label
+                ?? (nameFromMap
+                      ? (confPct ? `${nameFromMap}:${confPct}` : nameFromMap)
+                      : (hasCls
+                          ? (confPct ? `#${b.cls}:${confPct}` : `#${b.cls}`)
+                          : undefined));
+
+            return {
+              x: x1,
+              y: y1,
+              w: Math.max(0, x2 - x1),
+              h: Math.max(0, y2 - y1),
+              label
+            };
+          });
+          overlay.setBoxes(boxes);
+        } catch (e) { warn('[ws] bad message', e?.message || e); }
+      }
+
+      let reconnectDelay = 500; // grows to 5s
+      function openWS(force = false) {
+        if (intent !== 'running' && !force) return;
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) && !force) return;
+        try { ws?.close(1000, 'reopen'); } catch {}
+        resetWsOpened();
+        log('ws connect →', WS_URL);
+        ws = new WebSocket(WS_URL);
+        ws.onopen  = () => { log('[ws] open'); wsOpenedResolve?.(); reconnectDelay = 500; };
+        ws.onerror = (e) => warn('[ws] error', e);
+        ws.onclose = async (ev) => {
+          warn('[ws] close', ev.code, ev.reason);
+          if (intent === 'running' && !document.hidden) {
+            await ensureRunning(5000);
+            setTimeout(() => openWS(), reconnectDelay);
+            reconnectDelay = Math.min(reconnectDelay * 1.6, 5000);
+          }
+        };
+        ws.onmessage = onWSMessage;
+      }
+
+      // hydrate overlay from cache before first WS
+      try {
+        const cached = sessionStorage.getItem(STORAGE_KEY);
+        if (cached) {
+          const data = JSON.parse(cached);
+          const W = (data.w|0) || (video.videoWidth|0) || 1280;
+          const H = (data.h|0) || (video.videoHeight|0) || 720;
+          overlay.setSourceSize(W, H);
+          const boxes = (data.boxes||[]).map(b => {
+            const x1=b.x1|0, y1=b.y1|0, x2=b.x2|0, y2=b.y2|0;
+
+            const hasCls = b.cls !== undefined && b.cls !== null;
+            const nameFromMap = (hasCls && globalThis.overlayClassMap)
+              ? globalThis.overlayClassMap[b.cls]
+              : undefined;
+
+            const confPct = (b.conf !== undefined && b.conf !== null)
+              ? `${Math.round(b.conf*100)}%`
+              : undefined;
+
+            const label =
+              b.label
+                ?? (nameFromMap
+                      ? (confPct ? `${nameFromMap}:${confPct}` : nameFromMap)
+                      : (hasCls
+                          ? (confPct ? `#${b.cls}:${confPct}` : `#${b.cls}`)
+                          : undefined));
+
+            return { x:x1, y:y1, w:Math.max(0,x2-x1), h:Math.max(0,y2-y1), label };
+          });
+
+          overlay.setBoxes(boxes);
+        }
+      } catch {}
+      openWS();
+
+      // ---------- reusable READY GATE ----------
+      async function readyGate({ useCacheOk = true } = {}) {
+        const cached = useCacheOk ? (() => { try { return sessionStorage.getItem(STORAGE_KEY); } catch { return null; } })() : null;
+        await whenVideoReady(video);
+        await whenCanvasReady(canvas);
+        await Promise.race([
+          (async () => { if (!cached) await wsOpened; })(),
+          after(1200)
+        ]);
+        await waitVideoPlayable(video).catch(()=>{});
+        setLoading(false);
+        setStopped(false);
+      }
+
+      // initial gate
+      await readyGate();
+
+      // ---------- heartbeat ----------
+      function beat() {
+        fetch(`${ORCH}/demos/${DEMO_ID}/heartbeat?token=${encodeURIComponent(TOKEN)}`, {
+          method:'POST', mode:'no-cors', keepalive:true
+        }).catch(()=>{});
+      }
+      beat();
+      let hb = setInterval(beat, 25_000);
+
+      // ---------- stop / resume ----------
+      function stopDemoFireAndForget(reason='') {
+        if (stopSent) return;
+        stopSent = true;
+        intent = 'stopped';
+        if (hb) { clearInterval(hb); hb = null; }
+
+        // stop WebRTC media & blank frame
+        try {
+          if (video.srcObject) {
+            video.srcObject.getTracks().forEach(t => { try { t.stop(); } catch {} });
+            video.srcObject = null;
+            video.load();
+            video.pause();
+            video.currentTime = 0;
+          }
+        } catch {}
+
+        // clear overlay immediately
+        try {
+          overlay.setBoxes([]);
+          const ctx = canvas.getContext('2d');
+          ctx && ctx.clearRect(0,0,canvas.width,canvas.height);
+        } catch {}
+
+        setStopped(true);
+        setLoading(false);
+        stateEl.textContent = 'stopped';
+
+        try { ws?.close(1000, 'intent-stop'); } catch {}
+        const url = `${ORCH}/demos/${DEMO_ID}/stop?token=${encodeURIComponent(TOKEN)}`;
+        const ok = navigator.sendBeacon && navigator.sendBeacon(url);
+        if (!ok) fetch(url, { method:'POST', mode:'no-cors', keepalive:true }).catch(()=>{});
+        log('stop →', reason);
+        lastStopAt = nowMs();
+      }
+
+      async function resumeDemo(reason='') {
+        setStopped(false);
+        setLoading(true);
+        intent = 'running';
+
+        const sinceStop = nowMs() - lastStopAt;
+        if (sinceStop < 1200) await sleep(1200 - sinceStop);
+
+        try {
+          await fetch(`${ORCH}/demos/${DEMO_ID}/start?wait=1&timeout=90`, {
+            method:'POST', headers:{ 'x-token': TOKEN }
+          }).catch(()=>{});
+          const ok = await ensureRunning(8000);
+          if (ok) {
+            await ensureWhep(video, camUrl);   // reattach WebRTC if needed
+            openWS(true);                      // fresh wsOpened
+            await readyGate({ useCacheOk: true });
+          } else {
+            warn('resume: container did not reach running state in time');
+            setLoading(false);
+          }
+        } catch (e) {
+          warn('resume failed', e?.message || e);
+          setLoading(false);
+        }
+
+        if (!hb) { beat(); hb = setInterval(beat, 25_000); }
+        stopSent = false;
+        stateEl.textContent = 'running';
+        log('resume ←', reason);
+      }
+
+      // ---------- Only stop on real tab close (not refresh) ----------
+      window.addEventListener('beforeunload', () => {
+        try { sessionStorage.setItem('yolo:reloading', '1'); } catch {}
+        if (hb) clearInterval(hb);
+      });
+      try { if (sessionStorage.getItem('yolo:reloading') === '1') { sessionStorage.removeItem('yolo:reloading'); } } catch {}
+      window.addEventListener('pagehide', () => {
+        const reloadingNow = sessionStorage.getItem('yolo:reloading') === '1';
+        if (!reloadingNow) stopDemoFireAndForget('pagehide');
+      });
+
+      // ---------- Buttons wiring (3s cooldown & serialized actions) ----------
+      btnStart?.addEventListener('click', () => withActionLock(async () => {
+        await resumeDemo('manual-start');
+      }));
+
+      btnStop?.addEventListener('click', () => withActionLock(async () => {
+        stopDemoFireAndForget('manual-stop');
+      }));
+
+      btnReconn?.addEventListener('click', () => withActionLock(async () => {
+        setLoading(true);
+        if (ws && ws.readyState === WebSocket.OPEN) { try { ws.close(1000, 'manual-reconnect'); } catch {} }
+        await ensureRunning(4000);
+        openWS(true);
+        await wsOpened;
+        await waitVideoPlayable(video).catch(()=>{});
+        setLoading(false);
+      }));
+
+      btnRestart?.addEventListener('click', () => withActionLock(async () => {
+        setLoading(true);
+        stopDemoFireAndForget('manual-restart');
+        const stopped = await waitStopped(6000);
+        if (!stopped) await sleep(2000);
+        await resumeDemo('manual-restart'); // handles WHEP, WS, and gate
+      }));
+
+      btnResetOverlay?.addEventListener('click', () => withActionLock(async () => {
+        overlay.setBoxes([]);
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+      }, 1000));
+    </script>
+  </body>
+</html>

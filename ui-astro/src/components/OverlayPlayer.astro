@@ -1,0 +1,56 @@
+---
+export interface Props {
+  demo: string;
+  title?: string;
+  note?: string;
+  camEndpoint?: string; // si tu veux override /whep/cam
+  class?: string;
+}
+const { demo, title = 'Live Stream', note = '', camEndpoint, class: klass = '' } = Astro.props;
+---
+<div class={`card ${klass}`}>
+  <div class="title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <h3 style="margin:6px 10px">{title}</h3>
+    <div class="row" style="display:flex;gap:10px;align-items:center">
+      <span class="stat">Qualité: <b data-quality>—</b></span>
+      <span class="stat">FPS: <b data-fps>—</b></span>
+      <span class="stat">État: <b data-state>—</b></span>
+    </div>
+  </div>
+
+  <div class="stack overlay-root"
+       data-demo={demo}
+       data-cam={camEndpoint ?? ''}>
+    <video autoplay playsinline muted></video>
+    <canvas></canvas>
+  </div>
+
+  {note && <p class="sub" style="color:#9fb3d6;margin:8px 0 0 10px">{note}</p>}
+</div>
+
+<!-- Styles (tu peux déplacer ces classes dans app.css si tu préfères) -->
+<style is:global>
+  .stack{ position:relative; width:100%; max-width:900px; margin:0 auto; aspect-ratio:16/9; }
+  .stack > video, .stack > canvas{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
+    border:1px solid #202940; border-radius:12px;
+  }
+  .stack > video{ background:#000; z-index:1; }
+  .stack > canvas{ background:transparent; pointer-events:none; z-index:2; }
+</style>
+
+<!-- Init côté client (consomme /public/scripts/debug-entry.js) -->
+<script type="module">
+  import "/scripts/debug-entry.js";
+
+  const root = document.currentScript.previousElementSibling.previousElementSibling; // le .stack
+  const wrapper = root; // alias
+  const demo = wrapper.dataset.demo || "yolo";
+  const camEndpoint = wrapper.dataset.cam || undefined;
+
+  if (window.VH_INIT_OVERLAY) {
+    window.VH_INIT_OVERLAY(wrapper, { demo, camEndpoint });
+  } else {
+    console.error("VH_INIT_OVERLAY non défini : vérifie /public/scripts/debug-entry.js");
+  }
+</script>

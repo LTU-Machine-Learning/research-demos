@@ -1,0 +1,123 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+}
+const { title = 'Vision Hub – Welcome', description = 'Real-time AI demos' } = Astro.props;
+
+// Topbar links – tweak as you like
+const links = [
+  { href: '/',            label: 'Home' },
+  { href: '/projects',    label: 'Projects' },
+  { href: '/demo/yolo',   label: 'YOLO' },
+  { href: '/demo/pose',   label: 'Pose' },
+];
+
+const pathname = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === '/' ? pathname === '/' : pathname.startsWith(href);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="stylesheet" href="/styles/app.css" />
+    <slot name="head" />
+    <style is:global>
+      .topbar-inner {
+        max-width: 1100px; margin: 0 auto; padding: 10px 16px;
+        display: flex; gap: 12px; align-items: center; justify-content: space-between;
+      }
+      .brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-weight:700; }
+      .badge { width:26px; height:26px; border-radius:8px;
+        background: linear-gradient(135deg, var(--cta), var(--accent)); box-shadow: inset 0 0 12px #0006; }
+      nav { display:flex; gap:6px; align-items:center; }  
+      .nav-link:hover { opacity:1; background:#17203a; }
+      .spacer { flex:1; }
+      .pill { padding:6px 10px; border-radius:999px; font-size:12px; color:#cfe7ff;
+        background:#122035; border:1px solid var(--border); }
+      /* Optional page container so content doesn’t hug edges */
+      .page { max-width: 1100px; margin: 24px auto; padding: 0 16px 64px; }
+      /* Simple mobile menu (hide links, show burger) */
+      .burger{ display:none; background:none; border:none; color:var(--text); font-size:20px; }
+      @media (max-width: 800px) { nav{ display:none; } .burger{ display:inline-flex; } }
+    </style>
+    <script type="module">
+      // Minimal mobile menu toggle; safe no-op on desktop
+      const initMenu = () => {
+        const btn = document.querySelector('[data-burger]');
+        const nav = document.querySelector('[data-nav]');
+        if (!btn || !nav) return;
+        btn.addEventListener('click', () => {
+          const open = nav.style.display === 'flex';
+          nav.style.display = open ? 'none' : 'flex';
+          nav.style.flexDirection = 'column';
+          nav.style.position = 'absolute';
+          nav.style.top = '56px';
+          nav.style.left = '0';
+          nav.style.right = '0';
+          nav.style.background = 'linear-gradient(180deg, var(--bg-top), var(--bg-bottom))';
+          nav.style.padding = '8px';
+          nav.style.borderBottom = '1px solid var(--border)';
+        });
+      };
+      addEventListener('DOMContentLoaded', initMenu);
+    </script>
+    <script>
+      // 1) Swap du background vers la version HD une fois chargée (évite flash)
+      const hd = new Image();
+      hd.src = "/images/LTU_BG_2.JPG";
+      hd.decode ? hd.decode().then(done).catch(()=>hd.onload=done) : (hd.onload = done);
+      function done(){ document.body.classList.add('ready'); }
+
+      // 2) Révélations au scroll : ajoute .in sur les éléments .reveal
+      const io = new IntersectionObserver((entries)=>{
+        for (const e of entries) if (e.isIntersecting) {
+          e.target.classList.add('in'); io.unobserve(e.target);
+        }
+      }, { rootMargin: "0px 0px -10% 0px", threshold: .05 });
+
+      // Marque automatiquement certains blocs
+      document.querySelectorAll('.hero, .projects-preview, .proj-card').forEach(el=>{
+        el.classList.add('reveal'); io.observe(el);
+      });
+    </script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/" aria-label="Vision Hub home">
+          <img src="/images/LTU_logo.png" alt="" class="brand-logo" width="24" height="24" />
+          <span>Vision Hub</span>
+        </a>
+
+        <nav data-nav>
+          {links.map(l => (
+            <a href={l.href} class={`nav-link ${isActive(l.href) ? 'active' : ''}`}>{l.label}</a>
+          ))}
+        </nav>
+
+        <div class="spacer"></div>
+
+        <div class="pill">App</div>
+
+        <button class="burger" data-burger aria-label="Menu">☰</button>
+      </div>
+    </header>
+
+
+    {/* SCÈNE d’arrière-plan (blobs animés) */}
+    <div class="scene" aria-hidden="true">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+    </div>
+
+    <main class="page">
+      <slot />
+    </main>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+const title = "Privacy & Data Protection";
+const description = "How Vision Hub demos handle camera data, consent, and integrity in compliance with EU and Swedish law.";
+---
+
+<SiteLayout {title} {description}>
+  <div class="wrap" style="max-width:800px;margin:48px auto;padding:0 16px;">
+    <h1>Privacy & Data Protection</h1>
+
+    <p>
+      This page describes how <b>Vision Hub</b> processes visual data in compliance with the
+      <b>European Union’s General Data Protection Regulation (GDPR, Regulation (EU) 2016/679)</b>
+      and Sweden’s national implementation, <b>Dataskyddsförordningen</b>.
+      The system follows the integrity principles defined by
+      <b>Integritetsskyddsmyndigheten (IMY)</b>, Sweden’s data protection authority.
+    </p>
+
+    <h2>1. Purpose of the demonstration</h2>
+    <p>
+      The Vision Hub installation at Luleå University of Technology showcases interactive
+      <b>AI-based computer vision models</b> that operate in real time. The purpose is purely
+      educational and research-oriented — to demonstrate how modern AI systems can detect
+      objects, track movement, or estimate human poses visually.
+    </p>
+
+    <h2>2. Type of data processed</h2>
+    <p>
+      The demo processes <b>live video frames</b> from a fixed camera connected to the installation.
+      These frames are analyzed instantly in memory to draw overlays (such as boxes or skeletons)
+      on a live screen.  
+      <u>No videos, images, or identifying information are ever recorded, saved, or transmitted.</u>
+    </p>
+
+    <p>
+      Once you step out of view or the demo resets, all visual data is discarded immediately.
+    </p>
+
+    <h2>3. Legal basis for processing</h2>
+    <p>
+      The visual processing is based on <b>Article 6(1)(a) of the GDPR</b> — your
+      <b>explicit consent</b> to participate in a live, camera-based AI demonstration.
+      The processing serves no commercial or surveillance purpose.
+    </p>
+
+    <p>
+      Participation is entirely voluntary. You may withdraw consent at any time by asking
+      a staff member to stop the demo or by stepping away from the camera area.
+    </p>
+
+    <h2>4. Consent management</h2>
+    <p>
+      When a visitor gives consent to participate, a short-lived <b>consent token</b> is created
+      within the <b>local demo environment</b> (on the lab’s computer).  
+      This token:
+    </p>
+    <ul>
+      <li>Is valid for approximately 10 minutes.</li>
+      <li>Contains no personal or identifying data.</li>
+      <li>Is used only to temporarily authorize the live demo.</li>
+      <li>Expires automatically and is not stored anywhere after the session.</li>
+    </ul>
+
+    <p>
+      The consent is therefore <b>entirely local to the installation</b> and cannot be accessed
+      or linked to any external system, individual, or network.
+    </p>
+
+    <h2>5. Data retention and storage</h2>
+    <ul>
+      <li>No image, audio, or video data is stored or transmitted.</li>
+      <li>No identifiers such as IP addresses, cookies, or session IDs are collected.</li>
+      <li>The system does not log any personal activity, face, or biometric pattern.</li>
+      <li>All AI processing occurs in real time and in memory only.</li>
+    </ul>
+
+    <p>
+      The demo computer is isolated within the lab network and used solely for on-site research
+      and exhibition purposes.
+    </p>
+
+    <h2>6. Your rights under EU and Swedish law</h2>
+    <p>
+      Under the GDPR and Swedish Data Protection Act, you have the right to:
+    </p>
+    <ul>
+      <li>Be informed about how visual data is used.</li>
+      <li>Withdraw consent at any time.</li>
+      <li>Request erasure or restriction of any personal data (not applicable here, as none is stored).</li>
+      <li>Contact <b>Integritetsskyddsmyndigheten (IMY)</b> if you believe your rights are violated.</li>
+    </ul>
+
+    <p>
+      Since no data is stored or transferred, withdrawing consent simply ends the live session.
+    </p>
+
+    <h2>7. Contact information</h2>
+    <p>
+      For any question about data protection and privacy in Vision Hub, please contact:
+    </p>
+
+    <p>
+      <b>Tom Burellier</b><br/>
+      Vision Hub Project – Luleå University of Technology<br/>
+      Email: <a href="mailto:tom.burellier@telecom-sudparis.eu">tom.burellier@telecom-sudparis.eu</a>
+    </p>
+
+    <p style="margin-top:32px;color:#9cb0d8;font-size:0.9rem;">
+      Last updated: October 2025 — compliant with the EU GDPR and Swedish Data Protection Act (Dataskyddsförordningen).
+    </p>
+  </div>
+
+  <!-- /src/pages/privacy.astro (inside <SiteLayout>) -->
+<link rel="modulepreload" href="/scripts/consent-widget.js" />
+<script type="module" src="/scripts/consent-widget.js"></script>
+
+<h1>Privacy & Consent</h1>
+<p class="sub">This demo setup uses short-lived local consent tokens. You can see and withdraw them below.</p>
+
+<!-- Configure via attributes -->
+<consent-status
+  demos="yolo,pose"
+  orch=":8090"
+  token="dev-token"
+  stop="true"
+  intro="Below is your consent status on this station. Tokens are short-lived and stored locally. You can withdraw at any time."
+></consent-status>
+</SiteLayout>

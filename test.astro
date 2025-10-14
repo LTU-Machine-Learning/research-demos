@@ -1,0 +1,63 @@
+---
+import projects from '../../data/projects.js';
+import OverlayPlayer from '../../components/OverlayPlayer.astro';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+
+export async function getStaticPaths() {
+  return projects.map((p) => ({ params: { slug: p.slug } }));
+}
+const { slug } = Astro.params;
+const project = projects.find(p => p.slug === slug);
+if (!project) throw new Error('Project not found');
+
+const pageTitle = `${project.title} Live Demo – Vision Hub`;
+const pageDesc  = project.description;
+---
+<SiteLayout title={pageTitle} description={pageDesc}>
+  <section class="demo-wrap">
+    <div class="demo-links">
+      <a href={"/projects/" + project.slug}>← Back to project page</a>
+      <a href="/projects">Browse all projects</a>
+    </div>
+
+    <h1 class="demo-title">
+      {project.title} <span style="font-size:1.1rem;font-weight:400;color:#b0bedc">Live Demo</span>
+    </h1>
+    <div class="demo-desc">{project.description}</div>
+
+    <div class="streams" style="display:flex;justify-content:center;margin:32px 0">
+      <OverlayPlayer demo={slug} title="Overlay (WebRTC + Canvas)"
+        note="Low-latency WHEP + client-side overlay."
+        /* camEndpoint={`http://${Astro.request.headers.get('host')?.split(':')[0]}:8889/whep/cam`} */
+      />
+    </div>
+
+    <p class="demo-desc" style="margin-top:18px;font-size:1rem;">
+      If you see a black screen, ensure the backend is running and the streams are accessible.
+    </p>
+  </section>
+
+  <style>
+    /* Reprend tes styles existants de la page (tu peux les déplacer dans app.css) */
+    .demo-wrap {
+      max-width: 900px;
+      margin: 48px auto 0 auto;
+      padding: 0 16px 48px 16px;
+      background: rgba(20,24,36,0.97);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px #0005;
+    }
+    .demo-title {
+      text-align: center;
+      font-size: 2.2rem;
+      margin: 0 0 8px 0;
+      letter-spacing: -1px;
+    }
+    .demo-desc { text-align: center; color: #b0bedc; margin-bottom: 24px; }
+    .demo-links { text-align: center; margin-top: 32px; }
+    .demo-links a {
+      color: #5aa4ff; font-weight: 600; text-decoration: none; margin: 0 18px; font-size: 1.1rem; transition: color .18s;
+    }
+    .demo-links a:hover { color: #27d07d; text-decoration: underline; }
+  </style>
+</SiteLayout>

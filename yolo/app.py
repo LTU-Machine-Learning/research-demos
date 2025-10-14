@@ -136,7 +136,6 @@ def grabber():
                     now = time.time()
                     if now - last_dec_log >= 1.0 and dec_count > 0:
                         avg_dec = sum(dec_times) / dec_count
-                        log.info(f"[YOLO] Décodage: {dec_count} frames, {avg_dec:.1f} ms/frame")
                         dec_times.clear(); dec_count = 0; last_dec_log = now
                     # drop anciennes frames si q pleine
                     try:
@@ -335,7 +334,6 @@ def inferencer():
                 avg_infer = sum(infer_times)/len(infer_times) if infer_times else 0
                 avg_draw  = sum(draw_times)/len(draw_times)   if draw_times  else 0
                 avg_jpeg  = sum(jpeg_times)/len(jpeg_times)   if jpeg_times  else 0
-                log.info(f"[YOLO] FPS: {frame_count}, infer: {avg_infer:.1f} ms, draw: {avg_draw:.1f} ms, jpeg: {avg_jpeg:.1f} ms (batch {BATCH_SIZE})")
                 frame_count = 0; last_fps_time = now
                 infer_times.clear(); draw_times.clear(); jpeg_times.clear()
 
@@ -371,7 +369,6 @@ def mjpeg_generator():
         last_time = time.time()
         img_count += 1
         if last_time - last_log >= 1.0:
-            log.info(f"[YOLO] MJPEG → navigateur: {img_count} img/s")
             img_count = 0; last_log = last_time
         yield boundary + b"\r\nContent-Type: image/jpeg\r\n\r\n" + jpg + b"\r\n"
 

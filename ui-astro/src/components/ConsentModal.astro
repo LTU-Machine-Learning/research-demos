@@ -1,0 +1,168 @@
+---
+export interface Props { demoId: string; ttlSeconds?: number }
+const { demoId, ttlSeconds = 600 } = Astro.props;
+---
+
+<!-- Overlay ciblé par data-consent -->
+<div class="vh-modal-overlay" data-consent={demoId} hidden>
+  <div class="vh-modal" role="dialog" aria-modal="true" aria-labelledby="vh-consent-title" aria-describedby="vh-consent-desc">
+    <h2 id="vh-consent-title">Avant de lancer la démonstration</h2>
+    <p id="vh-consent-desc">
+      Cette démo peut activer votre <b>caméra</b> et traiter l’image en temps réel (détection, pose, etc.).<br/>
+      Aucune vidéo n’est enregistrée par l’application. <a href="/privacy" target="_blank" rel="noopener">En savoir plus</a>.
+    </p>
+
+    <label class="vh-row">
+      <input type="checkbox" class="vh-check" />
+      <span>Je comprends et <b>j’autorise</b> l’accès à ma caméra pour cette démonstration.</span>
+    </label>
+
+    <div class="vh-actions">
+      <button type="button" class="vh-btn ghost vh-cancel">Annuler</button>
+      <button type="button" class="vh-btn primary vh-accept" disabled>J’accepte</button>
+    </div>
+
+    <label class="vh-row small">
+      <input type="checkbox" class="vh-remember" checked />
+      <span>Mémoriser mon accord pour cette démo</span>
+    </label>
+  </div>
+</div>
+
+<style>
+  /* Respecter [hidden] coûte que coûte */
+  .vh-modal-overlay[hidden]{ display:none !important; }
+
+  .vh-modal-overlay{
+    position:fixed; inset:0; z-index:2000;
+    display:grid; place-items:center;
+    background:rgba(0,0,0,.5); backdrop-filter:blur(4px);
+  }
+  .vh-modal{
+    width:min(560px,92vw); background:#161b27f2; color:var(--text,#e8eefc);
+    border:1px solid var(--border,#1f2a44); border-radius:16px;
+    padding:22px 20px 16px; box-shadow:0 18px 60px #0008;
+  }
+  .vh-modal h2{margin:0 0 8px; font-size:1.35rem}
+  .vh-modal p{margin:0 0 12px; color:#b0bedc}
+  .vh-row{display:flex; align-items:flex-start; gap:10px; margin:12px 0}
+  .vh-row.small{opacity:.9}
+  .vh-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:14px}
+  .vh-btn{padding:10px 16px; border-radius:10px; font-weight:700; border:1px solid transparent; cursor:pointer}
+  .vh-btn.primary{background:#27d07d; color:#081120}
+  .vh-btn.primary:disabled{opacity:.5; cursor:not-allowed}
+  .vh-btn.ghost{background:#122035; color:#cfe7ff; border-color:var(--border,#1f2a44)}
+  @media (prefers-reduced-motion:reduce){.vh-modal-overlay{backdrop-filter:none}}
+</style>
+
+<!-- IMPORTANT: inline + define:vars pour injecter demoId sans currentScript -->
+<script is:inline define:vars={{ demoId, ttlMs : ttlSeconds * 1000 }}>
+(() => {
+  const root     = document.querySelector(`.vh-modal-overlay[data-consent="${demoId}"]`);
+  if (!root) return;
+
+  const check    = root.querySelector('.vh-check');
+  const accept   = root.querySelector('.vh-accept');
+  const cancel   = root.querySelector('.vh-cancel');
+  const remember = root.querySelector('.vh-remember');
+  const key      = `vh_consent_${demoId}`;
+  let lastFocus  = null;
+
+  // --- helpers stockage ---
+  function readConsent() {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj.expiresAt !== 'number') return null;
+      return obj;
+    } catch { return null; }
+  }
+  function writeConsent(msFromNow) {
+    const now = Date.now();
+    const rec = { grantedAt: now, expiresAt: now + msFromNow };
+    localStorage.setItem(key, JSON.stringify(rec));
+    return rec;
+  }
+  function isExpired(rec) {
+    return !rec || Date.now() >= rec.expiresAt;
+  }
+  function clearConsent() {
+    localStorage.removeItem(key);
+  }
+
+  // --- modal open/close ---
+  function open() {
+    lastFocus = document.activeElement;
+    accept.disabled = !check.checked;
+    root.hidden = false;
+    check.focus();
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') { close(); root._resolve?.(false); }
+      if (e.key === 'Tab') {
+        const f = root.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+        const list = Array.from(f).filter(el => !el.disabled && el.offsetParent !== null);
+        if (!list.length) return;
+        const first = list[0], last = list[list.length-1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    root.addEventListener('keydown', onKey);
+    root._onKey = onKey;
+  }
+  function close() {
+    root.hidden = true;
+    if (root._onKey) root.removeEventListener('keydown', root._onKey);
+    lastFocus?.focus();
+  }
+
+  const syncAcceptState = () => { accept.disabled = !check.checked; };
+  check.addEventListener('input', syncAcceptState);
+  check.addEventListener('change', syncAcceptState);
+
+  cancel.addEventListener('click', () => { close(); root._resolve?.(false); });
+
+  accept.addEventListener('click', () => {
+    if (!check.checked) return;
+    if (remember.checked) writeConsent(ttlMs); // ⬅️ consent avec expiration
+    close(); root._resolve?.(true);
+  });
+
+  // --- API publique: demande de consentement à l'instant T ---
+  // S'auto-expire si > ttlMs
+  window[`askConsent_${demoId}`] = () => {
+    const rec = readConsent();
+    if (rec && !isExpired(rec)) return Promise.resolve(true);
+    // s'il est expiré, on efface pour repartir propre
+    if (rec && isExpired(rec)) clearConsent();
+    open();
+    return new Promise((resolve) => { root._resolve = resolve; });
+  };
+
+  // --- (optionnel) expose un reset manuel pour tests ou bouton "Révoquer" ---
+  window[`clearConsent_${demoId}`] = () => clearConsent();
+
+  // --- timer d'expiration "à chaud": nettoie dès que le TTL est atteint ---
+  function scheduleExpiryTick() {
+    const rec = readConsent();
+    if (!rec) return; // rien à faire
+    const remaining = Math.max(0, rec.expiresAt - Date.now());
+    // programmation fine: quand on atteint l'expiration, on purge
+    setTimeout(() => {
+      const r = readConsent();
+      if (r && isExpired(r)) clearConsent();
+      // si un nouveau consent vient d'être posé, on reprogramme
+      scheduleExpiryTick();
+    }, Math.min(remaining, 2147483647)); // cap pour setTimeout
+  }
+  scheduleExpiryTick();
+
+  // --- (optionnel) "hard check" périodique (fallback si l'onglet a dormi) ---
+  setInterval(() => {
+    const rec = readConsent();
+    if (rec && isExpired(rec)) clearConsent();
+  }, 60_000);
+})();
+</script>

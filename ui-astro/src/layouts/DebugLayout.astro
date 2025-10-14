@@ -1,0 +1,29 @@
+---
+interface Props { title: string; note?: string }
+const { title, note } = Astro.props;
+---
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <link rel="stylesheet" href="/styles/debug.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="title">
+        <div>
+          <h1>{title}</h1>
+          {note && <p class="sub">{note}</p>}
+        </div>
+        <div class="row">
+          <button id="start" class="primary">Start</button>
+          <button id="stop" class="ghost" disabled>Stop</button>
+        </div>
+      </header>
+      <main>
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

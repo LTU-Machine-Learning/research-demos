@@ -1,4 +1,76 @@
+name: vision-hub
+networks:
+  hub:
+    name: vision-hub-net
+    external: true
+
+
 services:
+# --- video capture + encodage H.264 low-latency ---
+  capture:
+    image: jrottenberg/ffmpeg:6.1-ubuntu
+    container_name: vision-hub-capture
+    devices:
+      - "${CAMERA_DEVICE:-/dev/v4l/by-id/usb-webcam_webcam_AN20200825001-video-index0}:/dev/video10"
+    command:
+    - -hide_banner
+    - -loglevel
+    - error
+    - -fflags
+    - +discardcorrupt+nobuffer
+    - -err_detect
+    - ignore_err
+    - -flags
+    - low_delay
+    - -thread_queue_size
+    - "64"
+    - -use_wallclock_as_timestamps
+    - "1"
+    - -f
+    - v4l2
+    - -input_format
+    - "${CAMERA_FORMAT:-mjpeg}"    
+    - -framerate
+    - "${CAMERA_FPS:-30}"
+    - -video_size
+    - "${CAMERA_SIZE:-1280x720}"
+    - -i
+    - /dev/video10
+
+    # --- encodage H.264 sans B-frames + faible latence ---
+    - -c:v
+    - "${CAMERA_OUTPUT:-libx264}"
+    - -pix_fmt
+    - yuv420p
+    - -profile:v
+    - baseline
+    - -tune
+    - zerolatency
+    - -preset
+    - veryfast
+    - -bf
+    - "0"              
+    - -g
+    - "${CAMERA_FPS:-30}"
+    - -keyint_min
+    - "${CAMERA_FPS:-30}"
+    - -x264-params
+    - "bframes=0:scenecut=0:rc-lookahead=0:ref=1"
+
+    - -f
+    - rtsp
+    - -rtsp_transport
+    - udp
+    - -flush_packets
+    - "1"
+    - -max_interleave_delta
+    - "0"
+    - rtsp://mediamtx:8554/cam
+    networks: [hub]
+    restart: unless-stopped
+
+# --- Proxy video (RTSP, RTMP, HLS, WebRTC...) ---
+
   mediamtx:
     image: bluenviron/mediamtx:latest
     container_name: vision-hub-mediamtx
@@ -7,6 +79,10 @@ services:
       - "8889:8889" 
       - "8189:8189/udp" 
     restart: unless-stopped
+    networks: [hub]
+
+# --- Interface web (Astro + React) ---
+
   ui-astro:
     build:
       context: ./ui-astro
@@ -14,22 +90,12 @@ services:
     ports:
       - "4321:4321"
     restart: unless-stopped
-    depends_on: [web, yolo, pose]
+    depends_on: [mediamtx, api, capture]
+    networks: [hub]
 
-  capture:
-    image: jrottenberg/ffmpeg:6.1-ubuntu
-    container_name: vision-hub-capture
-    devices:
-      - "${CAMERA_DEVICE:-/dev/v4l/by-id/usb-webcam_webcam_AN20200825001-video-index0}:/dev/video10"
-    command: >
-      -hide_banner -loglevel warning
-      -fflags nobuffer -flags low_delay -thread_queue_size 64
-      -use_wallclock_as_timestamps 1
-      -f v4l2 -input_format h264 -framerate 30 -video_size 1280x720 -i /dev/video10
-      -c:v copy
-      -f rtsp -rtsp_transport udp -flush_packets 1 -max_interleave_delta 0
-      rtsp://mediamtx:8554/cam
-    restart: unless-stopped
+    
+
+# --- Inference YOLOv8 (via API Ultralytics) Object Decection + Pose Estimation ---
 
   yolo:
     build: ./yolo
@@ -54,15 +120,20 @@ services:
     restart: unless-stopped
     depends_on: [mediamtx, capture]
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/ || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS -L -o /dev/null http://mediamtx:8889/annot/ || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 20s
+    profiles: ["demo"]
+    networks: [hub]
+
 
   pose:
     build: ./pose
     container_name: vision-hub-pose
+    ports:
+      - "5001:5000" # port Flask/webSocket pour les poses
     devices:
       - "nvidia.com/gpu=all"
     environment:
@@ -73,18 +144,54 @@ services:
     - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     - RTSP_URL=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - IMG_SIZE=${IMG_SIZE:-640}
+    - RTSP_URL=rtsp://mediamtx:8554/cam
+    - ANNOT_URL=rtsp://mediamtx:8554/pose_annot
+    - RTSP_TRANSPORT=udp
+    - DRAW_ON_VIDEO=1          # drawing is optional; RTSP publish happens anyway
+    - KP_THR=0.25
+    - MODEL=yolov8n-pose.pt
+    - MTX_HOST=mediamtx        # for /healthz probe only
+    - MTX_RTSP_PORT=8554
     restart: unless-stopped
     depends_on: [mediamtx, capture]
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/ || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS -L -o /dev/null http://mediamtx:8889/pose_annot/ || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 20s
+    profiles: ["demo"]
+    networks: [hub]
 
-  web:
-    build: ./web
-    container_name: vision-hub-web
-    ports: ["8080:8080"]
+
+ # web:
+ #   build: ./web
+ #   container_name: vision-hub-web
+ #   ports: ["8080:8080"]
+ #   restart: unless-stopped
+ #   depends_on: [yolo, pose]
+
+
+# --- API d'orchestration (FastAPI) ---
+
+  api:
+    build: ./API
+    container_name: vision-hub-api
+    ports: ["8090:8090"]
+    environment:
+      - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
+      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+      - IDLE_SECONDS=${IDLE_SECONDS:-120}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - CONSENT_SECRET=${CONSENT_SECRET}
+      - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS}
+      - CONSENT_AUD=${CONSENT_AUD}
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mediamtx
+      - capture
+    networks: [hub]
     restart: unless-stopped
-    depends_on: [yolo, pose]
+

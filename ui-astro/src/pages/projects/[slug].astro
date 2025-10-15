@@ -11,7 +11,7 @@ const { slug } = Astro.params;
 const project = projects.find(p => p.slug === slug);
 if (!project) throw new Error('Project not found');
 
-// this is the demo id your orchestrator expects ("yolo", "pose", …)
+// demo id your orchestrator expects ("yolo", "pose", …)
 const demoId = slug;
 
 const title = `${project.title} – Vision Hub`;
@@ -169,7 +169,7 @@ const isHttpUrl = (u: unknown): u is string =>
       };
 
       const ORCH       = absolutizeHttp(":8090");
-      const ORCH_TOKEN = "dev-token"; // ton token d'API existant
+      const ORCH_TOKEN = "dev-token";
 
       // ---------- Consent storage helpers ----------
       const STORAGE_KEY = (id) => `vh_consent_${id}`;
@@ -192,23 +192,20 @@ const isHttpUrl = (u: unknown): u is string =>
 
       // ---------- Ask modal + fetch token from API ----------
       async function ensureConsent(id) {
-        // 1) déjà un jeton valide ?
         const existing = getConsent(id);
         if (existing) return existing;
 
-        // 2) afficher la modale
         const ask = window[`askConsent_${id}`];
         const ok  = typeof ask === 'function' ? await ask() : true;
         if (!ok) throw new Error("consent denied");
 
-        // 3) demander un jeton côté API (lié à la démo)
         const resp = await fetch(`${ORCH}/consent?demo=${encodeURIComponent(id)}`, {
           method: 'POST'
         });
         if (!resp.ok) {
           throw new Error(`consent error: ${resp.status}`);
         }
-        const data = await resp.json(); // { token, expiresAt }
+        const data = await resp.json(); 
         setConsent(id, data);
         return data;
       }
@@ -216,8 +213,8 @@ const isHttpUrl = (u: unknown): u is string =>
       // ---------- Fetch helpers avec headers ----------
       function apiHeaders(consentToken) {
         return {
-          "X-Consent-Token": consentToken,   // <-- jeton de consentement (expirable)
-          "x-token": ORCH_TOKEN              // <-- ton token d'orchestrateur existant
+          "X-Consent-Token": consentToken,   // consent token (expires)
+          "x-token": ORCH_TOKEN              // existing API token (static)
         };
       }
 
@@ -231,17 +228,14 @@ const isHttpUrl = (u: unknown): u is string =>
         const startURL  = `${ORCH}/demos/${demoId}/start?wait=1&timeout=90`;
 
         try {
-          // s'assurer d'avoir un consent token valide
           const consent = await ensureConsent(demoId);
           const headers = apiHeaders(consent.token);
 
-          // (optionnel) ping status — utile si /status est protégé par consent aussi
           try { await fetch(statusURL, { method: 'GET', headers }); } catch {}
 
           // lancer la démo
           let r = await fetch(startURL, { method: 'POST', headers });
           if (r.status === 401) {
-            // expiré côté API: nettoyer et re-demander
             clearConsent(demoId);
             const fresh = await ensureConsent(demoId);
             r = await fetch(startURL, { method: 'POST', headers: apiHeaders(fresh.token) });
@@ -260,7 +254,7 @@ const isHttpUrl = (u: unknown): u is string =>
         }
       }
 
-      // ---------- Expiration passive : si le TTL passe, on efface le jeton ----------
+      // ---------- passive expiration: if TTL passes, clear the token ----------
       setInterval(() => {
         const c = getConsent(demoId);
         if (!c) return;
@@ -269,7 +263,6 @@ const isHttpUrl = (u: unknown): u is string =>
 
       btn.addEventListener('click', async (e) => {
         e.preventDefault();
-        // on (re)demande le consentement si besoin, puis on démarre
         try {
           const ask = window[`askConsent_${demoId}`];
           const ok  = typeof ask === 'function' ? await ask() : true;

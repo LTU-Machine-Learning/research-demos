@@ -67,9 +67,9 @@ services:
     - "0"
     - rtsp://mediamtx:8554/cam
     networks: [hub]
-    restart: unless-stopped
+    restart: no
 
-# --- Proxy video (RTSP, RTMP, HLS, WebRTC...) ---
+# --- Video proxy (RTSP, RTMP, HLS, WebRTC...) ---
 
   mediamtx:
     image: bluenviron/mediamtx:latest
@@ -79,24 +79,32 @@ services:
       - "8889:8889" 
       - "8189:8189/udp" 
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/8554' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
     networks: [hub]
 
-# --- Interface web (Astro + React) ---
+# --- Web interface (Astro + React) ---
 
   ui-astro:
     build:
       context: ./ui-astro
+      args:
+        - PUBLIC_CONTACT_NAME=${CONTACT_NAME:-Tom Burellier}
+        - PUBLIC_CONTACT_EMAIL=${CONTACT_EMAIL:-tom.burellier@associated.ltu.se}
     container_name: vision-hub-ui-astro
     ports:
       - "4321:4321"
     restart: unless-stopped
-    depends_on: [mediamtx, api, capture]
+    depends_on: [mediamtx, api]
     networks: [hub]
 
     
 
-# --- Inference YOLOv8 (via API Ultralytics) Object Decection + Pose Estimation ---
-
+# --- YOLOv8 Inference (via Ultralytics API) Object Detection + Pose Estimation ---
   yolo:
     build: ./yolo
     container_name: vision-hub-yolo
@@ -133,7 +141,7 @@ services:
     build: ./pose
     container_name: vision-hub-pose
     ports:
-      - "5001:5000" # port Flask/webSocket pour les poses
+      - "5001:5000" # Flask/webSocket port for poses
     devices:
       - "nvidia.com/gpu=all"
     environment:
@@ -150,7 +158,7 @@ services:
     - DRAW_ON_VIDEO=1          # drawing is optional; RTSP publish happens anyway
     - KP_THR=0.25
     - MODEL=yolov8n-pose.pt
-    - MTX_HOST=mediamtx        # for /healthz probe only
+    - MTX_HOST=mediamtx
     - MTX_RTSP_PORT=8554
     restart: unless-stopped
     depends_on: [mediamtx, capture]
@@ -164,16 +172,7 @@ services:
     networks: [hub]
 
 
- # web:
- #   build: ./web
- #   container_name: vision-hub-web
- #   ports: ["8080:8080"]
- #   restart: unless-stopped
- #   depends_on: [yolo, pose]
-
-
-# --- API d'orchestration (FastAPI) ---
-
+# --- Orchestration API (FastAPI) ---
   api:
     build: ./API
     container_name: vision-hub-api
@@ -186,12 +185,17 @@ services:
       - CONSENT_SECRET=${CONSENT_SECRET}
       - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS}
       - CONSENT_AUD=${CONSENT_AUD}
+      - CAPTURE_NAME=vision-hub-capture
+      - CAPTURE_IDLE_GRACE=180        # keep capture up 3 min after last demo
+      - CAPTURE_MIN_DOWN=20           # don’t restart within 20s of stopping
+      - CAPTURE_MIN_UP=60             # keep at least 60s up before stopping
+      - CAPTURE_STARTUP_SETTLE=3      # wait 3s after start to let camera settle
+
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - mediamtx
-      - capture
     networks: [hub]
     restart: unless-stopped
 

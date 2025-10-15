@@ -5,7 +5,7 @@ export interface Props {
 }
 const { title = 'Vision Hub – Welcome', description = 'Real-time AI demos' } = Astro.props;
 
-// Topbar links – tweak as you like
+// Topbar links
 const links = [
   { href: '/',            label: 'Home' },
   { href: '/projects',    label: 'Projects' },
@@ -16,6 +16,10 @@ const links = [
 const pathname = Astro.url.pathname;
 const isActive = (href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+const year = new Date().getFullYear();
+const brand = 'Vision Hub';
+const ltuUrl = 'https://www.ltu.se/';
 ---
 
 <html lang="en">
@@ -39,14 +43,42 @@ const isActive = (href: string) =>
       .spacer { flex:1; }
       .pill { padding:6px 10px; border-radius:999px; font-size:12px; color:#cfe7ff;
         background:#122035; border:1px solid var(--border); }
-      /* Optional page container so content doesn’t hug edges */
       .page { max-width: 1100px; margin: 24px auto; padding: 0 16px 64px; }
-      /* Simple mobile menu (hide links, show burger) */
       .burger{ display:none; background:none; border:none; color:var(--text); font-size:20px; }
       @media (max-width: 800px) { nav{ display:none; } .burger{ display:inline-flex; } }
+
+      /* ===== Footer ===== */
+      .vh-footer{
+        margin-top: 24px;
+        background: #0f1422;
+        border-top: 1px solid #1f2a44;
+        color: #b8c7ea;
+      }
+      .vh-footer .vh-wrap{
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 18px 16px;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .vh-footer .vh-left{ display:flex; flex-direction:column; gap:4px; }
+      .vh-footer .vh-brand{ font-weight:600; color:#e8eefc; }
+      .vh-footer .vh-byline a{ color:#5aa4ff; text-decoration:none; }
+      .vh-footer .vh-byline a:hover{ text-decoration:underline; color:#27d07d; }
+      .vh-footer .vh-right{ display:flex; gap:16px; align-items:center; }
+      .vh-footer .vh-right a{
+        color:#9cb0d8; text-decoration:none; font-weight:600; font-size:.95rem;
+        border:1px solid transparent; padding:6px 10px; border-radius:10px;
+      }
+      .vh-footer .vh-right a:hover{ color:#27d07d; background:#132342; border-color:#1f2a44; }
+      @media (max-width: 640px){
+        .vh-footer .vh-right{ width:100%; justify-content:flex-start; flex-wrap:wrap; gap:10px; }
+      }
     </style>
     <script type="module">
-      // Minimal mobile menu toggle; safe no-op on desktop
       const initMenu = () => {
         const btn = document.querySelector('[data-burger]');
         const nav = document.querySelector('[data-nav]');
@@ -67,20 +99,17 @@ const isActive = (href: string) =>
       addEventListener('DOMContentLoaded', initMenu);
     </script>
     <script>
-      // 1) Swap du background vers la version HD une fois chargée (évite flash)
       const hd = new Image();
       hd.src = "/images/LTU_BG_2.JPG";
       hd.decode ? hd.decode().then(done).catch(()=>hd.onload=done) : (hd.onload = done);
       function done(){ document.body.classList.add('ready'); }
 
-      // 2) Révélations au scroll : ajoute .in sur les éléments .reveal
       const io = new IntersectionObserver((entries)=>{
         for (const e of entries) if (e.isIntersecting) {
           e.target.classList.add('in'); io.unobserve(e.target);
         }
       }, { rootMargin: "0px 0px -10% 0px", threshold: .05 });
 
-      // Marque automatiquement certains blocs
       document.querySelectorAll('.hero, .projects-preview, .proj-card').forEach(el=>{
         el.classList.add('reveal'); io.observe(el);
       });
@@ -108,7 +137,6 @@ const isActive = (href: string) =>
       </div>
     </header>
 
-
     {/* SCÈNE d’arrière-plan (blobs animés) */}
     <div class="scene" aria-hidden="true">
       <div class="blob b1"></div>
@@ -119,5 +147,27 @@ const isActive = (href: string) =>
     <main class="page">
       <slot />
     </main>
+
+    {/* ===== Footer ===== */}
+    <footer class="vh-footer" role="contentinfo">
+      <div class="vh-wrap">
+        <div class="vh-left">
+          <div class="vh-brand">© {year} {brand} — All rights reserved</div>
+          <div class="vh-byline">
+            Developed with <span aria-label="love">❤️</span> by
+            {' '}
+            <a href={ltuUrl} target="_blank" rel="noopener noreferrer">balmine</a>
+            {' '}
+            for Luleå University of Technology
+          </div>
+        </div>
+        <nav class="vh-right" aria-label="Footer">
+          <a href="/privacy">Privacy</a>
+          <a href="/contact">Contact</a>
+          <a href="/projects">Projects</a>
+          <a href={ltuUrl} target="_blank" rel="noopener noreferrer">LTU's website</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

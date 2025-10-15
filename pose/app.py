@@ -34,7 +34,7 @@ try:
 except Exception:
     pass
 
-# GPU diag (so you see *why* it picked CPU)
+# GPU diagnostics
 cuda_ok = False
 cuda_err = None
 try:
@@ -76,7 +76,6 @@ def ws_pose(ws):
     _stats["ws_clients"] = len(_ws_clients)
     log.info(f"[WS] client connected (total={_stats['ws_clients']})")
     try:
-        # keep alive; we don't expect messages
         while True:
             if ws.receive() is None:
                 break
@@ -152,7 +151,6 @@ def grabber():
                     break
                 for f in pkt.decode():
                     img = f.to_ndarray(format="bgr24")
-                    # drop older frames if full
                     try:
                         while True:
                             frame_q.get_nowait()
@@ -215,17 +213,16 @@ class RtspPublisher:
             "-tune", "zerolatency",
             "-preset", "veryfast",
             "-bf", "0",
-            "-g", str(self.fps),            # GOP = 1 sec
+            "-g", str(self.fps),
             "-keyint_min", str(self.fps),
             "-x264-params", "bframes=0:scenecut=0:rc-lookahead=0:ref=1",
 
             # RTSP muxer: prefer low buffering
             "-f", "rtsp",
-            "-rtsp_transport", self.transport,   # "udp" (or "tcp" if your network needs it)
+            "-rtsp_transport", self.transport,
             "-flush_packets", "1",
             "-max_interleave_delta", "0",
 
-            # output URL
             self.url,
         ]
         log.info(f"[PUB] ffmpeg start {W}x{H}@{self.fps} → {self.url} ({self.transport})")
@@ -370,7 +367,7 @@ def inferencer():
 
             _stats["people_last"] = people_count
 
-            # WS send (even if empty; front can smooth)
+            # WS sender
             _broadcast({
                 "ts": int(time.time()*1000),
                 "w": int(w), "h": int(h),
@@ -388,7 +385,7 @@ def inferencer():
                     try: jpeg_q.put_nowait(buf.tobytes())
                     except queue.Full: pass
 
-            # RTSP publish (independent of DRAW_ON_VIDEO to ensure path exists)
+            # RTSP publish
             if publisher:
                 publisher.write(fr)
 

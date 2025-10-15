@@ -1,0 +1,52 @@
+---
+const year = new Date().getFullYear();
+const brand = "Vision Hub";
+const githubUrl = "https://github.com/balmine";
+---
+<footer class="vh-footer" role="contentinfo">
+  <div class="vh-wrap">
+    <div class="vh-left">
+      <div class="vh-brand">© {year} {brand} — All rights reserved</div>
+      <div class="vh-byline">Developed with <span aria-label="love">❤️</span> by <a href={githubUrl} target="_blank" rel="noopener noreferrer">balmine</a></div>
+    </div>
+    <nav class="vh-right" aria-label="Footer">
+      <a href="/privacy">Privacy</a>
+      <a href="/contact">Contact</a>
+      <a href="/projects">Projects</a>
+      <a href={githubUrl} target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .vh-footer{
+    margin-top: 48px;
+    background: #0f1422;
+    border-top: 1px solid #1f2a44;
+    color: #b8c7ea;
+  }
+  .vh-wrap{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 18px 16px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .vh-left{ display:flex; flex-direction:column; gap:4px; }
+  .vh-brand{ font-weight:600; color:#e8eefc; }
+  .vh-byline a{ color:#5aa4ff; text-decoration:none; }
+  .vh-byline a:hover{ text-decoration:underline; color:#27d07d; }
+
+  .vh-right{ display:flex; gap:16px; align-items:center; }
+  .vh-right a{
+    color:#9cb0d8; text-decoration:none; font-weight:600; font-size:.95rem;
+    border:1px solid transparent; padding:6px 10px; border-radius:10px;
+  }
+  .vh-right a:hover{ color:#27d07d; background:#132342; border-color:#1f2a44; }
+  @media (max-width: 640px){
+    .vh-right{ width:100%; justify-content:flex-start; flex-wrap:wrap; gap:10px; }
+  }
+</style>

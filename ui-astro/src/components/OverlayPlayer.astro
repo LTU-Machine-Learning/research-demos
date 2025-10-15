@@ -3,7 +3,7 @@ export interface Props {
   demo: string;
   title?: string;
   note?: string;
-  camEndpoint?: string; // si tu veux override /whep/cam
+  camEndpoint?: string;
   class?: string;
 }
 const { demo, title = 'Live Stream', note = '', camEndpoint, class: klass = '' } = Astro.props;
@@ -12,9 +12,9 @@ const { demo, title = 'Live Stream', note = '', camEndpoint, class: klass = '' }
   <div class="title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
     <h3 style="margin:6px 10px">{title}</h3>
     <div class="row" style="display:flex;gap:10px;align-items:center">
-      <span class="stat">Qualité: <b data-quality>—</b></span>
+      <span class="stat">Quality: <b data-quality>—</b></span>
       <span class="stat">FPS: <b data-fps>—</b></span>
-      <span class="stat">État: <b data-state>—</b></span>
+      <span class="stat">State: <b data-state>—</b></span>
     </div>
   </div>
 
@@ -28,7 +28,6 @@ const { demo, title = 'Live Stream', note = '', camEndpoint, class: klass = '' }
   {note && <p class="sub" style="color:#9fb3d6;margin:8px 0 0 10px">{note}</p>}
 </div>
 
-<!-- Styles (tu peux déplacer ces classes dans app.css si tu préfères) -->
 <style is:global>
   .stack{ position:relative; width:100%; max-width:900px; margin:0 auto; aspect-ratio:16/9; }
   .stack > video, .stack > canvas{
@@ -39,7 +38,6 @@ const { demo, title = 'Live Stream', note = '', camEndpoint, class: klass = '' }
   .stack > canvas{ background:transparent; pointer-events:none; z-index:2; }
 </style>
 
-<!-- Init côté client (consomme /public/scripts/debug-entry.js) -->
 <script type="module">
   import "/scripts/debug-entry.js";
 

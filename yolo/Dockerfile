@@ -6,7 +6,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1
 
-# Runtime libs for OpenCV & PyAV
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip curl \
     ffmpeg \

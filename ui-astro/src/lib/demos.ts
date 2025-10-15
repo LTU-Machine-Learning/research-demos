@@ -18,8 +18,8 @@ export default function demos(slug: string): DemoCfg {
       title: "Demo – YOLO (WebRTC + Canvas)",
       subtitle: "Flux ‘cam’ en WebRTC + overlay Canvas.",
       transport: "whep",
-      cam: ":8889/cam/whep",     // flux vidéo de base (non annoté)
-      ws:  ":5000/ws/dets",      // WS envoie des boxes
+      cam: ":8889/cam/whep",     // base stream
+      ws:  ":5000/ws/dets",      // WS sends detection boxes
       wsKind: "boxes",
       orch: ":8090",
       token: "dev-token",
@@ -29,9 +29,8 @@ export default function demos(slug: string): DemoCfg {
       title: "Demo – YOLO Pose",
       subtitle: "Flux ‘cam’ en WebRTC + squelette via WS.",
       transport: "whep",
-      cam: ":8889/cam/whep",     // même preview vidéo; on dessine le squelette côté front
-      // si tu préfères afficher l’annot serveur : cam: ":8889/annot_pose/whep",
-      ws:  ":5001/ws/pose",      // WS n’envoie que les keypoints
+      cam: ":8889/cam/whep",     // same video feed as above
+      ws:  ":5001/ws/pose",      // WS sends only pose keypoints
       wsKind: "pose",
       orch: ":8090",
       token: "dev-token",

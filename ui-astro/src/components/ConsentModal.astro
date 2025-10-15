@@ -3,34 +3,33 @@ export interface Props { demoId: string; ttlSeconds?: number }
 const { demoId, ttlSeconds = 600 } = Astro.props;
 ---
 
-<!-- Overlay ciblé par data-consent -->
+<!-- Overlay targeted by data-consent -->
 <div class="vh-modal-overlay" data-consent={demoId} hidden>
   <div class="vh-modal" role="dialog" aria-modal="true" aria-labelledby="vh-consent-title" aria-describedby="vh-consent-desc">
-    <h2 id="vh-consent-title">Avant de lancer la démonstration</h2>
+    <h2 id="vh-consent-title">Before starting the demo</h2>
     <p id="vh-consent-desc">
-      Cette démo peut activer votre <b>caméra</b> et traiter l’image en temps réel (détection, pose, etc.).<br/>
-      Aucune vidéo n’est enregistrée par l’application. <a href="/privacy" target="_blank" rel="noopener">En savoir plus</a>.
+      This demo may activate the <b>camera</b> and process the image in real time (detection, pose, etc.).<br/>
+      No video is recorded by the application. <a href="/privacy" target="_blank" rel="noopener">Learn more</a>.
     </p>
 
     <label class="vh-row">
       <input type="checkbox" class="vh-check" />
-      <span>Je comprends et <b>j’autorise</b> l’accès à ma caméra pour cette démonstration.</span>
+      <span>I understand and <b>allow</b> camera access for this demonstration.</span>
     </label>
 
     <div class="vh-actions">
-      <button type="button" class="vh-btn ghost vh-cancel">Annuler</button>
-      <button type="button" class="vh-btn primary vh-accept" disabled>J’accepte</button>
+      <button type="button" class="vh-btn ghost vh-cancel">Cancel</button>
+      <button type="button" class="vh-btn primary vh-accept" disabled>I agree</button>
     </div>
 
     <label class="vh-row small">
       <input type="checkbox" class="vh-remember" checked />
-      <span>Mémoriser mon accord pour cette démo</span>
+      <span>Remember my consent for this demo</span>
     </label>
   </div>
 </div>
 
 <style>
-  /* Respecter [hidden] coûte que coûte */
   .vh-modal-overlay[hidden]{ display:none !important; }
 
   .vh-modal-overlay{
@@ -55,7 +54,6 @@ const { demoId, ttlSeconds = 600 } = Astro.props;
   @media (prefers-reduced-motion:reduce){.vh-modal-overlay{backdrop-filter:none}}
 </style>
 
-<!-- IMPORTANT: inline + define:vars pour injecter demoId sans currentScript -->
 <script is:inline define:vars={{ demoId, ttlMs : ttlSeconds * 1000 }}>
 (() => {
   const root     = document.querySelector(`.vh-modal-overlay[data-consent="${demoId}"]`);
@@ -68,7 +66,7 @@ const { demoId, ttlSeconds = 600 } = Astro.props;
   const key      = `vh_consent_${demoId}`;
   let lastFocus  = null;
 
-  // --- helpers stockage ---
+  // --- storage helpers ---
   function readConsent() {
     try {
       const raw = localStorage.getItem(key);
@@ -126,40 +124,38 @@ const { demoId, ttlSeconds = 600 } = Astro.props;
 
   accept.addEventListener('click', () => {
     if (!check.checked) return;
-    if (remember.checked) writeConsent(ttlMs); // ⬅️ consent avec expiration
+    if (remember.checked) writeConsent(ttlMs); // ⬅️ consent with expiration
     close(); root._resolve?.(true);
   });
 
-  // --- API publique: demande de consentement à l'instant T ---
-  // S'auto-expire si > ttlMs
+  // --- public API: ask for consent right now ---
+  // Auto-expires after ttlMs
   window[`askConsent_${demoId}`] = () => {
     const rec = readConsent();
     if (rec && !isExpired(rec)) return Promise.resolve(true);
-    // s'il est expiré, on efface pour repartir propre
+    // if expired, clean up to restart fresh
     if (rec && isExpired(rec)) clearConsent();
     open();
     return new Promise((resolve) => { root._resolve = resolve; });
   };
 
-  // --- (optionnel) expose un reset manuel pour tests ou bouton "Révoquer" ---
+  // --- (optional) manual reset for tests or a “Revoke” button elsewhere ---
   window[`clearConsent_${demoId}`] = () => clearConsent();
 
-  // --- timer d'expiration "à chaud": nettoie dès que le TTL est atteint ---
+  // --- live expiry tick: purge exactly when TTL is reached ---
   function scheduleExpiryTick() {
     const rec = readConsent();
-    if (!rec) return; // rien à faire
+    if (!rec) return;
     const remaining = Math.max(0, rec.expiresAt - Date.now());
-    // programmation fine: quand on atteint l'expiration, on purge
     setTimeout(() => {
       const r = readConsent();
       if (r && isExpired(r)) clearConsent();
-      // si un nouveau consent vient d'être posé, on reprogramme
       scheduleExpiryTick();
-    }, Math.min(remaining, 2147483647)); // cap pour setTimeout
+    }, Math.min(remaining, 2147483647));
   }
   scheduleExpiryTick();
 
-  // --- (optionnel) "hard check" périodique (fallback si l'onglet a dormi) ---
+  // --- (optional) periodic hard check (in case the tab slept) ---
   setInterval(() => {
     const rec = readConsent();
     if (rec && isExpired(rec)) clearConsent();

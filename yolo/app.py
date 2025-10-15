@@ -3,7 +3,7 @@ import cv2
 import av
 import torch
 from flask import Flask, Response
-from flask_sock import Sock  # <-- NEW
+from flask_sock import Sock
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("YOLO-APP")
@@ -15,7 +15,7 @@ except Exception:
     jpeg_encoder = None
 
 app = Flask(__name__)
-sock = Sock(app)  # <-- NEW
+sock = Sock(app)
 
 from ultralytics import YOLO
 
@@ -30,7 +30,7 @@ MAX_DET       = int(os.environ.get("MAX_DET", "100"))
 DRAW_LABELS   = os.environ.get("DRAW_LABELS", "1") == "1"
 JPEG_QUALITY  = int(os.environ.get("JPEG_QUALITY", "80"))
 FORCE_CPU     = os.environ.get("FORCE_CPU", "0") == "1"
-FPS_OUT       = int(os.environ.get("FPS_OUT", "30"))  # FPS publiés (RTSP & MJPEG)
+FPS_OUT       = int(os.environ.get("FPS_OUT", "30")) 
 
 # ---- Torch / YOLO ----
 torch.backends.cudnn.benchmark = True
@@ -164,7 +164,7 @@ class RtspPublisher:
     def __init__(self, url, fps=30, transport="udp"):
         self.url = url
         self.fps = int(fps)
-        self.transport = transport  # "udp" ou "tcp"
+        self.transport = transport
         self.proc = None
         self.w = None
         self.h = None

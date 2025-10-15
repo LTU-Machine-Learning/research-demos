@@ -32,6 +32,11 @@ See `.env.example` for the full list. Key variables:
 - `JPEG_QUALITY`: JPEG quality for MJPEG stream (e.g. `80`)
 - `FORCE_CPU`: Set to `1` to force CPU usage even if a GPU is available
 - `CONF`, `IOU`, `MAX_DET`: Detection thresholds
+- .....
+
+## Frontend (UX : Astro)
+
+Contact form page : Formspree.io (Account tom.burellier@associated.ltu.se, password ask me)
 
 ## Usage Notes
 - Besides global variables, there's always default ones, these are they I use on my own computer

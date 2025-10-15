@@ -2,7 +2,6 @@
 import SiteLayout from '../layouts/SiteLayout.astro';
 import DebugLayout from '../layouts/DebugLayout.astro';
 import VideoCard from '../components/VideoCard.astro';
-// @ts-ignore  ← ajoute cette ligne
 
 const TITLE = 'Vision Hub - Démos - Debug';
 const NOTE  = 'Aperçu faible latence (WebRTC) – cam & annot + compteur FPS.';
@@ -35,6 +34,5 @@ const NOTE  = 'Aperçu faible latence (WebRTC) – cam & annot + compteur FPS.';
     </div>
   </div>
 
-  <!-- Scripts — ordre important -->
   <script type="module" src="/scripts/debug-entry.js"></script>
 </DebugLayout>

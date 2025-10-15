@@ -1,6 +1,6 @@
 // src/lib/orch.ts
 const ORCH = "http://localhost:8090";
-const TOKEN = "dev-token"; // mirror ORCH_TOKEN; in prod, load from a server-side env
+const TOKEN = "dev-token";
 
 export async function startDemo(id: "yolo" | "pose") {
   const r = await fetch(`${ORCH}/demos/${id}/start`, {

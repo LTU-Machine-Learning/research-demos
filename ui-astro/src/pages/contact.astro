@@ -1,0 +1,163 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+const title = "Contact";
+const description = "Get in touch.";
+---
+
+<SiteLayout {title} {description}>
+  <section class="contact-wrap">
+    <div class="contact-card">
+      <header class="contact-head">
+        <h1>Contact</h1>
+        <p>Send me a message - I’ll reply by email.</p>
+      </header>
+
+      <form id="contactForm" action="https://formspree.io/f/myznbqvj" method="POST" class="contact-form" novalidate>
+
+        <label class="field">
+          <span class="label">Name <b aria-hidden="true">*</b></span>
+          <input name="name" type="text" required autocomplete="name" />
+        </label>
+
+        <label class="field">
+          <span class="label">Email <b aria-hidden="true">*</b></span>
+          <input name="email" type="email" required autocomplete="email" />
+        </label>
+
+        <label class="field field--full">
+          <span class="label">Message <b aria-hidden="true">*</b></span>
+          <textarea name="message" rows="6" required></textarea>
+        </label>
+
+        <input type="text" name="_hp" tabindex="-1" autocomplete="off" class="hp" />
+
+        <input type="hidden" name="_subject" value="New message from website" />
+
+        <label class="consent field--full">
+          <input type="checkbox" name="consent" required />
+          <span>I agree to be contacted about my message.</span>
+        </label>
+
+        <div class="actions field--full">
+          <button id="submitBtn" type="submit" class="btn">
+            <svg id="spinner" class="spinner" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"/>
+              <path d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" fill="currentColor" opacity="0.85"/>
+            </svg>
+            <span>Send message</span>
+          </button>
+          <p id="status" class="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <script is:inline>
+    const form = document.getElementById('contactForm');
+    const status = document.getElementById('status');
+    const btn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      spinner.classList.add('spin');
+      status.textContent = 'Sending…';
+      status.className = 'status';
+
+      try {
+        const data = new FormData(form);
+        const res = await fetch(form.action, { method: 'POST', headers: { 'Accept': 'application/json' }, body: data });
+
+        if (res.ok) {
+          status.textContent = 'Message sent - thanks! I’ll get back to you soon.';
+          status.classList.add('ok');
+          form.reset();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          status.textContent = (err?.errors?.[0]?.message) || 'Failed to send. Try again later.';
+          status.classList.add('err');
+        }
+      } catch {
+        status.textContent = 'Network error. Please try again.';
+        status.classList.add('err');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.remove('spin');
+      }
+    });
+  </script>
+
+  <style>
+    :root { color-scheme: dark; }
+    .contact-wrap { max-width: 48rem; margin: 0 auto; padding: 3rem 1rem; }
+    .contact-card {
+      border-radius: 1rem; border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06); backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      overflow: hidden;
+    }
+    .contact-head { padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .contact-head h1 { margin: 0; font-size: 2rem; font-weight: 700; }
+    .contact-head p { margin: .35rem 0 0; opacity: .85; }
+
+    /* Core grid */
+    .contact-form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .contact-form { grid-template-columns: 1fr 1fr; }
+    }
+    .field { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+    .field--full { grid-column: 1 / -1; }
+    .label { font-size: .95rem; opacity: .9; }
+    .hp { position: absolute; left: -9999px; opacity: 0; }
+
+    /* Inputs */
+    .contact-form input[type="text"],
+    .contact-form input[type="email"],
+    .contact-form textarea {
+      display: block; width: 100%; box-sizing: border-box; appearance: none;
+      padding: .8rem 1rem; border-radius: .75rem;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
+      color: #fff; outline: none;
+    }
+    .contact-form textarea { resize: vertical; min-height: 8rem; }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: rgba(255,255,255,.6); }
+
+    /* Focus */
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      border-color: rgba(56,189,248,.9);
+      box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    }
+
+    /* Consent row */
+    .consent { display: flex; align-items: flex-start; gap: .6rem; font-size: .95rem; }
+    .consent input { margin-top: .25rem; }
+
+    /* Actions */
+    .actions { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: .6rem;
+      border: none; border-radius: .9rem; padding: .8rem 1.1rem;
+      background: rgba(56,189,248,.9); color: #0b1220; font-weight: 600;
+      cursor: pointer; transition: transform .05s ease, filter .2s ease; outline: none;
+    }
+    .btn:disabled { filter: grayscale(.2) opacity(.7); cursor: not-allowed; }
+    .btn:active { transform: translateY(1px); }
+
+    .spinner { width: 1.25rem; height: 1.25rem; display: none; }
+    .spin { display: block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status { min-height: 1.25rem; font-size: .95rem; opacity: .9; }
+    .status.ok { color: #6ee7b7; }   /* emerald-300 */
+    .status.err { color: #fca5a5; }  /* rose-300   */
+  </style>
+</SiteLayout>

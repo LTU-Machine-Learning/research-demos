@@ -2,6 +2,8 @@
 import SiteLayout from '../layouts/SiteLayout.astro';
 const title = "Privacy & Data Protection";
 const description = "How Vision Hub demos handle camera data, consent, and integrity in compliance with EU and Swedish law.";
+const CONTACT_NAME = import.meta.env.PUBLIC_CONTACT_NAME || 'Your Name';
+const CONTACT_EMAIL = import.meta.env.PUBLIC_CONTACT_EMAIL || 'your.email@example.com';
 ---
 
 <SiteLayout {title} {description}>
@@ -29,7 +31,7 @@ const description = "How Vision Hub demos handle camera data, consent, and integ
       The demo processes <b>live video frames</b> from a fixed camera connected to the installation.
       These frames are analyzed instantly in memory to draw overlays (such as boxes or skeletons)
       on a live screen.  
-      <u>No videos, images, or identifying information are ever recorded, saved, or transmitted.</u>
+      <u>No videos, images, or identifying information are ever saved or transmitted.</u>
     </p>
 
     <p>
@@ -100,9 +102,9 @@ const description = "How Vision Hub demos handle camera data, consent, and integ
     </p>
 
     <p>
-      <b>Tom Burellier</b><br/>
+      <b>{CONTACT_NAME}</b><br/>
       Vision Hub Project – Luleå University of Technology<br/>
-      Email: <a href="mailto:tom.burellier@telecom-sudparis.eu">tom.burellier@telecom-sudparis.eu</a>
+      Email: <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>
     </p>
 
     <p style="margin-top:32px;color:#9cb0d8;font-size:0.9rem;">
@@ -110,7 +112,6 @@ const description = "How Vision Hub demos handle camera data, consent, and integ
     </p>
   </div>
 
-  <!-- /src/pages/privacy.astro (inside <SiteLayout>) -->
 <link rel="modulepreload" href="/scripts/consent-widget.js" />
 <script type="module" src="/scripts/consent-widget.js"></script>
 

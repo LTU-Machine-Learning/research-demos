@@ -7,7 +7,6 @@ export async function getStaticPaths() {
   return [
     { params: { slug: 'yolo' } },
     { params: { slug: 'pose' } },
-    // add more demos here…
   ];
 }
 
@@ -20,12 +19,9 @@ const description = cfg.subtitle ?? '';
 ---
 
 <SiteLayout {title} {description}>
-  <!-- Consent modal mounted here; viewer.js will call window["askConsent_<demoId>"] when needed -->
+  
   <ConsentModal demoId={cfg.demoId} ttlSeconds={600} />
 
-  <!-- Tout ce que tu mettras ici va dans <main class="page"> de ton layout -->
-
-  <!-- (Optionnel) Injecte head spécifique via le slot "head" -->
   <Fragment slot="head">
     <link rel="stylesheet" href="/styles/debug.css" />
   </Fragment>
@@ -71,9 +67,6 @@ const description = cfg.subtitle ?? '';
     </div>
   </div>
 
-  <!-- Scripts de ta démo ; la balise <script> fonctionne dans le slot de contenu -->
-  <!-- classmap for labels -->
   <script is:inline src="/scripts/overlay-classmap.js"></script>
-  <!-- unified viewer (old yolo logic + absolute URLs + MJPEG fallback) -->
   <script is:inline type="module" src="/scripts/viewer.js"></script>
 </SiteLayout>

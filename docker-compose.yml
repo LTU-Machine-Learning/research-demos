@@ -110,21 +110,12 @@ services:
     container_name: vision-hub-yolo
     ports:
       - "5000:5000"
-    devices:
-      - "nvidia.com/gpu=all"
     environment:
     - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
-    - NVIDIA_VISIBLE_DEVICES=all
-    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     - IMG_SIZE=${IMG_SIZE:-640}
     - DRAW_LABELS=1
     - MODEL=${MODEL:-yolov8n.pt}
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
     restart: unless-stopped
     depends_on: [mediamtx, capture]
     healthcheck:
@@ -142,14 +133,10 @@ services:
     container_name: vision-hub-pose
     ports:
       - "5001:5000" # Flask/webSocket port for poses
-    devices:
-      - "nvidia.com/gpu=all"
     environment:
     - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
     - MODEL=${MODEL_POSE:-yolov8n-pose.pt}
-    - NVIDIA_VISIBLE_DEVICES=all
-    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     - RTSP_URL=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - IMG_SIZE=${IMG_SIZE:-640}
     - RTSP_URL=rtsp://mediamtx:8554/cam
@@ -170,6 +157,30 @@ services:
       start_period: 20s
     profiles: ["demo"]
     networks: [hub]
+
+
+
+  price-api:
+    build:
+      context: ./price-estimation/api
+    image: vision-hub/price-api:latest
+    container_name: vision-hub-price-api
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Europe/Stockholm
+      - MODEL_DIR=/app/model
+      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+    volumes:
+      - ./price-estimation/model:/app/model:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks: [hub]
+    restart: unless-stopped
 
 
 # --- Orchestration API (FastAPI) ---
@@ -198,4 +209,6 @@ services:
       - mediamtx
     networks: [hub]
     restart: unless-stopped
+
+
 

@@ -67,5 +67,32 @@ export default [
     contributors: ['Chang'],
     repo: 'https://github.com/chang/idk'
 
-  }
+  },
+  {
+  slug: 'price',
+  title: 'House Price Estimation (Sweden / Luleå demo)',
+  description: 'Tabular ML pipeline (LightGBM + FastAPI) that estimates home prices and returns prediction intervals. Trained on a Sweden-wide dataset; easily swappable to Luleå/Norrbotten when data access is granted.',
+  image: '/images/price-demo.jpg',
+  author: {
+    name: 'Tom Burellier',
+    url: 'https://github.com/balmine',
+    role: 'Maintainer'
+  },
+  upstreams: [
+    { name: 'LightGBM',        url: 'https://lightgbm.readthedocs.io/',            role: 'Gradient boosting regressor' },
+    { name: 'scikit-learn',    url: 'https://scikit-learn.org/',                   role: 'Pipelines, preprocessing, CV' },
+    { name: 'Pandas + NumPy',  url: 'https://pandas.pydata.org/',                  role: 'Data wrangling' },
+    { name: 'FastAPI',         url: 'https://fastapi.tiangolo.com/',               role: 'Serving /predict' },
+    { name: 'Uvicorn',         url: 'https://www.uvicorn.org/',                    role: 'ASGI server' },
+    { name: 'Docker',          url: 'https://www.docker.com/',                     role: 'Containerized deployment' },
+    { name: 'Astro (UI)',      url: 'https://astro.build/',                        role: 'Frontend integration' }
+  ],
+  history: [
+    { date: '2025-10-14', event: 'Initial data ingestion (Kaggle SwedenHousingPrices.csv)' },
+    { date: '2025-10-15', event: 'Baseline LightGBM pipeline + quantile bands; model artifacts exported' },
+    { date: '2025-10-16', event: 'FastAPI container online; /predict returns price and PI (P10–P90)' }
+  ],
+  video: '/videos/price-demo.mp4',
+  demoUrl: '/demo/price'
+}
 ];

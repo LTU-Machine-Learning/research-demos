@@ -66,7 +66,13 @@ DEMOS: Dict[str, Dict] = {
         "needs": ["vision-hub-mediamtx", "vision-hub-capture"],
     },
     "chang": {},
-    "appartment-prices": { "needs": [] },
+    "price": {
+    "container": "vision-hub-price-api",
+    "url": "http://localhost:8080/healthz",             # from the browser
+    "health_url": "http://vision-hub-price-api:8080/healthz",  # inside Docker network
+    "needs": []
+},
+
 }
 
 CORE = ["vision-hub-mediamtx"]

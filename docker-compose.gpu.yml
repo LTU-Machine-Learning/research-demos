@@ -1,0 +1,24 @@
+services:
+  yolo:
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+              - capabilities: [gpu]
+    devices:
+      - "nvidia.com/gpu=all"
+
+  pose:
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+              - capabilities: [gpu]
+    devices:
+      - "nvidia.com/gpu=all"

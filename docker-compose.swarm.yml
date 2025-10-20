@@ -1,0 +1,173 @@
+version: "3.8"
+name: vision-hub
+
+networks:
+  hub:
+    name: vision-hub-net
+    external: true
+
+services:
+  capture:
+    image: jrottenberg/ffmpeg:6.1-ubuntu
+    networks: [hub]
+    # map the webcam
+    devices:
+      - "${CAMERA_DEVICE:-/dev/v4l/by-id/usb-webcam_webcam_AN20200825001-video-index0}:/dev/video10"
+    command:
+      - -hide_banner
+      - -loglevel; error
+      - -fflags; +discardcorrupt+nobuffer
+      - -err_detect; ignore_err
+      - -flags; low_delay
+      - -thread_queue_size; "64"
+      - -use_wallclock_as_timestamps; "1"
+      - -f; v4l2
+      - -input_format; ${CAMERA_FORMAT:-mjpeg}
+      - -framerate; ${CAMERA_FPS:-30}
+      - -video_size; ${CAMERA_SIZE:-1280x720}
+      - -i; /dev/video10
+      - -c:v; ${CAMERA_OUTPUT:-libx264}
+      - -pix_fmt; yuv420p
+      - -profile:v; baseline
+      - -tune; zerolatency
+      - -preset; veryfast
+      - -bf; "0"
+      - -g; ${CAMERA_FPS:-30}
+      - -keyint_min; ${CAMERA_FPS:-30}
+      - -x264-params; bframes=0:scenecut=0:rc-lookahead=0:ref=1
+      - -f; rtsp
+      - -rtsp_transport; udp
+      - -flush_packets; "1"
+      - -max_interleave_delta; "0"
+      - rtsp://mediamtx:8554/cam
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == frontend
+      restart_policy: { condition: any }
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    networks: [hub]
+    # publish the same ports on the frontend node
+    ports:
+      - target: 8554; published: 8554; protocol: tcp; mode: host
+      - target: 8889; published: 8889; protocol: tcp; mode: host
+      - target: 8189; published: 8189; protocol: udp; mode: host
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == frontend
+      restart_policy: { condition: any }
+
+  ui-astro:
+    build:
+      context: ./ui-astro
+      args:
+        - PUBLIC_CONTACT_NAME=${CONTACT_NAME:-Tom Burellier}
+        - PUBLIC_CONTACT_EMAIL=${CONTACT_EMAIL:-tom.burellier@associated.ltu.se}
+    networks: [hub]
+    ports:
+      - target: 4321; published: 4321; protocol: tcp; mode: host
+    depends_on: [mediamtx, api]
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == frontend
+      restart_policy: { condition: any }
+
+  yolo:
+    build: ./yolo
+    networks: [hub]
+    environment:
+      - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
+      - IMG_SIZE=${IMG_SIZE:-640}
+      - DRAW_LABELS=1
+      - MODEL=${MODEL:-yolov8n.pt}
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - target: 5000; published: 5000; protocol: tcp; mode: host
+    depends_on: [mediamtx, capture]
+    deploy:
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+      restart_policy: { condition: any }
+
+  pose:
+    build: ./pose
+    networks: [hub]
+    environment:
+      - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
+      - MODEL=${MODEL_POSE:-yolov8n-pose.pt}
+      - IMG_SIZE=${IMG_SIZE:-640}
+      - ANNOT_URL=rtsp://mediamtx:8554/pose_annot
+      - RTSP_TRANSPORT=udp
+      - DRAW_ON_VIDEO=1
+      - KP_THR=0.25
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - target: 5000; published: 5001; protocol: tcp; mode: host
+    depends_on: [mediamtx, capture]
+    deploy:
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+      restart_policy: { condition: any }
+
+  price-api:
+    image: vision-hub/price-api:latest
+    networks: [hub]
+    environment:
+      - TZ=Europe/Stockholm
+      - MODEL_DIR=/app/model
+      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+    ports:
+      - target: 8080; published: 8080; protocol: tcp; mode: host
+    volumes:
+      - /srv/vision-hub/model:/app/model:ro   # create on frontend node
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == frontend
+      restart_policy: { condition: any }
+
+  api:
+    build: ./API
+    networks: [hub]
+    environment:
+      - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
+      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+      - IDLE_SECONDS=${IDLE_SECONDS:-120}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - CONSENT_SECRET=${CONSENT_SECRET}
+      - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS}
+      - CONSENT_AUD=${CONSENT_AUD}
+      - CAPTURE_NAME=vision-hub-capture
+      - CAPTURE_IDLE_GRACE=180
+      - CAPTURE_MIN_DOWN=20
+      - CAPTURE_MIN_UP=60
+      - CAPTURE_STARTUP_SETTLE=3
+    ports:
+      - target: 8090; published: 8090; protocol: tcp; mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on: [mediamtx]
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == frontend
+          - node.role == manager    # keep API on the manager so DOCKER_HOST works
+      restart_policy: { condition: any }

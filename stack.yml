@@ -61,6 +61,7 @@ services:
         mode: host
     volumes:
       - /srv/vision-hub/model:/app/model:ro
+    # (healthcheck retiré côté mediamtx; celui-ci garde le sien si endpoint /healthz existe)
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
       interval: 10s
@@ -111,8 +112,9 @@ services:
     image: yolo:local
     networks: [hub]
     environment:
-      - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
-      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
+      # IMPORTANT: RTSP en TCP et URL stable (par défaut via DNS overlay)
+      - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
       - IMG_SIZE=${IMG_SIZE:-640}
       - DRAW_LABELS=1
       - MODEL=${MODEL:-yolov8n.pt}
@@ -123,12 +125,7 @@ services:
         published: 5000
         protocol: tcp
         mode: host
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -L -o /dev/null http://mediamtx:8889/annot/ || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 20s
+    # healthcheck supprimé (les endpoints /annot n'existent pas côté MediaMTX)
     deploy:
       placement:
         constraints:
@@ -141,12 +138,12 @@ services:
     image: pose:local
     networks: [hub]
     environment:
-      - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
-      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
+      - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
       - MODEL=${MODEL_POSE:-yolov8n-pose.pt}
       - IMG_SIZE=${IMG_SIZE:-640}
       - ANNOT_URL=rtsp://mediamtx:8554/pose_annot
-      - RTSP_TRANSPORT=udp
+      - RTSP_TRANSPORT=tcp
       - DRAW_ON_VIDEO=1
       - KP_THR=0.25
       - NVIDIA_VISIBLE_DEVICES=all
@@ -156,12 +153,7 @@ services:
         published: 5001
         protocol: tcp
         mode: host
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -L -o /dev/null http://mediamtx:8889/pose_annot/ || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 20s
+    # healthcheck supprimé (même raison)
     deploy:
       placement:
         constraints:

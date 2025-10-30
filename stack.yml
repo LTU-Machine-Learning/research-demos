@@ -23,12 +23,6 @@ services:
         published: 8189
         protocol: udp
         mode: host
-    healthcheck:
-      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/8554' || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 5s
     deploy:
       placement:
         constraints:

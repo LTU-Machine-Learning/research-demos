@@ -37,7 +37,7 @@
         <div><input type="text" id="vh_annot" placeholder="/annot/whep"></div>
 
         <label>WS boxes (YOLO)</label>
-        <div><input type="text" id="vh_ws" placeholder="ws(s)://host:5000/ws/dets">
+        <div><input type="text" id="vh_ws" placeholder="ws(s)://192.168.10.1:5000/ws/dets">
           <div class="vh-help">Doit être <b>wss://</b> si la page est servie en https.</div>
         </div>
 

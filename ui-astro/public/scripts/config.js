@@ -8,7 +8,7 @@
     basePort: 8889,
     camPath: '/cam/whep',
     annotPath: '/annot/whep',
-    wsUrl: `${wsProto}://${location.hostname}:5000/ws/dets`,
+    wsUrl: `${wsProto}://192.168.10.1:5000/ws/dets`,
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
   };
 

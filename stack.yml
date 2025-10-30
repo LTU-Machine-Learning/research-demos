@@ -113,10 +113,10 @@ services:
     networks: [hub]
     environment:
       # IMPORTANT: RTSP en TCP et URL stable (par défaut via DNS overlay)
-      - CAMERA=${CAMERA_URL:-rtsp://192.168.10.2:8554/c am}
+      - CAMERA=${CAMERA_URL:-rtsp://192.168.10.2:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
       - IMG_SIZE=${IMG_SIZE:-640}
-      - DRAW_LABELS=1docker service logs --tail 80 vision-hub_pose
+      - DRAW_LABELS=1
       - MODEL=${MODEL:-yolov8n.pt}
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility

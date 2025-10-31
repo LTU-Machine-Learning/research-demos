@@ -14,15 +14,12 @@ services:
       - target: 8554
         published: 8554
         protocol: tcp
-        mode: host
       - target: 8889
         published: 8889
         protocol: tcp
-        mode: host
       - target: 8189
         published: 8189
         protocol: udp
-        mode: host
     deploy:
       placement:
         constraints:
@@ -38,7 +35,6 @@ services:
       - target: 4321
         published: 4321
         protocol: tcp
-        mode: host
     # depends_on is ignored by Swarm; startup order handled by retries
     deploy:
       placement:
@@ -63,7 +59,6 @@ services:
       - target: 5000
         published: 5000
         protocol: tcp
-        mode: host
     deploy:
       placement:
         constraints:
@@ -95,7 +90,6 @@ services:
       - target: 5000
         published: 5001
         protocol: tcp
-        mode: host
     deploy:
       placement:
         constraints:
@@ -119,7 +113,6 @@ services:
       - target: 8080
         published: 8080
         protocol: tcp
-        mode: host
     volumes:
       - /srv/vision-hub/model:/app/model:ro
     deploy:
@@ -150,7 +143,6 @@ services:
       - target: 8090
         published: 8090
         protocol: tcp
-        mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:

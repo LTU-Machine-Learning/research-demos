@@ -82,17 +82,23 @@ services:
   # --- Orchestration API (frontend manager) ---
   api:
     image: api:local
-    networks:
-      hub:
-        aliases:
-          - api
+    networks: [hub]
     environment:
+      # --- Auth / API ---
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+
+      # --- CORS ---
+      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321
+
+      # --- Swarm awareness ---
+      - STACK_NAME=vision-hub
+      - PUBLIC_BASE=http://192.168.10.2:4321
+
+      # --- Idle / Capture config ---
       - IDLE_SECONDS=${IDLE_SECONDS:-120}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - CONSENT_SECRET=${CONSENT_SECRET}
-      - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS}
+      - CONSENT_TTL_SECONDS=${CONSENT_TTL_SE ONDS}
       - CONSENT_AUD=${CONSENT_AUD}
       - CAPTURE_NAME=vision-hub-capture
       - CAPTURE_IDLE_GRACE=180

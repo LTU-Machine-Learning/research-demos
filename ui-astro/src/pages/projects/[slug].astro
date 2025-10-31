@@ -168,7 +168,7 @@ const isHttpUrl = (u: unknown): u is string =>
         return `${location.protocol}//${location.hostname}/${endpoint.replace(/^\/+/, "")}`;
       };
 
-      const ORCH       = absolutizeHttp(":8090");
+      import { orchFetch, toOrchURL } from '../../lib/orch';
       const ORCH_TOKEN = "dev-token";
 
       // ---------- Consent storage helpers ----------
@@ -199,7 +199,7 @@ const isHttpUrl = (u: unknown): u is string =>
         const ok  = typeof ask === 'function' ? await ask() : true;
         if (!ok) throw new Error("consent denied");
 
-        const resp = await fetch(`${ORCH}/consent?demo=${encodeURIComponent(id)}`, {
+        + const resp = await orchFetch(`/consent?demo=${encodeURIComponent(id)}`, {
           method: 'POST'
         });
         if (!resp.ok) {
@@ -224,8 +224,8 @@ const isHttpUrl = (u: unknown): u is string =>
         loader.style.display = 'inline';
         loader.textContent = 'starting…';
 
-        const statusURL = `${ORCH}/demos/${demoId}/status`;
-        const startURL  = `${ORCH}/demos/${demoId}/start?wait=1&timeout=90`;
+        const statusURL = toOrchURL(`/demos/${demoId}/status`);
+        const startURL  = toOrchURL(`/demos/${demoId}/start?wait=1&timeout=90`);
 
         try {
           const consent = await ensureConsent(demoId);

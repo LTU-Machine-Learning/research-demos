@@ -98,7 +98,7 @@ services:
       - IDLE_SECONDS=${IDLE_SECONDS:-120}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - CONSENT_SECRET=${CONSENT_SECRET}
-      - CONSENT_TTL_SECONDS=${CONSENT_TTL_SE ONDS}
+      - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS:-600}
       - CONSENT_AUD=${CONSENT_AUD}
       - CAPTURE_NAME=vision-hub-capture
       - CAPTURE_IDLE_GRACE=180
@@ -119,6 +119,7 @@ services:
       restart_policy:
         condition: any
 
+
   # --- YOLO (GPU node) ---
   yolo:
     image: yolo:local
@@ -128,7 +129,7 @@ services:
           - yolo
     environment:
       # IMPORTANT: RTSP en TCP et URL stable (par défaut via DNS overlay)
-      - CAMERA=${CAMERA_URL:-rtsp://192.168.10.2:8554/cam}
+      - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
       - IMG_SIZE=${IMG_SIZE:-640}
       - DRAW_LABELS=1
@@ -155,7 +156,7 @@ services:
         aliases:
           - pose
     environment:
-      - CAMERA=${CAMERA_URL:-rtsp://192.168.10.2:8554/cam}
+      - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
       - MODEL=${MODEL_POSE:-yolov8n-pose.pt}
       - IMG_SIZE=${IMG_SIZE:-640}

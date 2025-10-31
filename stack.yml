@@ -9,7 +9,10 @@ services:
   # --- Media proxy (frontend) ---
   mediamtx:
     image: bluenviron/mediamtx:latest
-    networks: [hub]
+    networks:
+      hub:
+        aliases:
+          - mediamtx
     ports:
       - target: 8554
         published: 8554
@@ -30,7 +33,10 @@ services:
   # --- Web UI (frontend) ---
   ui-astro:
     image: ui-astro:local
-    networks: [hub]
+    networks:
+      hub:
+        aliases:
+          - ui-astro
     ports:
       - target: 4321
         published: 4321
@@ -45,7 +51,10 @@ services:
   # --- Price API (frontend) ---
   price-api:
     image: vision-hub/price-api:latest
-    networks: [hub]
+    networks:
+      hub:
+        aliases:
+          - price-api
     environment:
       - TZ=Europe/Stockholm
       - MODEL_DIR=/app/model
@@ -73,7 +82,10 @@ services:
   # --- Orchestration API (frontend manager) ---
   api:
     image: api:local
-    networks: [hub]
+    networks:
+      hub:
+        aliases:
+          - api
     environment:
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
       - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
@@ -104,7 +116,10 @@ services:
   # --- YOLO (GPU node) ---
   yolo:
     image: yolo:local
-    networks: [hub]
+    networks:
+      hub:
+        aliases:
+          - yolo
     environment:
       # IMPORTANT: RTSP en TCP et URL stable (par défaut via DNS overlay)
       - CAMERA=${CAMERA_URL:-rtsp://192.168.10.2:8554/cam}
@@ -129,7 +144,10 @@ services:
   # --- Pose (GPU node) ---
   pose:
     image: pose:local
-    networks: [hub]
+    networks:
+      hub:
+        aliases:
+          - pose
     environment:
       - CAMERA=${CAMERA_URL:-rtsp://192.168.10.2:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000

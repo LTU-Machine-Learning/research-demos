@@ -59,13 +59,13 @@ DEMOS: Dict[str, Dict] = {
     "yolo": {
         "service": "yolo",                        # <-- short service name
         "url": None,                              # browser URL built later
-        "health_url": "http://yolo:5000/health",  # internal (overlay)
+        "health_url": "http://yolo:5000/",  # internal (overlay)
         "needs": ["mediamtx", "capture"],       # mediamtx service + local capture
     },
     "pose": {
         "service": "pose",
         "url": None,
-        "health_url": "http://pose:5000/health",
+        "health_url": "http://pose:5000/",
         "needs": ["mediamtx", "capture"],
     },
     "chang": {},

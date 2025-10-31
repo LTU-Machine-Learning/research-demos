@@ -40,8 +40,11 @@ CAPTURE_MIN_UP          = int(os.getenv("CAPTURE_MIN_UP", "60"))        # min up
 CAPTURE_STARTUP_SETTLE  = int(os.getenv("CAPTURE_STARTUP_SETTLE", "3")) # settle after start
 
 # CORS
-ALLOW_ORIGINS     = [o for o in os.getenv("ALLOW_ORIGINS", "http://localhost:4321").split(",") if o]
-ALLOW_ORIGIN_REGEX= os.getenv("ALLOW_ORIGIN_REGEX", "")
+ALLOW_ORIGINS = [o for o in os.getenv(
+    "ALLOW_ORIGINS",
+    "http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321"
+).split(",") if o]
+ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", "")
 
 # Idle watchdog for demos (seconds without heartbeat → stop)
 IDLE_SECONDS = int(os.getenv("IDLE_SECONDS", "300"))
@@ -54,30 +57,53 @@ ADOPT_MODE       = os.getenv("ADOPT_MODE", "now").lower()  # "now" | "started_at
 # ================== DEMO REGISTRY ==================
 DEMOS: Dict[str, Dict] = {
     "yolo": {
-        "container": "vision-hub-yolo",
-        "url": "http://localhost:5000/",
-        "health_url": "http://vision-hub-yolo:5000/",
-        "needs": ["vision-hub-mediamtx", "vision-hub-capture"],
+        "service": "yolo",                        # <-- short service name
+        "url": None,                              # browser URL built later
+        "health_url": "http://yolo:5000/health",  # internal (overlay)
+        "needs": ["mediamtx", "capture"],       # mediamtx service + local capture
     },
     "pose": {
-        "container": "vision-hub-pose",
-        "url": "http://localhost:5000/",
-        "health_url": "http://vision-hub-pose:5000/",
-        "needs": ["vision-hub-mediamtx", "vision-hub-capture"],
+        "service": "pose",
+        "url": None,
+        "health_url": "http://pose:5000/health",
+        "needs": ["mediamtx", "capture"],
     },
     "chang": {},
     "price": {
-    "container": "vision-hub-price-api",
-    "url": "http://localhost:8080/healthz",             # from the browser
-    "health_url": "http://vision-hub-price-api:8080/healthz",  # inside Docker network
-    "needs": []
+        "service": "price-api",
+        "url": None,
+        "health_url": "http://price-api:8080/healthz",
+        "needs": [],
 },
 
 }
 
-CORE = ["vision-hub-mediamtx"]
+CORE = ["mediamtx"]
 
 SHARED_DEPS: list[str] = []
+
+LOCAL_ONLY= {"capture"}
+
+
+def _start_need(name: str):
+    if name in LOCAL_ONLY:
+        _ensure_capture_started(block=True)
+    else:
+        # name is a service short name (e.g., "mediamtx")
+        _service_scale(name, 1)
+
+def _stop_need(name: str):
+    if name in LOCAL_ONLY:
+        _maybe_stop_capture_now()
+    else:
+        _service_scale(name, 0)
+
+PUBLIC_BASE = os.getenv("PUBLIC_BASE", "http://192.168.10.2")  # your frontend host
+def _browser_url_for(demo_id: str) -> Optional[str]:
+    if demo_id == "yolo": return f"{PUBLIC_BASE}:5000/"
+    if demo_id == "pose": return f"{PUBLIC_BASE}:5001/"
+    if demo_id == "price": return f"{PUBLIC_BASE}:8080/healthz"
+    return None
 
 # ================== FASTAPI / CORS ==================
 app = FastAPI(title="Vision Hub Orchestrator")
@@ -203,6 +229,45 @@ def _wait_http_200(url: str, timeout_s: int = 20, step: float = 0.5) -> bool:
         time.sleep(step)
     return False
 
+# ================== SERVICE HELPERS ==================
+
+STACK = os.getenv("STACK_NAME", "vision-hub")  # your stack name
+
+def _svc_name(short: str) -> str:
+    # Swarm’s actual service name in `docker stack deploy` is "<stack>_<service>"
+    return f"{STACK}_{short}"
+
+def _service_get(short: str):
+    name = _svc_name(short)
+    try:
+        return client.services.get(name)
+    except Exception:
+        return None
+
+def _service_scale(short: str, replicas: int) -> bool:
+    svc = _service_get(short)
+    if not svc:
+        return False
+    svc.scale(replicas)      # <- simpler & reliable
+    return True
+
+def _service_replicas(short: str) -> int:
+    svc = _service_get(short)
+    if not svc:
+        return 0
+    mode = svc.attrs["Spec"].get("Mode", {})
+    reps = mode.get("Replicated", {}).get("Replicas")
+    return int(reps or 0)
+
+def _service_running(short: str) -> bool:
+    # consider running if at least one task desired RUNNING and actual RUNNING
+    svc = _service_get(short)
+    if not svc:
+        return False
+    tasks = svc.tasks(filters={"desired-state": "running"})
+    return any(t.get("Status", {}).get("State") == "running" for t in tasks)
+
+
 # ================== CAPTURE (HYSTERESIS) ==================
 def _capture_running() -> bool:
     st = _status(CAPTURE_NAME)
@@ -264,16 +329,14 @@ def _schedule_capture_stop_if_idle():
         _capture_stop_timer.start()
 
 # ================== ADOPT / IDLE MONITOR ==================
-def _demo_has_container(demo_id: str) -> bool:
+def _demo_has_service(demo_id: str) -> bool:
     spec = DEMOS.get(demo_id) or {}
-    return "container" in spec and bool(spec["container"])
+    return bool(spec.get("service"))
 
 def _demo_running(demo_id: str) -> bool:
-    if not _demo_has_container(demo_id):
-        return False
-    spec = DEMOS[demo_id]
-    st = _status(spec["container"])
-    return bool(st.get("exists") and st.get("running"))
+    spec = DEMOS.get(demo_id) or {}
+    svc = spec.get("service")
+    return _service_running(svc) if svc else False
 
 def _any_demo_running() -> bool:
     return any(_demo_running(did) for did in DEMOS.keys())
@@ -281,10 +344,10 @@ def _any_demo_running() -> bool:
 def _reconcile_shared_deps():
     any_running = _any_demo_running()
     for dep in SHARED_DEPS:
-        if any_running:
-            _start_if_exists(dep)
+        if dep in LOCAL_ONLY:
+            (_ensure_capture_started if any_running else _maybe_stop_capture_now)()
         else:
-            _stop_if_exists(dep)
+            _service_scale(dep, 1 if any_running else 0)
 
 def _ensure_idle_monitor():
     global _stop_thread_started
@@ -302,12 +365,8 @@ def _ensure_idle_monitor():
                     if not last:
                         continue
                     if now - last > IDLE_SECONDS:
-                        if _demo_has_container(demo_id):
-                            log.info(
-                                "idle-monitor: stopping demo=%s container=%s (idle for %.1fs)",
-                                demo_id, spec["container"], now - last
-                            )
-                            _stop_if_exists(spec["container"])
+                        if _demo_has_service(demo_id):
+                            _service_scale(DEMOS[demo_id]["service"], 0)
                         _last_beat.pop(demo_id, None)
                         _active_demos.discard(demo_id)
                         _schedule_capture_stop_if_idle()
@@ -332,37 +391,14 @@ def _parse_started_at(s: str) -> Optional[float]:
 
 def _adopt_running_demos():
     if not ADOPT_ON_STARTUP:
-        log.info("adopt: disabled (ADOPT_ON_STARTUP=0)")
+        log.info("adopt: disabled")
         return
-
-    log.info("adopt: scanning demos after %ss (mode=%s)", ADOPT_DELAY_SEC, ADOPT_MODE)
     time.sleep(ADOPT_DELAY_SEC)
-
     for demo_id, spec in DEMOS.items():
-        if not _demo_has_container(demo_id):
-            log.info("adopt: %s -> no container key (skipped)", demo_id)
-            continue
-        c = _get(spec["container"])
-        if not c:
-            log.info("adopt: %s -> container not found (%s)", demo_id, spec["container"])
-            continue
-        c.reload()
-        if c.status != "running":
-            log.info("adopt: %s -> container not running", demo_id)
-            continue
-        if demo_id in _last_beat:
-            log.info("adopt: %s -> already has last_beat=%d", demo_id, int(_last_beat[demo_id]))
-            continue
-
-        if ADOPT_MODE == "started_at":
-            started_at_raw = c.attrs.get("State", {}).get("StartedAt", "")
-            t0 = _parse_started_at(started_at_raw) or time.time()
-        else:
-            t0 = time.time()
-
-        _last_beat[demo_id] = t0
-        log.info("adopt: demo=%s container=%s last_beat=%d", demo_id, spec["container"], int(t0))
-
+        svc = spec.get("service")
+        if svc and _service_running(svc):
+            _last_beat[demo_id] = time.time() if ADOPT_MODE == "now" else time.time()
+            log.info("adopt: demo=%s running", demo_id)
     _ensure_idle_monitor()
     _reconcile_shared_deps()
 
@@ -390,34 +426,29 @@ def list_demos(x_token: Optional[str] = Header(None), token: Optional[str] = Que
     _auth(x_token, token)
     out = []
     for demo_id, spec in DEMOS.items():
-        url = spec.get("url")
         exists = running = False
-        if _demo_has_container(demo_id):
-            st = _status(spec["container"])
-            exists = bool(st["exists"])
-            running = bool(st["running"])
-        out.append(DemoStatus(id=demo_id, exists=exists, running=running, url=url))
+        if _demo_has_service(demo_id):
+            exists = _service_get(spec["service"]) is not None
+            running = _service_running(spec["service"])
+        out.append(DemoStatus(id=demo_id, exists=exists, running=running,
+                              url=_browser_url_for(demo_id)))
     return out
 
 @app.get("/demos/{demo_id}/status")
 def demo_status(demo_id: str, x_token: Optional[str] = Header(None), token: Optional[str] = Query(None)):
     _auth(x_token, token)
-    spec = DEMOS.get(demo_id)
+    spec = DEMOS.get(demo_id) or {}
     if not spec:
         raise HTTPException(404, "Unknown demo id")
-
     exists = running = False
-    if _demo_has_container(demo_id):
-        st = _status(spec["container"])
-        exists = bool(st["exists"])
-        running = bool(st["running"])
+    if _demo_has_service(demo_id):
+        exists = _service_get(spec["service"]) is not None
+        running = _service_running(spec["service"])
         if running and demo_id not in _last_beat:
             _last_beat[demo_id] = time.time()
-            log.info("adopt(status): demo=%s container=%s last_beat=%d",
-                     demo_id, spec["container"], int(_last_beat[demo_id]))
+            log.info("adopt(status): demo=%s last_beat=%d", demo_id, int(_last_beat[demo_id]))
             _ensure_idle_monitor()
-
-    return DemoStatus(id=demo_id, exists=exists, running=running, url=spec.get("url"))
+    return DemoStatus(id=demo_id, exists=exists, running=running, url=_browser_url_for(demo_id))
 
 @app.post("/demos/{demo_id}/start")
 def start_demo(
@@ -432,53 +463,32 @@ def start_demo(
     if not spec:
         raise HTTPException(404, "Unknown demo id")
 
-    # Start core + declared deps
+    # Start core + deps
     for core in CORE:
-        _start_if_exists(core)
+        _start_need(core)
     for dep in spec.get("needs", []):
-        _start_if_exists(dep)
+        _start_need(dep)
 
-    # Mark demo active and ensure capture (if needed)
     _active_demos.add(demo_id)
-    if CAPTURE_NAME in spec.get("needs", []):
-        _ensure_capture_started(block=True)
 
-    # If no container (non-container demo), just mark running logically
-    if not _demo_has_container(demo_id):
-        _last_beat[demo_id] = time.time()
-        _ensure_idle_monitor()
-        _reconcile_shared_deps()
-        return {"ok": True, "id": demo_id, "url": spec.get("url")}
-
-    # Start the demo container
-    c = _get(spec["container"])
-    if not c:
-        raise HTTPException(
-            404,
-            f"Container '{spec['container']}' not found. Create it once with `docker compose --profile demo up -d`."
-        )
-    c.reload()
-    if c.status != "running":
-        log.info("start: starting demo=%s container=%s", demo_id, spec["container"])
-        c.start()
-
-    # Wait strategy
-    if wait:
-        has_health = bool(c.attrs.get("Config", {}).get("Health"))
-        ok = _wait_healthy_by_docker(spec["container"], timeout_s=timeout) if has_health \
-             else _wait_http_200(spec.get("health_url") or spec.get("url",""), timeout_s=timeout)
+    # Start the service (or mark active if non-service)
+    if _demo_has_service(demo_id):
+        if not _service_scale(spec["service"], 1):
+            raise HTTPException(404, f"Service '{_svc_name(spec['service'])}' not found.")
+        # wait for health by HTTP via internal DNS (VIP)
+        ok = _wait_http_200(spec.get("health_url") or "", timeout_s=timeout) if wait else True
         if not ok:
             _active_demos.discard(demo_id)
             _schedule_capture_stop_if_idle()
             raise HTTPException(504, f"Demo did not become healthy within {timeout}s")
+    else:
+        # non-service demo, just mark active
+        pass
 
-    # Idle tracking
     _last_beat[demo_id] = time.time()
-    log.info("start: demo=%s last_beat=%d", demo_id, int(_last_beat[demo_id]))
     _ensure_idle_monitor()
     _reconcile_shared_deps()
-
-    return {"ok": True, "id": demo_id, "url": spec.get("url")}
+    return {"ok": True, "id": demo_id, "url": _browser_url_for(demo_id)}
 
 @app.post("/demos/{demo_id}/stop")
 def stop_demo(
@@ -489,31 +499,16 @@ def stop_demo(
 ):
     _auth(x_token, token)
     _require_consent_for(demo_id, x_consent_token)
-
     spec = DEMOS.get(demo_id)
     if not spec:
         raise HTTPException(404, "Unknown demo id")
-
-    if _demo_has_container(demo_id):
-        _stop_if_exists(spec["container"])
-
+    if _demo_has_service(demo_id):
+        _service_scale(spec["service"], 0)
     _last_beat.pop(demo_id, None)
     _active_demos.discard(demo_id)
-    log.info("stop: demo=%s", demo_id)
-
     _schedule_capture_stop_if_idle()
     _reconcile_shared_deps()
     return {"ok": True, "id": demo_id}
-
-@app.post("/demos/{demo_id}/heartbeat")
-def heartbeat(demo_id: str, x_token: Optional[str] = Header(None), token: Optional[str] = Query(None)):
-    _auth(x_token, token)
-    if demo_id not in DEMOS:
-        raise HTTPException(404, "Unknown demo id")
-    _last_beat[demo_id] = time.time()
-    log.info("heartbeat: demo=%s last_beat=%d", demo_id, int(_last_beat[demo_id]))
-    _ensure_idle_monitor()
-    return {"ok": True}
 
 @app.post("/consent")
 def create_consent_token(demo: str = Query("*")):

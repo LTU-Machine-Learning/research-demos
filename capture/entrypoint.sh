@@ -11,6 +11,8 @@ exec ffmpeg \
   -flags low_delay \
   -thread_queue_size 64 \
   -use_wallclock_as_timestamps 1 \
+  -analyzeduration 0 \            # ← ajout
+  -probesize 32k \                # ← ajout
   -f v4l2 \
   -input_format "${CAMERA_FORMAT}" \
   -framerate "${CAMERA_FPS}" \
@@ -26,7 +28,8 @@ exec ffmpeg \
   -keyint_min "${CAMERA_FPS}" \
   -x264-params "bframes=0:scenecut=0:rc-lookahead=0:ref=1" \
   -f rtsp \
-  -rtsp_transport udp \
+  -rtsp_transport "${RTSP_TRANSPORT:-tcp}" \
   -flush_packets 1 \
   -max_interleave_delta 0 \
   "${RTSP_URL}"
+

@@ -58,7 +58,7 @@ services:
     environment:
       - TZ=Europe/Stockholm
       - MODEL_DIR=/app/model
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321,http://ui-astro:4321,http://api:8090
     ports:
       - target: 8080
         published: 8080

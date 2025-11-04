@@ -80,9 +80,8 @@ DEMOS: Dict[str, Dict] = {
 
 CORE = ["mediamtx"]
 
-SHARED_DEPS: list[str] = []
-
-LOCAL_ONLY= {"capture"}
+SHARED_DEPS: list[str] = ["capture"]  # capture suit l'activité des démos
+LOCAL_ONLY = set()                    # capture n'est plus local-only
 
 
 def _start_need(name: str):

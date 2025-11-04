@@ -42,7 +42,7 @@ CAPTURE_STARTUP_SETTLE  = int(os.getenv("CAPTURE_STARTUP_SETTLE", "3")) # settle
 # CORS
 ALLOW_ORIGINS = [o for o in os.getenv(
     "ALLOW_ORIGINS",
-    "http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321"
+    "http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321,http://192.168.10.1:4321"
 ).split(",") if o]
 ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", "")
 
@@ -514,6 +514,22 @@ def stop_demo(
 def create_consent_token(demo: str = Query("*")):
     """Returns {token, expiresAt} for the given demo (or '*' for global)."""
     return _issue_consent_token(demo_id=demo)
+
+@app.post("/demos/{demo_id}/heartbeat")
+def heartbeat_demo(
+    demo_id: str,
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    _auth(x_token, token)
+    if demo_id not in DEMOS:
+        raise HTTPException(404, "Unknown demo id")
+
+    _last_beat[demo_id] = time.time()
+    _active_demos.add(demo_id)
+    _ensure_idle_monitor()
+    _reconcile_shared_deps()
+    return {"ok": True, "id": demo_id, "lastBeat": int(_last_beat[demo_id])}
 
 # ================== STARTUP ==================
 @app.on_event("startup")

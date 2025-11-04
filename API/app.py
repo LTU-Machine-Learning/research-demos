@@ -80,8 +80,8 @@ DEMOS: Dict[str, Dict] = {
 
 CORE = ["mediamtx"]
 
-SHARED_DEPS: list[str] = ["capture"]  # capture suit l'activité des démos
-LOCAL_ONLY = set()                    # capture n'est plus local-only
+SHARED_DEPS = []           # (ou vide)
+LOCAL_ONLY  = {"capture"}  # <= capture est relancé/arrêté par l’API en local
 
 
 def _start_need(name: str):

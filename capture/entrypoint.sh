@@ -51,4 +51,9 @@ args=(
 # Log propre des args
 printf '[capture] ffmpeg args: '; printf '%q ' "${args[@]}"; echo
 
-exec ffmpeg "${args[@]}"
+# Boucle de reconnexion (si mediamtx redémarre, on repart)
+while true; do
+  ffmpeg "${args[@]}" || true
+  echo "[capture] ffmpeg exited ($?), retrying in 3s..."
+  sleep 3
+done

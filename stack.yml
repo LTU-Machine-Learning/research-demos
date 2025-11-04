@@ -6,35 +6,7 @@ networks:
     external: true
 
 services:
- # --- Capture (webcam -> RTSP) ---
-  capture:
-    image: vision-hub-capture:latest      # ← ton image buildée depuis le Dockerfile + entrypoint.sh
-    networks:
-      hub: {}
-    environment:
-      # mêmes variables/valeurs par défaut que dans ton Dockerfile/entrypoint
-      - CAMERA_DEVICE=/dev/video10
-      - CAMERA_FORMAT=mjpeg
-      - CAMERA_FPS=30
-      - CAMERA_SIZE=1280x720
-      - CAMERA_OUTPUT=libx264
-      - RTSP_TRANSPORT=tcp               # ← fiable; mets udp si tu préfères
-      - RTSP_URL=rtsp://mediamtx:8554/cam
-    # bind-mount du device du nœud hôte vers /dev/video10 dans le conteneur
-    volumes:
-      - type: bind
-        source: /dev/video0
-        target: /dev/video10
-        read_only: true
-    # (optionnel) ajouter le groupe video si nécessaire
-    # user: "0:video"
-    deploy:
-      placement:
-        constraints:
-          - node.labels.role == frontend   # même nœud que mediamtx (et la cam)
-          # - node.hostname == B           # (optionnel) verrouiller sur ce nœud
-      restart_policy:
-        condition: any
+  # --- Capture (webcam -> RTSP) non supporté par docker stack ---
 
   # --- Media proxy (frontend) ---
   mediamtx:

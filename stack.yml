@@ -6,15 +6,12 @@ networks:
     external: true
 
 services:
-  # --- Capture (webcam -> RTSP) non supporté par docker stack ---
-
   # --- Media proxy (frontend) ---
   mediamtx:
     image: bluenviron/mediamtx:latest
     networks:
       hub:
-        aliases:
-          - mediamtx
+        aliases: [mediamtx]
     ports:
       - target: 8554
         published: 8554
@@ -31,14 +28,18 @@ services:
           - node.labels.role == frontend
       restart_policy:
         condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+    init: true
 
   # --- Web UI (frontend) ---
   ui-astro:
     image: ui-astro:local
     networks:
       hub:
-        aliases:
-          - ui-astro
+        aliases: [ui-astro]
     ports:
       - target: 4321
         published: 4321
@@ -49,14 +50,18 @@ services:
           - node.labels.role == frontend
       restart_policy:
         condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+    init: true
 
   # --- Price API (frontend) ---
   price-api:
     image: vision-hub/price-api:latest
     networks:
       hub:
-        aliases:
-          - price-api
+        aliases: [price-api]
     environment:
       - TZ=Europe/Stockholm
       - MODEL_DIR=/app/model
@@ -67,7 +72,6 @@ services:
         protocol: tcp
     volumes:
       - /srv/vision-hub/model:/app/model:ro
-    # (healthcheck retiré côté mediamtx; celui-ci garde le sien si endpoint /healthz existe)
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
       interval: 10s
@@ -80,23 +84,28 @@ services:
           - node.labels.role == frontend
       restart_policy:
         condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+    init: true
 
   # --- Orchestration API (frontend manager) ---
   api:
     image: api:local
     networks: [hub]
     environment:
-      # --- Auth / API ---
+      # Auth / API
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
 
-      # --- CORS ---
+      # CORS
       - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321
 
-      # --- Swarm awareness ---
+      # Swarm awareness
       - STACK_NAME=vision-hub
       - PUBLIC_BASE=http://192.168.10.2:4321
 
-      # --- Idle / Capture config ---
+      # Idle / Capture config
       - IDLE_SECONDS=${IDLE_SECONDS:-120}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - CONSENT_SECRET=${CONSENT_SECRET}
@@ -120,43 +129,55 @@ services:
           - node.role == manager
       restart_policy:
         condition: any
-
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+    init: true
 
   # --- YOLO (GPU node) ---
   yolo:
     image: yolo:local
     networks:
       hub:
-        aliases:
-          - yolo
+        aliases: [yolo]
     environment:
-      # IMPORTANT: RTSP en TCP et URL stable (par défaut via DNS overlay)
       - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
       - IMG_SIZE=${IMG_SIZE:-640}
       - DRAW_LABELS=1
       - MODEL=${MODEL:-yolov8n.pt}
+      # Ces variables sont optionnelles si 'devices' est déclaré, on les laisse
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - target: 5000
         published: 5000
         protocol: tcp
-    # healthcheck supprimé (les endpoints /annot n'existent pas côté MediaMTX)
     deploy:
       placement:
         constraints:
           - node.labels.gpu == true
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
       restart_policy:
         condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+    init: true
 
   # --- Pose (GPU node) ---
   pose:
     image: pose:local
     networks:
       hub:
-        aliases:
-          - pose
+        aliases: [pose]
     environment:
       - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
@@ -172,10 +193,20 @@ services:
       - target: 5000
         published: 5001
         protocol: tcp
-    # healthcheck supprimé (même raison)
     deploy:
       placement:
         constraints:
           - node.labels.gpu == true
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
       restart_policy:
         condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+    init: true

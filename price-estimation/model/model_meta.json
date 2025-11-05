@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-11-04T16:20:26.315572Z",
+  "rows": 4491,
+  "year_min": 2019,
+  "year_max": 2025,
+  "mae_cv_median_sek": 147266.83500909593,
+  "features_used": [
+    "living_area",
+    "plot_area",
+    "rooms",
+    "month",
+    "year",
+    "lat",
+    "lon",
+    "construction_year",
+    "floor",
+    "rent",
+    "list_price",
+    "housing_type",
+    "municipality",
+    "address"
+  ],
+  "addr_txt_enabled": true
+}

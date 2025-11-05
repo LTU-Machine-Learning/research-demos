@@ -7,34 +7,64 @@ networks:
 
 services:
   mediamtx:
-  image: bluenviron/mediamtx:latest
-  volumes:
-    - /srv/vision-hub/mediamtx.yml:/mediamtx.yml:ro
-  networks: { hub: { aliases: [mediamtx] } }
-  ports:
-    - target: 8554  published: 8554  protocol: tcp   # RTSP
-    - target: 8889  published: 8889  protocol: tcp   # WHEP/WHIP HTTP
-    - target: 8189  published: 8189  protocol: udp   # RTSP/UDP
-    # WebRTC ICE UDP range (must match webrtcICEPortRange)
-    - target: 10000 published: 10000 protocol: udp
-    - target: 10001 published: 10001 protocol: udp
-    - target: 10002 published: 10002 protocol: udp
-    - target: 10003 published: 10003 protocol: udp
-    - target: 10004 published: 10004 protocol: udp
-    - target: 10005 published: 10005 protocol: udp
-    - target: 10006 published: 10006 protocol: udp
-    - target: 10007 published: 10007 protocol: udp
-    - target: 10008 published: 10008 protocol: udp
-    - target: 10009 published: 10009 protocol: udp
-  deploy:
-    placement:
-      constraints:
-        - node.labels.role == frontend
-  init: true
+    image: bluenviron/mediamtx:latest
+    volumes:
+      - /srv/vision-hub/mediamtx.yml:/mediamtx.yml:ro
+    networks:
+      hub:
+        aliases: [mediamtx]
+    ports:
+      - target: 8554
+        published: 8554
+        protocol: tcp
+      - target: 8889
+        published: 8889
+        protocol: tcp
+      - target: 8189
+        published: 8189
+        protocol: udp
+      # WebRTC ICE UDP range (doit correspondre à webrtcICEPortRange)
+      - target: 10000
+        published: 10000
+        protocol: udp
+      - target: 10001
+        published: 10001
+        protocol: udp
+      - target: 10002
+        published: 10002
+        protocol: udp
+      - target: 10003
+        published: 10003
+        protocol: udp
+      - target: 10004
+        published: 10004
+        protocol: udp
+      - target: 10005
+        published: 10005
+        protocol: udp
+      - target: 10006
+        published: 10006
+        protocol: udp
+      - target: 10007
+        published: 10007
+        protocol: udp
+      - target: 10008
+        published: 10008
+        protocol: udp
+      - target: 10009
+        published: 10009
+        protocol: udp
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == frontend
+    init: true
 
   ui-astro:
     image: ui-astro:local
-    networks: { hub: { aliases: [ui-astro] } }
+    networks:
+      hub:
+        aliases: [ui-astro]
     ports:
       - target: 4321
         published: 4321
@@ -43,13 +73,19 @@ services:
       placement:
         constraints:
           - node.labels.role == frontend
-      restart_policy: { condition: any }
-      update_config: { order: start-first, parallelism: 1, delay: 2s }
+      restart_policy:
+        condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
     init: true
 
   price-api:
     image: vision-hub/price-api:latest
-    networks: { hub: { aliases: [price-api] } }
+    networks:
+      hub:
+        aliases: [price-api]
     environment:
       - TZ=Europe/Stockholm
       - MODEL_DIR=/app/model
@@ -70,8 +106,12 @@ services:
       placement:
         constraints:
           - node.labels.role == frontend
-      restart_policy: { condition: any }
-      update_config: { order: start-first, parallelism: 1, delay: 2s }
+      restart_policy:
+        condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
     init: true
 
   api:
@@ -103,13 +143,19 @@ services:
         constraints:
           - node.labels.role == frontend
           - node.role == manager
-      restart_policy: { condition: any }
-      update_config: { order: start-first, parallelism: 1, delay: 2s }
+      restart_policy:
+        condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
     init: true
 
   yolo:
     image: yolo:local
-    networks: { hub: { aliases: [yolo] } }
+    networks:
+      hub:
+        aliases: [yolo]
     environment:
       - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
@@ -126,13 +172,19 @@ services:
       placement:
         constraints:
           - node.labels.gpu == true
-      restart_policy: { condition: any }
-      update_config: { order: start-first, parallelism: 1, delay: 2s }
+      restart_policy:
+        condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
     init: true
 
   pose:
     image: pose:local
-    networks: { hub: { aliases: [pose] } }
+    networks:
+      hub:
+        aliases: [pose]
     environment:
       - CAMERA=${CAMERA_URL:-rtsp://mediamtx:8554/cam}
       - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
@@ -152,6 +204,10 @@ services:
       placement:
         constraints:
           - node.labels.gpu == true
-      restart_policy: { condition: any }
-      update_config: { order: start-first, parallelism: 1, delay: 2s }
+      restart_policy:
+        condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
     init: true

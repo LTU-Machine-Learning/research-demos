@@ -1,0 +1,18 @@
+logLevel: info
+
+# Enable WebRTC/WHEP
+webrtc: yes
+
+# Advertise a reachable address (LAN IP of the host that runs mediamtx)
+webrtcICEHostNAT1To1IPs: ["192.168.10.2"]
+
+# Fix a small UDP port range for ICE (open/publish these)
+webrtcICEPortRange: 10000-10009
+
+# Add STUN so server-reflexive candidates appear (helps across subnets/NAT)
+webrtcICEServers:
+  - urls:
+      - stun:stun.l.google.com:19302
+
+# (Optional) avoid TCP fallback for lower latency
+# webrtcDisableTCP: yes

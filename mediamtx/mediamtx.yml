@@ -16,3 +16,5 @@ webrtcICEServers:
 
 # (Optional) avoid TCP fallback for lower latency
 # webrtcDisableTCP: yes
+
+httpAllowOrigin: "*"

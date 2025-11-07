@@ -1,28 +1,33 @@
-# /srv/vision-hub/mediamtx.yml
 logLevel: debug
 
+# RTSP
 rtsp: yes
 rtspAddress: :8554
 
+# WebRTC / WHEP
 webrtc: yes
 webrtcAddress: :8889
 webrtcEncryption: no
 webrtcAllowOrigin: "*"
 
-# 1.15.3 = un seul port UDP pour ICE/SRTP
+# SRTP / ICE (v1.15.3 uses ONE UDP port)
 webrtcLocalUDPAddress: :8189
-webrtcLocalTCPAddress: ""   # pas de fallback TCP (on le remettra si besoin)
+# (TEMP for diagnostics) allow TCP fallback too:
+webrtcLocalTCPAddress: :8189   # remove/empty once stable
 
-# N’annonce QUE les bonnes interfaces (évite 172.x docker)
+# Candidate advertisement
 webrtcIPsFromInterfaces: yes
 webrtcIPsFromInterfacesList:
-  - "eno1"    # 192.168.10.2 (LAN)
-  # - "wlp1s0" # (désactive-le pour l’instant → évite candidats 130.240.x)
-# Pas d'additionalHosts au début, on simplifie
-# webrtcAdditionalHosts: []
+  - "eno1"
+  - "wlp1s0"
+webrtcAdditionalHosts:
+  - "192.168.10.2"
+  - "130.240.94.235"
 
-# STUN: on va d’abord TESTER SANS (voir A/B plus bas). Pour l’instant: pas de STUN.
-# webrtcICEServers2: []
+# STUN
+webrtcICEServers:
+  - urls:
+    - stun:stun.l.google.com:19302
 
 paths:
   all:

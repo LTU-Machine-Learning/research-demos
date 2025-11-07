@@ -1,34 +1,35 @@
 logLevel: debug
 
-# RTSP
+# --- RTSP ---
 rtsp: yes
 rtspAddress: :8554
 
-# WebRTC / WHEP
+# --- WebRTC / WHEP ---
 webrtc: yes
 webrtcAddress: :8889
 webrtcEncryption: no
-webrtcAllowOrigin: "*"
+webrtcAllowOrigin: "*"     # CORS for the browser UI
 
 # SRTP / ICE (v1.15.3 uses ONE UDP port)
 webrtcLocalUDPAddress: :8189
-# (TEMP for diagnostics) allow TCP fallback too:
-webrtcLocalTCPAddress: :8189   # remove/empty once stable
+# (TEMP while debugging; comment out once stable)
+# webrtcLocalTCPAddress: :8189
 
-# Candidate advertisement
+# Advertise only the right NICs (avoid docker bridges/127.0.0.1)
 webrtcIPsFromInterfaces: yes
 webrtcIPsFromInterfacesList:
-  - "eno1"
-  - "wlp1s0"
+  - "eno1"            # 192.168.10.2
+  - "wlp1s0"          # 130.240.94.235 (optionnel)
 webrtcAdditionalHosts:
   - "192.168.10.2"
   - "130.240.94.235"
 
-# STUN
+# STUN servers (must be plain strings in 1.15.3)
 webrtcICEServers:
-  - urls:
-    - stun:stun.l.google.com:19302
+  - stun:stun.l.google.com:19302
+  # - stun:stun.cloudflare.com:3478
 
+# Accept any publisher path
 paths:
   all:
     source: publisher

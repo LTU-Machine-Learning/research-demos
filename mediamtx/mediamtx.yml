@@ -28,3 +28,12 @@ webrtcICEServers2:
 hls: yes
 hlsAddress: :8888
 hlsAllowOrigin: "*"
+
+paths:
+  # Autorise explicitement la voie "cam" à être publiée (ton ffmpeg pousse dessus)
+  cam:
+    source: publisher
+
+  # Ou, si tu veux autoriser n'importe quel nom de voie :
+  all:
+    source: publisher

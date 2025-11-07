@@ -14,14 +14,19 @@ services:
       hub:
         aliases: [mediamtx]
     ports:
-      - target: 8554  published: 8554  protocol: tcp   # RTSP
-      - target: 8889  published: 8889  protocol: tcp   # WHEP/WHIP HTTP
-      - target: 8189  published: 8189  protocol: udp   # WebRTC (UN SEUL port en 1.15.3)
+      - target: 8554
+        published: 8554
+        protocol: tcp   # RTSP
+      - target: 8889
+        published: 8889
+        protocol: tcp   # WHEP/WHIP HTTP
+      - target: 8189
+        published: 8189
+        protocol: udp   # WebRTC (UN SEUL port en 1.15.3)
     deploy:
       placement:
         constraints:
           - node.labels.role == frontend
-
     init: true
 
   ui-astro:

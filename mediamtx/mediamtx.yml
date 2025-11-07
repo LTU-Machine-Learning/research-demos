@@ -1,39 +1,36 @@
 logLevel: info
 
-# --- WebRTC (v1.15.3) ---
+# --- RTSP ---
+rtsp: yes
+rtspAddress: :8554
+
+# --- WebRTC / WHEP ---
 webrtc: yes
 webrtcAddress: :8889
 webrtcEncryption: no
-
-# CORS pour les requêtes WHEP depuis ton UI
 webrtcAllowOrigin: "*"
 
-# Écoute locale pour le trafic média WebRTC (UDP DTLS/SRTP)
-# (En 1.15.3 c’est UN port, pas une plage)
+# SRTP / ICE UDP (un seul port en 1.15.3)
 webrtcLocalUDPAddress: :8189
-webrtcLocalTCPAddress: ""   # désactivé (évite le fallback TCP)
+webrtcLocalTCPAddress: ""   # pas de fallback TCP
 
-# Annonce d’IP atteignable (remplace les anciens NAT1To1)
+# N’annonce que les interfaces LAN + Wi-Fi (évite les ponts Docker)
 webrtcIPsFromInterfaces: yes
-webrtcIPsFromInterfacesList: []  # ou garde vide
-webrtcAdditionalHosts:
-  - "192.168.10.2"               # IP LAN du nœud qui héberge MediaMTX
+webrtcIPsFromInterfacesList:
+  - "eno1"       # ton LAN 192.168.10.2
+  - "wlp1s0"     # ton Wi-Fi public (optionnel mais utile si accès depuis Internet)
 
-# STUN (format v1.15.3 = webrtcICEServers2)
+# Pour forcer l’IP publique visible depuis l’extérieur (optionnel)
+webrtcAdditionalHosts:
+  - "192.168.10.2"
+  - "130.240.94.235"
+
+# Serveur STUN public pour aider les pairs à se découvrir
 webrtcICEServers2:
   - url: stun:stun.l.google.com:19302
     clientOnly: false
 
-# Optionnel: HLS si tu veux tester facilement
-hls: yes
-hlsAddress: :8888
-hlsAllowOrigin: "*"
-
+# --- Définition des flux acceptés ---
 paths:
-  # Autorise explicitement la voie "cam" à être publiée (ton ffmpeg pousse dessus)
-  cam:
-    source: publisher
-
-  # Ou, si tu veux autoriser n'importe quel nom de voie :
   all:
     source: publisher

@@ -1,20 +1,30 @@
 logLevel: info
 
-# Enable WebRTC/WHEP
+# --- WebRTC (v1.15.3) ---
 webrtc: yes
+webrtcAddress: :8889
+webrtcEncryption: no
 
-# Advertise a reachable address (LAN IP of the host that runs mediamtx)
-webrtcICEHostNAT1To1IPs: ["192.168.10.2"]
+# CORS pour les requêtes WHEP depuis ton UI
+webrtcAllowOrigin: "*"
 
-# Fix a small UDP port range for ICE (open/publish these)
-webrtcICEPortRange: 10000-10009
+# Écoute locale pour le trafic média WebRTC (UDP DTLS/SRTP)
+# (En 1.15.3 c’est UN port, pas une plage)
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: ""   # désactivé (évite le fallback TCP)
 
-# Add STUN so server-reflexive candidates appear (helps across subnets/NAT)
-webrtcICEServers:
-  - urls:
-      - stun:stun.l.google.com:19302
+# Annonce d’IP atteignable (remplace les anciens NAT1To1)
+webrtcIPsFromInterfaces: yes
+webrtcIPsFromInterfacesList: []  # ou garde vide
+webrtcAdditionalHosts:
+  - "192.168.10.2"               # IP LAN du nœud qui héberge MediaMTX
 
-# (Optional) avoid TCP fallback for lower latency
-# webrtcDisableTCP: yes
+# STUN (format v1.15.3 = webrtcICEServers2)
+webrtcICEServers2:
+  - url: stun:stun.l.google.com:19302
+    clientOnly: false
 
-httpAllowOrigin: "*"
+# Optionnel: HLS si tu veux tester facilement
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: "*"

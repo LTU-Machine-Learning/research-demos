@@ -14,50 +14,14 @@ services:
       hub:
         aliases: [mediamtx]
     ports:
-      - target: 8554
-        published: 8554
-        protocol: tcp
-      - target: 8889
-        published: 8889
-        protocol: tcp
-      - target: 8189
-        published: 8189
-        protocol: udp
-      # WebRTC ICE UDP range (doit correspondre à webrtcICEPortRange)
-      - target: 10000
-        published: 10000
-        protocol: udp
-      - target: 10001
-        published: 10001
-        protocol: udp
-      - target: 10002
-        published: 10002
-        protocol: udp
-      - target: 10003
-        published: 10003
-        protocol: udp
-      - target: 10004
-        published: 10004
-        protocol: udp
-      - target: 10005
-        published: 10005
-        protocol: udp
-      - target: 10006
-        published: 10006
-        protocol: udp
-      - target: 10007
-        published: 10007
-        protocol: udp
-      - target: 10008
-        published: 10008
-        protocol: udp
-      - target: 10009
-        published: 10009
-        protocol: udp
+      - target: 8554  published: 8554  protocol: tcp   # RTSP
+      - target: 8889  published: 8889  protocol: tcp   # WHEP/WHIP HTTP
+      - target: 8189  published: 8189  protocol: udp   # WebRTC (UN SEUL port en 1.15.3)
     deploy:
       placement:
         constraints:
           - node.labels.role == frontend
+
     init: true
 
   ui-astro:

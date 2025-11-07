@@ -1,36 +1,29 @@
-logLevel: info
+# /srv/vision-hub/mediamtx.yml
+logLevel: debug
 
-# --- RTSP ---
 rtsp: yes
 rtspAddress: :8554
 
-# --- WebRTC / WHEP ---
 webrtc: yes
 webrtcAddress: :8889
 webrtcEncryption: no
 webrtcAllowOrigin: "*"
 
-# SRTP / ICE UDP (un seul port en 1.15.3)
+# 1.15.3 = un seul port UDP pour ICE/SRTP
 webrtcLocalUDPAddress: :8189
-webrtcLocalTCPAddress: ""   # pas de fallback TCP
+webrtcLocalTCPAddress: ""   # pas de fallback TCP (on le remettra si besoin)
 
-# N’annonce que les interfaces LAN + Wi-Fi (évite les ponts Docker)
+# N’annonce QUE les bonnes interfaces (évite 172.x docker)
 webrtcIPsFromInterfaces: yes
 webrtcIPsFromInterfacesList:
-  - "eno1"       # ton LAN 192.168.10.2
-  - "wlp1s0"     # ton Wi-Fi public (optionnel mais utile si accès depuis Internet)
+  - "eno1"    # 192.168.10.2 (LAN)
+  # - "wlp1s0" # (désactive-le pour l’instant → évite candidats 130.240.x)
+# Pas d'additionalHosts au début, on simplifie
+# webrtcAdditionalHosts: []
 
-# Pour forcer l’IP publique visible depuis l’extérieur (optionnel)
-webrtcAdditionalHosts:
-  - "192.168.10.2"
-  - "130.240.94.235"
+# STUN: on va d’abord TESTER SANS (voir A/B plus bas). Pour l’instant: pas de STUN.
+# webrtcICEServers2: []
 
-# Serveur STUN public pour aider les pairs à se découvrir
-webrtcICEServers2:
-  - url: stun:stun.l.google.com:19302
-    clientOnly: false
-
-# --- Définition des flux acceptés ---
 paths:
   all:
     source: publisher

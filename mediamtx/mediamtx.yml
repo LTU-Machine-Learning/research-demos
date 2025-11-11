@@ -36,9 +36,7 @@ paths:
 
 
 # --- RTSP ---
-rtsp: yes
 rtspTransports: [udp, tcp]
-rtspAddress: :8554
 
 # UDP sockets used for RTSP/UDP publishing/reading
 rtpAddress: :8000

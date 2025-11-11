@@ -10,7 +10,7 @@ CAMERA_SIZE="${CAMERA_SIZE:-1280x720}"
 CAMERA_OUTPUT="${CAMERA_OUTPUT:-libx264}"
 
 # ➜ UDP par défaut (changer en "tcp" si besoin)
-RTSP_TRANSPORT="${RTSP_TRANSPORT:-tcp}"
+RTSP_TRANSPORT="${RTSP_TRANSPORT:-udp}"
 
 # H.264 “low latency”
 X264_PARAMS="${X264_PARAMS:-bframes=0:scenecut=0:rc-lookahead=0:ref=1}"

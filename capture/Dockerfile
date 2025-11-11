@@ -10,7 +10,7 @@ ENV CAMERA_DEVICE=/dev/video0 \
     CAMERA_SIZE=1280x720 \
     CAMERA_OUTPUT=libx264 \
     RTSP_URL=rtsp://192.168.10.2:8554/cam \
-    RTSP_TRANSPORT=tcp
+    RTSP_TRANSPORT=udp
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

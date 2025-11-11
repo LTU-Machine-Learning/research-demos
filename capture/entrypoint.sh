@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 : "${CAMERA_DEVICE:?Set CAMERA_DEVICE (e.g. /dev/video10)}"
-: "${RTSP_URL:?Set RTSP_URL (e.g. rtsp://192.168.10.2:8554/cam)}"
+: "${RTSP_URL:?Set RTSP_URL (e.g. rtsp://mediamtx:8554/cam)}"
 
 CAMERA_FORMAT="${CAMERA_FORMAT:-mjpeg}"
 CAMERA_FPS="${CAMERA_FPS:-30}"

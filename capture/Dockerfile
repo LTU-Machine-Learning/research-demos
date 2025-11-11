@@ -9,7 +9,7 @@ ENV CAMERA_DEVICE=/dev/video0 \
     CAMERA_FPS=30 \
     CAMERA_SIZE=1280x720 \
     CAMERA_OUTPUT=libx264 \
-    RTSP_URL=rtsp://mediamtx:8554/cam \
+    RTSP_URL=rtsp://192.168.10.2:8554/cam \
     RTSP_TRANSPORT=tcp
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

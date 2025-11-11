@@ -13,5 +13,5 @@ docker run -d \
   -e CAMERA_SIZE=1280x720 \
   -e CAMERA_OUTPUT=libx264 \
   -e RTSP_TRANSPORT=tcp \
-  -e RTSP_URL=rtsp://mediamtx:8554/cam \
+  -e RTSP_URL=rtsp://192.168.10.2:8554/cam \
   vision-hub-capture:latest

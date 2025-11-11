@@ -10,7 +10,7 @@ CAMERA_SIZE="${CAMERA_SIZE:-1280x720}"
 CAMERA_OUTPUT="${CAMERA_OUTPUT:-libx264}"
 
 # ➜ UDP par défaut (changer en "tcp" si besoin)
-RTSP_TRANSPORT="${RTSP_TRANSPORT:-udp}"
+RTSP_TRANSPORT="${RTSP_TRANSPORT:-tcp}"
 
 # H.264 “low latency”
 X264_PARAMS="${X264_PARAMS:-bframes=0:scenecut=0:rc-lookahead=0:ref=1}"
@@ -76,7 +76,11 @@ printf '%q ' "${args[@]}" "${enc[@]}" "${out[@]}"; echo
 
 # Boucle de reconnexion automatique
 while true; do
-  ffmpeg "${args[@]}" "${enc[@]}" "${out[@]}" || true
-  echo "[capture] ffmpeg exited ($?), retrying in 3s..."
+  # Print a marker with timestamp at each start
+  echo "[capture] $(date +'%F %T') starting ffmpeg …"
+  stdbuf -oL -eL ffmpeg "${args[@]}" "${enc[@]}" "${out[@]}" \
+    2> >(awk '{ print strftime("[ffmpeg %F %T]"), $0; fflush() }')
+  rc=$?
+  echo "[capture] $(date +'%F %T') ffmpeg exited ($rc), retrying in 3s..."
   sleep 3
 done

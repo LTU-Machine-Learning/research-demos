@@ -23,6 +23,9 @@ services:
       - target: 8189
         published: 8189
         protocol: udp   # WebRTC (UN SEUL port en 1.15.3)
+      - target: 8189
+        published: 8189
+        protocol: tcp   # WebRTC TCP (TEMP while debugging)
     deploy:
       placement:
         constraints:

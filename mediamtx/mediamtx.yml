@@ -33,3 +33,16 @@ webrtcICEServers:
 paths:
   all:
     source: publisher
+
+
+# --- RTSP ---
+rtsp: yes
+rtspTransports: [udp, tcp]
+rtspAddress: :8554
+
+# UDP sockets used for RTSP/UDP publishing/reading
+rtpAddress: :8000
+rtcpAddress: :8001
+
+# Lower the max UDP payload to avoid VXLAN/overlay fragmentation
+udpMaxPayloadSize: 1200

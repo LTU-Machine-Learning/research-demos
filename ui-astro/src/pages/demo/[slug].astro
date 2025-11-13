@@ -1,4 +1,5 @@
 ---
+// unchanged prolog
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import ConsentModal from '../../components/ConsentModal.astro';
 export const prerender = true;
@@ -37,12 +38,11 @@ const description = cfg.subtitle ?? '';
     .stack {
       position: relative;
       width: 100%;
-      /* Reserve height even before metadata loads */
       aspect-ratio: var(--vh-ar, 16 / 9);
-      min-height: 320px;              /* fallback for tiny screens */
-      background: #000;               /* avoids flash */
+      min-height: 320px;
+      background: #000;
       border-radius: 12px;
-      overflow: hidden;               /* prevent spill over footer */
+      overflow: hidden;
     }
     .stack video,
     .stack canvas,
@@ -73,9 +73,11 @@ const description = cfg.subtitle ?? '';
     .req { color:#ff7d7d; }
     .error { background:#2a1020; border:1px solid #b9466b; color:#ffd9e4; padding:10px 12px; border-radius:10px; margin:0 0 12px 0; font-size:.95rem; }
     .invalid { border-color:#ff7d7d !important; box-shadow:0 0 0 2px #ff7d7d33; }
+
+    /* small helper section header style */
+    .legend { grid-column: 1 / -1; opacity: .8; margin-top: 8px; font-size: .9rem; }
   </style>
 
-  <!-- COCO class names for viewer labels (served from /public/scripts) -->
   <script src="/scripts/overlay-classmap.js" is:inline></script>
 
   <div class="wrap">
@@ -120,8 +122,9 @@ const description = cfg.subtitle ?? '';
         <form
           id="price-form"
           novalidate
-          data-api={cfg.api ?? import.meta.env.PUBLIC_PRICE_API ?? 'http://localhost:8080/predict'}
+          data-api={cfg.api ?? import.meta.env.PUBLIC_PRICE_API ?? 'http://192.168.10.2:8080/predict'}
         >
+          <!-- Required -->
           <label>
             Living area (sqm) <span class="req">*</span>
             <input type="number" name="living_area" min="10" step="1" value="60" />
@@ -130,9 +133,11 @@ const description = cfg.subtitle ?? '';
             Rooms <span class="req">*</span>
             <input type="number" name="rooms" min="1" step="0.5" value="3" />
           </label>
+
+          <!-- Optional (existing) -->
           <label>
             Plot area (sqm)
-            <input type="number" name="plot_area" min="0" step="1" value="0" />
+            <input type="number" name="plot_area" min="0" step="1" placeholder="e.g. 300" />
           </label>
           <label>
             Housing type
@@ -146,19 +151,48 @@ const description = cfg.subtitle ?? '';
           </label>
           <label>
             Municipality
-            <input type="text" name="municipality" placeholder="Göteborgs kommun" />
+            <input type="text" name="municipality" placeholder="Luleå" />
           </label>
           <label>
             Address / area
-            <input type="text" name="address" placeholder="Hisings Backa" />
+            <input type="text" name="address" placeholder="Bergviken" />
           </label>
           <label>
             Latitude
-            <input type="number" name="lat" step="0.0001" placeholder="57.7470" />
+            <input type="number" name="lat" step="0.0001" placeholder="65.5833" />
           </label>
           <label>
             Longitude
-            <input type="number" name="lon" step="0.0001" placeholder="11.9700" />
+            <input type="number" name="lon" step="0.0001" placeholder="22.1500" />
+          </label>
+
+          <!-- Optional (new in API) -->
+          <div class="legend">Optional — time context</div>
+          <label>
+            Month (1–12)
+            <input type="number" name="month" min="1" max="12" step="1" placeholder="(auto)" />
+          </label>
+          <label>
+            Year
+            <input type="number" name="year" min="2000" max="2100" step="1" placeholder="(auto)" />
+          </label>
+
+          <div class="legend">Optional — Booli-enriched</div>
+          <label>
+            Construction year
+            <input type="number" name="construction_year" min="1800" max="2100" step="1" placeholder="e.g. 1978" />
+          </label>
+          <label>
+            Floor
+            <input type="number" name="floor" step="0.5" placeholder="e.g. 2" />
+          </label>
+          <label>
+            Monthly rent (SEK)
+            <input type="number" name="rent" min="0" step="100" placeholder="e.g. 4500" />
+          </label>
+          <label>
+            List price (SEK)
+            <input type="number" name="list_price" min="0" step="50000" placeholder="e.g. 2 500 000" />
           </label>
 
           <div style="grid-column:1 / -1; display:flex; gap:10px; align-items:center;">
@@ -184,7 +218,7 @@ const description = cfg.subtitle ?? '';
     const errBox  = document.getElementById('p-error');
     const loading = document.getElementById('p-loading');
 
-    const api = form?.dataset?.api || 'http://localhost:8080/predict';
+    const api = form?.dataset?.api || 'http://192.168.10.2:8080/predict';
 
     const STORAGE_KEY = 'vh_price_form';
     const fmt = n => new Intl.NumberFormat('sv-SE', { style:'currency', currency:'SEK', maximumFractionDigits:0 }).format(n);
@@ -199,6 +233,7 @@ const description = cfg.subtitle ?? '';
       });
     }
 
+    // restore saved state
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       if (saved && typeof saved === 'object' && form) {
@@ -209,6 +244,7 @@ const description = cfg.subtitle ?? '';
       }
     } catch {}
 
+    // persist on input
     form?.addEventListener('input', () => {
       const fd = new FormData(form);
       const obj = {};
@@ -216,12 +252,18 @@ const description = cfg.subtitle ?? '';
       localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
     });
 
+    // build body with correct numeric casts; skip empty fields
+    const NUMERIC_FIELDS = [
+      'living_area','rooms','plot_area','lat','lon',
+      'month','year','construction_year','floor','rent','list_price'
+    ];
+
     function collectBody() {
       const fd = new FormData(form);
       const body = {};
       for (const [k, v] of fd.entries()) {
         if (v === '' || v == null) continue;
-        body[k] = ['living_area','rooms','plot_area','lat','lon','month','year'].includes(k) ? Number(v) : v;
+        body[k] = NUMERIC_FIELDS.includes(k) ? Number(v) : v;
       }
       return body;
     }

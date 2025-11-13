@@ -27,7 +27,6 @@ services:
         published: 8189
         protocol: tcp   # WebRTC TCP (TEMP while debugging)
     deploy:
-      endpoint_mode: dnsrr
       placement:
         constraints:
           - node.labels.role == frontend
@@ -78,7 +77,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.role == frontend
+          - node.labels.gpu == true
       restart_policy:
         condition: any
       update_config:

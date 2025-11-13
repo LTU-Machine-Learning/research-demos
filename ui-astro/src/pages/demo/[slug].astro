@@ -122,7 +122,7 @@ const description = cfg.subtitle ?? '';
         <form
           id="price-form"
           novalidate
-          data-api={cfg.api ?? import.meta.env.PUBLIC_PRICE_API ?? 'http://192.168.10.2:8080/predict'}
+          data-api={cfg.api ?? import.meta.env.PUBLIC_PRICE_API ?? 'http://192.168.10.1:8080/predict'}
         >
           <!-- Required -->
           <label>
@@ -218,7 +218,7 @@ const description = cfg.subtitle ?? '';
     const errBox  = document.getElementById('p-error');
     const loading = document.getElementById('p-loading');
 
-    const api = form?.dataset?.api || 'http://192.168.10.2:8080/predict';
+    const api = form?.dataset?.api || 'http://192.168.10.1:8080/predict';
 
     const STORAGE_KEY = 'vh_price_form';
     const fmt = n => new Intl.NumberFormat('sv-SE', { style:'currency', currency:'SEK', maximumFractionDigits:0 }).format(n);

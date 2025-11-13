@@ -1,10 +1,9 @@
-# main.py
 from __future__ import annotations
 
 import os
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional    
+from typing import Any, Dict, List, Optional
 import json
 
 import joblib
@@ -18,7 +17,7 @@ from pydantic import BaseModel, Field
 # ------------------------------------------------------------------------------
 MODEL_DIR = os.environ.get("MODEL_DIR", "/app/model")
 APP_TITLE = "SE House Price API"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO"),
@@ -32,20 +31,31 @@ log = logging.getLogger("se-house-price-api")
 app = FastAPI(title=APP_TITLE, version=APP_VERSION)
 
 # CORS
-ALLOWED = os.getenv(
+allowed = os.getenv(
     "ALLOW_ORIGINS",
     "http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321",
 ).split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[o.strip() for o in ALLOWED if o.strip()],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+allow_origin_regex = os.getenv("ALLOW_ORIGIN_REGEX")  # e.g. r"^https?://192\.168\.10\.\d+:4321$"
+if allow_origin_regex:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=allow_origin_regex,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in allowed if o.strip()],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # ------------------------------------------------------------------------------
-# Models & schema (loaded at import so uvicorn workers share the state)
+# Load artifacts
 # ------------------------------------------------------------------------------
 def _load_artifact(path: str):
     p = os.path.join(MODEL_DIR, path)
@@ -53,58 +63,71 @@ def _load_artifact(path: str):
         raise FileNotFoundError(f"Missing artifact: {p}")
     return joblib.load(p)
 
+def _load_json(path: str) -> dict:
+    p = os.path.join(MODEL_DIR, path)
+    return json.load(open(p, "r", encoding="utf-8")) if os.path.exists(p) else {}
+
 try:
     median_model = _load_artifact("model_median.pkl")
-    p10_model = _load_artifact("model_p10.pkl")
-    p90_model = _load_artifact("model_p90.pkl")
+    p10_model    = _load_artifact("model_p10.pkl")
+    p90_model    = _load_artifact("model_p90.pkl")
     schema: Dict[str, Any] = _load_artifact("schema.pkl")
+    model_meta = _load_json("model_meta.json")
     log.info("Models & schema loaded from %s", MODEL_DIR)
 except Exception as e:
-    # Defer failing hard until /readyz or /predict is called
     log.exception("Failed loading artifacts: %s", e)
     median_model = p10_model = p90_model = None  # type: ignore
     schema = {"required": ["living_area", "rooms"], "optional": []}
+    model_meta = {}
+
+# Build canonical expected input column list
+def _expected_input_columns() -> List[str]:
+    # 1) meta.features_used from training
+    feats = model_meta.get("features_used") if isinstance(model_meta, dict) else None
+    if feats:
+        return list(feats)
+    # 2) fallback to schema
+    req = list(schema.get("required", []))
+    opt = list(schema.get("optional", []))
+    if req or opt:
+        return [*req, *opt]
+    return ["living_area", "rooms"]
+
+EXPECTED_INPUT_COLS: List[str] = _expected_input_columns()
+
+# Text fields to coerce to strings only if present in this model
+TEXT_FIELDS = tuple([f for f in ("housing_type", "municipality", "address") if f in EXPECTED_INPUT_COLS])
 
 REQUIRED: List[str] = list(schema.get("required", ["living_area", "rooms"]))
-OPTIONAL: List[str] = list(schema.get("optional", []))
-ALL_FEATURES: List[str] = [*REQUIRED, *OPTIONAL]
-
-# Text fields we sanitize to non-None strings
-TEXT_FIELDS = ("housing_type", "municipality", "address")
 
 # ------------------------------------------------------------------------------
 # Pydantic models
 # ------------------------------------------------------------------------------
 class PredictIn(BaseModel):
-    # required
     living_area: float = Field(..., ge=10)
     rooms: float = Field(..., ge=1)
 
-    # optional (kept as None -> NaN; we do NOT drop missing cols)
     plot_area: Optional[float] = None
-    housing_type: Optional[str] = None    # APARTMENT, HOUSE, ...
-    municipality: Optional[str] = None    # e.g. "Luleå"
+    housing_type: Optional[str] = None
+    municipality: Optional[str] = None
     address: Optional[str] = None
     lat: Optional[float] = None
     lon: Optional[float] = None
     month: Optional[int] = None
     year: Optional[int] = None
 
-    # Booli-enriched fields
     construction_year: Optional[int] = None
     floor: Optional[float] = None
     rent: Optional[float] = None
     list_price: Optional[int] = None
 
     class Config:
-        extra = "ignore"   # ignore unexpected keys instead of 422
-
+        extra = "ignore"
 
 class PredictOut(BaseModel):
     price_sek: int
     pi_low: int
     pi_high: int
-
 
 # ------------------------------------------------------------------------------
 # Helpers
@@ -114,34 +137,33 @@ def _ensure_ready():
         raise HTTPException(status_code=503, detail="Model artifacts not loaded")
 
 def _sanitize_payload(d: Dict[str, Any]) -> Dict[str, Any]:
-    # Defaults for month/year
+    # Default time context
     now = datetime.now()
-    if not d.get("month"):
-        d["month"] = now.month
-    if not d.get("year"):
-        d["year"] = now.year
+    d.setdefault("month", now.month)
+    d.setdefault("year",  now.year)
 
-    # Text sanitization: tf-idf expects strings, not None
+    # Strings for text features
     for k in TEXT_FIELDS:
         v = d.get(k)
         d[k] = "" if v is None else str(v).strip()
 
-    # Ensure all expected columns exist; DO NOT drop numeric Nones
-    for col in ALL_FEATURES:
+    # Ensure EVERY expected column exists; keep numeric None -> NaN
+    for col in EXPECTED_INPUT_COLS:
         d.setdefault(col, None)
-
     return d
 
 def _predict_row(row: Dict[str, Any]) -> PredictOut:
-    # Columns aligned and order fixed for pandas DataFrame
-    X = pd.DataFrame([row], columns=ALL_FEATURES)
+    # Build dataframe with EXACT training-time columns
+    X = pd.DataFrame([row])
+    for c in EXPECTED_INPUT_COLS:
+        if c not in X.columns:
+            X[c] = pd.NA
+    X = X.reindex(columns=EXPECTED_INPUT_COLS)
 
-    # Inference
-    y_med = float(median_model.predict(X)[0])  # type: ignore[attr-defined]
-    y_lo = float(p10_model.predict(X)[0])      # type: ignore[attr-defined]
-    y_hi = float(p90_model.predict(X)[0])      # type: ignore[attr-defined]
+    y_med = float(median_model.predict(X)[0])  # type: ignore
+    y_lo  = float(p10_model.predict(X)[0])     # type: ignore
+    y_hi  = float(p90_model.predict(X)[0])     # type: ignore
 
-    # Guardrail: ensure pi_low <= pi_high
     if y_lo > y_hi:
         y_lo, y_hi = y_hi, y_lo
 
@@ -150,13 +172,6 @@ def _predict_row(row: Dict[str, Any]) -> PredictOut:
         pi_low=int(round(y_lo)),
         pi_high=int(round(y_hi)),
     )
-
-def _load_json(path: str) -> dict:
-    p = os.path.join(MODEL_DIR, path)
-    return json.load(open(p, "r", encoding="utf-8")) if os.path.exists(p) else {}
-
-model_meta = _load_json("model_meta.json")
-
 
 # ------------------------------------------------------------------------------
 # Routes
@@ -172,24 +187,25 @@ def healthz():
 @app.get("/readyz")
 def readyz():
     ready = all(m is not None for m in (median_model, p10_model, p90_model))
-    return {"ready": ready, "model_dir": MODEL_DIR}
+    return {"ready": ready, "model_dir": MODEL_DIR, "expected_input_cols": EXPECTED_INPUT_COLS}
 
 @app.get("/schema")
 def get_schema():
-    # Return the training-time schema (as saved by train_booli.py)
     return schema
+
+@app.get("/meta")
+def meta():
+    return model_meta or {"info": "no meta available"}
 
 @app.post("/predict", response_model=PredictOut)
 def predict(payload: PredictIn):
     _ensure_ready()
     try:
         d = payload.dict()
-        # Friendlier checks for required numerics
         if d.get("living_area") is None:
             raise HTTPException(400, detail="Missing field: living_area")
         if d.get("rooms") is None:
             raise HTTPException(400, detail="Missing field: rooms")
-
         row = _sanitize_payload(d)
         return _predict_row(row)
     except HTTPException:
@@ -197,7 +213,3 @@ def predict(payload: PredictIn):
     except Exception as e:
         log.exception("Prediction failed: %s", e)
         raise HTTPException(status_code=400, detail=str(e))
-    
-@app.get("/meta")
-def meta():
-    return model_meta or {"info": "no meta available"}

@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-11-04T16:20:26.315572Z",
-  "rows": 4491,
+  "timestamp": "2025-11-13T11:31:44.062738Z",
+  "rows": 4510,
   "year_min": 2019,
   "year_max": 2025,
-  "mae_cv_median_sek": 147266.83500909593,
+  "mae_cv_median_sek": 150156.1177977226,
   "features_used": [
     "living_area",
     "plot_area",

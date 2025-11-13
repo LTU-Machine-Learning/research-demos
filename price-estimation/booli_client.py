@@ -32,7 +32,6 @@ async def _get(client: httpx.AsyncClient, path: str, params: Dict[str, Any]) -> 
     return r.json()
 
 async def find_area_ids(query: str) -> Iterable[Dict[str, Any]]:
-    """Return matching areas for a free-text query (e.g., 'Luleå')."""
     async with httpx.AsyncClient() as client:
         data = await _get(client, "/areas", {"q": query, "limit": 25, "transactions": 1})
         for a in data.get("areas", []):
@@ -41,18 +40,16 @@ async def find_area_ids(query: str) -> Iterable[Dict[str, Any]]:
 async def iter_sold(
     area_ids: list[int] | None = None,
     bbox: Optional[str] = None,
-    min_sold_date: Optional[str] = None,  # YYYYMMDD
-    max_sold_date: Optional[str] = None,  # YYYYMMDD
+    min_sold_date: Optional[str] = None,
+    max_sold_date: Optional[str] = None,
     limit: int = 500
 ):
-    """Iterate over all pages from /sold with optional filters."""
     params: Dict[str, Any] = {"limit": min(limit, 500), "offset": 0}
     if area_ids: params["areaId"] = ",".join(map(str, area_ids))
     if bbox: params["bbox"] = bbox
     if min_sold_date: params["minSoldDate"] = min_sold_date
     if max_sold_date: params["maxSoldDate"] = max_sold_date
 
-    # Keep a single client; just sleep a bit between pages.
     async with httpx.AsyncClient() as client:
         while True:
             data = await _get(client, "/sold", params)

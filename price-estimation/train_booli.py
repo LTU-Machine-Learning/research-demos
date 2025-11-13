@@ -12,7 +12,7 @@ DATA = "data/booli_lulea_sold.parquet"
 OUTDIR = "model"
 os.makedirs(OUTDIR, exist_ok=True)
 
-RECENT_YEARS = 7         # use a slightly larger window to stabilize splits
+RECENT_YEARS = 7
 N_SPLITS = 5
 SEED = 42
 
@@ -22,21 +22,20 @@ df = df.dropna(subset=["price", "living_area", "rooms"]).copy()
 # Ensure address exists & is string
 df["address"] = df.get("address", "").fillna("").astype(str)
 
-# Build month/year from sold_date if available
+# Month/year from sold_date if available
 if "sold_date" in df.columns:
     df["sold_date"] = pd.to_datetime(df["sold_date"], errors="coerce")
-    df["year"] = df["sold_date"].dt.year
+    df["year"]  = df["sold_date"].dt.year
     df["month"] = df["sold_date"].dt.month
 else:
     now = datetime.now()
-    df["year"] = df.get("year", now.year)
+    df["year"]  = df.get("year", now.year)
     df["month"] = df.get("month", now.month)
 
 # Keep recent window
 max_year = int(df["year"].dropna().max())
 min_keep = max_year - (RECENT_YEARS - 1)
 df = df[df["year"] >= min_keep].copy()
-
 print(f"Training on Luleå SOLD data, years >= {min_keep} (max={max_year}). Rows: {len(df):,}")
 
 # -------------------- FEATURES --------------------
@@ -47,11 +46,11 @@ num = [
 ]
 cat = ["housing_type", "municipality"]
 
-# If addresses are mostly empty, skip TFIDF (prevents useless sparse features)
 addr_nonempty = (df["address"].str.len() > 0).sum()
 use_txt = "address" if addr_nonempty >= 100 else None
 
 def drop_allnan(columns: list[str]) -> list[str]:
+    # Keep only columns that exist and are not entirely NaN in TRAINING data
     return [c for c in columns if c in df.columns and not df[c].isna().all()]
 
 num = drop_allnan(num)
@@ -63,31 +62,23 @@ if cat: transformers.append(("cat", OneHotEncoder(handle_unknown="ignore"), cat)
 if use_txt: transformers.append(("txt", TfidfVectorizer(max_features=6000, ngram_range=(1,2)), use_txt))
 
 pre = ColumnTransformer(transformers, remainder="drop", sparse_threshold=0.3)
+# Canonical input columns for this trained pipeline:
 cols = [*num, *cat, *( [use_txt] if use_txt else [] )]
 
 X = df[cols].copy()
 y = df["price"].astype(float)
 
 def train_lgbm(X, y, alpha=None, objective=None):
-    # objective: None -> choose by alpha
     if objective is None:
-        objective = "quantile" if alpha is not None else "regression_l1"  # MAE for median
+        objective = "quantile" if alpha is not None else "regression_l1"
 
     model = lgb.LGBMRegressor(
-        objective=objective,
-        alpha=alpha,
-        n_estimators=1400,
-        learning_rate=0.04,
-        subsample=0.85,
-        colsample_bytree=0.9,
-        num_leaves=63,
-        min_child_samples=25,
-        max_depth=-1,
-        random_state=SEED,
-        n_jobs=-1,
-        verbosity=-1,                 # silence noisy logs
-        min_gain_to_split=0.0,        # allow small gains
-        min_sum_hessian_in_leaf=1e-3  # be less picky on leaves
+        objective=objective, alpha=alpha,
+        n_estimators=1400, learning_rate=0.04,
+        subsample=0.85, colsample_bytree=0.9,
+        num_leaves=63, min_child_samples=25,
+        max_depth=-1, random_state=SEED, n_jobs=-1,
+        verbosity=-1, min_gain_to_split=0.0, min_sum_hessian_in_leaf=1e-3
     )
     pipe = Pipeline([("pre", pre), ("lgbm", model)])
 
@@ -116,7 +107,7 @@ joblib.dump(p10_pipe,    os.path.join(OUTDIR, "model_p10.pkl"))
 joblib.dump(p90_pipe,    os.path.join(OUTDIR, "model_p90.pkl"))
 
 schema = {
-    "required": ["living_area", "rooms"],
+    "required": ["living_area", "rooms"],  # keep API simple
     "optional": [c for c in [
         "plot_area","housing_type","municipality","address","month","year",
         "lat","lon","construction_year","floor","rent","list_price"
@@ -125,7 +116,7 @@ schema = {
 }
 joblib.dump(schema, os.path.join(OUTDIR, "schema.pkl"))
 
-# Feature importances (best-effort)
+# Best-effort feature importances
 try:
     lgbm = median_pipe.named_steps["lgbm"]
     feat_names = median_pipe.named_steps["pre"].get_feature_names_out()
@@ -143,7 +134,7 @@ meta = {
     "year_min": int(df["year"].min()),
     "year_max": int(df["year"].max()),
     "mae_cv_median_sek": float(mae_med),
-    "features_used": cols,
+    "features_used": cols,               # <-- canonical input list
     "addr_txt_enabled": bool(use_txt),
 }
 with open(os.path.join(OUTDIR, "model_meta.json"), "w", encoding="utf-8") as f:

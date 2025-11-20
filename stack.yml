@@ -138,7 +138,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - target: 6000
-        published: 6000
+        published: 6002
         protocol: tcp
     deploy:
       placement:

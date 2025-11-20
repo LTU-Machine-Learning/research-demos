@@ -32,7 +32,7 @@ export default function demos(slug: string): DemoCfg {
       subtitle: "‘cam’ stream via WebRTC with pose skeleton overlay.",
       transport: "whep",
       cam: ":8889/cam/whep",     // same video feed as above
-      ws:  ":5001/ws/pose",      // WebSocket sends only pose keypoints
+      ws:  ":6001/ws/pose",      // WebSocket sends only pose keypoints
       wsKind: "pose",
       orch: ":8090",
       token: "dev-token",

@@ -56,8 +56,8 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
-      - target: 5000
-        published: 5000
+      - target: 6000
+        published: 6000
         protocol: tcp
     deploy:
       placement:
@@ -87,8 +87,8 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
-      - target: 5000
-        published: 5001
+      - target: 6000
+        published: 6001
         protocol: tcp
     deploy:
       placement:

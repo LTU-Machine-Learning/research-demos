@@ -50,7 +50,7 @@ const WS_KIND = (root?.dataset?.wsKind || 'boxes').toLowerCase(); // "boxes" | "
 const TOKEN   = root?.dataset?.token  || 'dev-token';
 const ORCH    = absolutizeHttp(root?.dataset?.orch || ':8090');
 const camUrl  = absolutizeHttp(root?.dataset?.cam  || '');
-const WS_URL  = absolutizeWs(root?.dataset?.ws || (WS_KIND === 'pose' ? ':5000/ws/pose' : ':5000/ws/dets'));
+const WS_URL  = absolutizeWs(root?.dataset?.ws || (WS_KIND === 'pose' ? ':6000/ws/pose' : ':6000/ws/dets'));
 // ---- Consent (uniquement pour START) ----
 const CONSENT_KEY = (id) => `vh_consent_${id}`;
 

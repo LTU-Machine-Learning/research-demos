@@ -59,13 +59,13 @@ DEMOS: Dict[str, Dict] = {
     "yolo": {
         "service": "yolo",                        # <-- short service name
         "url": None,                              # browser URL built later
-        "health_url": "http://yolo:5000/",  # internal (overlay)
+        "health_url": "http://yolo:6000/",  # internal (overlay)
         "needs": ["mediamtx", "capture"],       # mediamtx service + local capture
     },
     "pose": {
         "service": "pose",
         "url": None,
-        "health_url": "http://pose:5000/",
+        "health_url": "http://pose:6000/",
         "needs": ["mediamtx", "capture"],
     },
     "chang": {},
@@ -100,8 +100,8 @@ def _stop_need(name: str):
 
 PUBLIC_BASE = os.getenv("PUBLIC_BASE", "http://192.168.10.2")  # your frontend host
 def _browser_url_for(demo_id: str) -> Optional[str]:
-    if demo_id == "yolo": return f"{PUBLIC_BASE}:5000/"
-    if demo_id == "pose": return f"{PUBLIC_BASE}:5001/"
+    if demo_id == "yolo": return f"{PUBLIC_BASE}:6000/"
+    if demo_id == "pose": return f"{PUBLIC_BASE}:6001/"
     if demo_id == "price": return f"{PUBLIC_BASE}:8080/healthz"
     return None
 

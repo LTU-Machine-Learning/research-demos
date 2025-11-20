@@ -109,7 +109,7 @@ services:
     build: ./yolo
     container_name: vision-hub-yolo
     ports:
-      - "5000:5000"
+      - "6000:6000"
     environment:
     - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
@@ -132,7 +132,7 @@ services:
     build: ./pose
     container_name: vision-hub-pose
     ports:
-      - "5001:5000" # Flask/webSocket port for poses
+      - "6001:6000" # Flask/webSocket port for poses
     environment:
     - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000

@@ -4,8 +4,8 @@ type DemoCfg = {
   subtitle: string;
   transport: "whep" | "mjpeg";
   cam?: string;    // e.g. ":8889/<stream>/whep"
-  mjpeg?: string;  // e.g. ":5000/video"
-  ws?: string;     // e.g. ":5000/ws/dets" or ":5000/ws/pose"
+  mjpeg?: string;  // e.g. ":6000/video"
+  ws?: string;     // e.g. ":6000/ws/dets" or ":6000/ws/pose"
   orch?: string;   // e.g. ":8090"
   token?: string;
   demoId: string;
@@ -20,7 +20,7 @@ export default function demos(slug: string): DemoCfg {
       subtitle: "‘cam’ stream via WebRTC with Canvas overlay.",
       transport: "whep",
       cam: ":8889/cam/whep",     // base stream
-      ws:  ":5000/ws/dets",      // WebSocket sends detection boxes
+      ws:  ":6000/ws/dets",      // WebSocket sends detection boxes
       wsKind: "boxes",
       orch: ":8090",
       token: "dev-token",
@@ -56,7 +56,7 @@ export default function demos(slug: string): DemoCfg {
     subtitle: "Generic video stream",
     transport: "whep",
     cam: `:8889/${slug}/whep`,
-    ws:  `:5000/ws/${slug}`,
+    ws:  `:6000/ws/${slug}`,
     wsKind: "boxes",
     orch: ":8090",
     token: "dev-token",

@@ -8,7 +8,7 @@
     const cfg = (typeof window.getConfig === 'function') ? window.getConfig() : null;
     if (cfg && cfg.wsUrl) return cfg.wsUrl;
     const proto = (location.protocol === 'https:') ? 'wss' : 'ws';
-    return `${proto}://${location.hostname}:5000/ws/dets`;
+    return `${proto}://${location.hostname}:6000/ws/dets`;
   }
 
   // ---- Helpers label / classe

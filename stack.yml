@@ -137,8 +137,8 @@ services:
       - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
-      - target: 5000
-        published: 5000
+      - target: 6000
+        published: 6000
         protocol: tcp
     deploy:
       placement:
@@ -169,8 +169,8 @@ services:
       - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
-      - target: 5000
-        published: 5001
+      - target: 6000
+        published: 6001
         protocol: tcp
     deploy:
       placement:

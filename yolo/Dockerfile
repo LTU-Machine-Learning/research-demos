@@ -20,5 +20,5 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel \
 
 COPY app.py ./
 
-EXPOSE 6000
+EXPOSE 6002
 CMD ["python3", "-X", "faulthandler", "app.py"]

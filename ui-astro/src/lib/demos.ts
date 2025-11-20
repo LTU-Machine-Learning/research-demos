@@ -20,7 +20,7 @@ export default function demos(slug: string): DemoCfg {
       subtitle: "‘cam’ stream via WebRTC with Canvas overlay.",
       transport: "whep",
       cam: ":8889/cam/whep",     // base stream
-      ws:  ":6000/ws/dets",      // WebSocket sends detection boxes
+      ws:  ":6002/ws/dets",      // WebSocket sends detection boxes
       wsKind: "boxes",
       orch: ":8090",
       token: "dev-token",

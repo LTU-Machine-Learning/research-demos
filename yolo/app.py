@@ -62,6 +62,7 @@ _ws_clients = set()
 @sock.route('/ws/dets')
 def ws_dets(ws):
     """Client WS: on garde la socket ouverte; on n'attend rien du client."""
+    log.info("[WS DETS] client connected")   # 👈 AJOUT
     _ws_clients.add(ws)
     try:
         while True:
@@ -70,6 +71,7 @@ def ws_dets(ws):
                 break
     finally:
         _ws_clients.discard(ws)
+        log.info("[WS DETS] client disconnected")
 
 def _broadcast_dets(payload: dict):
     """Envoie un JSON compact à tous les clients WS."""

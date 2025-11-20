@@ -9,5 +9,5 @@ COPY requirements.txt ./
 RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel \
  && pip install --no-cache-dir -r requirements.txt
 COPY app.py ./
-EXPOSE 5000
+EXPOSE 6000
 CMD ["python3", "-X", "faulthandler", "app.py"]

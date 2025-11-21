@@ -260,12 +260,31 @@ def _service_replicas(short: str) -> int:
     return int(reps or 0)
 
 def _service_running(short: str) -> bool:
-    # consider running if at least one task desired RUNNING and actual RUNNING
+    # Consider running if service has replicas > 0 AND has at least one task
+    # that is running or in a non-terminal state (starting, preparing, etc.)
     svc = _service_get(short)
     if not svc:
         return False
+    
+    # Check desired replicas first
+    replicas = _service_replicas(short)
+    if replicas == 0:
+        return False
+    
+    # Get tasks with desired-state = running
     tasks = svc.tasks(filters={"desired-state": "running"})
-    return any(t.get("Status", {}).get("State") == "running" for t in tasks)
+    if not tasks:
+        return False
+    
+    # Consider running if any task is in an active state
+    # Active states: preparing, starting, running
+    # Terminal/failed states: shutdown, complete, failed, rejected
+    for task in tasks:
+        state = task.get("Status", {}).get("State", "")
+        if state in ("preparing", "starting", "running"):
+            return True
+    
+    return False
 
 
 # ================== CAPTURE (HYSTERESIS) ==================

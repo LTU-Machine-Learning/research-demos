@@ -55,6 +55,11 @@ ADOPT_DELAY_SEC  = float(os.getenv("ADOPT_DELAY_SEC", "5"))
 ADOPT_MODE       = os.getenv("ADOPT_MODE", "now").lower()  # "now" | "started_at"
 
 # ================== DEMO REGISTRY ==================
+
+# Docker Swarm task states that indicate a service is active/running
+# (i.e., not in a terminal/failed state)
+ACTIVE_TASK_STATES = frozenset(["new", "pending", "assigned", "preparing", "starting", "running"])
+
 DEMOS: Dict[str, Dict] = {
     "yolo": {
         "service": "yolo",                        # <-- short service name
@@ -260,8 +265,19 @@ def _service_replicas(short: str) -> int:
     return int(reps or 0)
 
 def _service_running(short: str) -> bool:
-    # Consider running if service has replicas > 0 AND has at least one task
-    # that is running or in a non-terminal state (starting, preparing, etc.)
+    """
+    Check if a Docker Swarm service is running or starting.
+    
+    Returns True if:
+    - Service has desired replicas > 0, AND
+    - At least one task exists in an active state (not terminal/failed)
+    
+    Active states include: new, pending, assigned, preparing, starting, running
+    Terminal states (return False): shutdown, complete, failed, rejected, orphaned, remove
+    
+    This approach is lenient during container transitions (startup, restart)
+    to avoid false negatives that could cause the heartbeat system to fail.
+    """
     svc = _service_get(short)
     if not svc:
         return False
@@ -271,17 +287,18 @@ def _service_running(short: str) -> bool:
     if replicas == 0:
         return False
     
-    # Get tasks with desired-state = running
-    tasks = svc.tasks(filters={"desired-state": "running"})
+    # Get all tasks (not just desired-state=running) to handle rapid transitions
+    # During restart, tasks might momentarily not have desired-state=running
+    tasks = svc.tasks()
     if not tasks:
-        return False
+        # If replicas > 0 but no tasks exist yet, consider it "starting"
+        # This handles the brief moment when a service is first scaled up
+        return True
     
-    # Consider running if any task is in an active state
-    # Active states: preparing, starting, running
-    # Terminal/failed states: shutdown, complete, failed, rejected
+    # Consider running if any task is in an active (non-terminal) state
     for task in tasks:
         state = task.get("Status", {}).get("State", "")
-        if state in ("preparing", "starting", "running"):
+        if state in ACTIVE_TASK_STATES:
             return True
     
     return False

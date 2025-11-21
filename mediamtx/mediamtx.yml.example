@@ -1,0 +1,51 @@
+logLevel: debug
+
+# --- RTSP ---
+rtsp: yes
+rtspAddress: :8554
+
+# --- WebRTC / WHEP ---
+webrtc: yes
+webrtcAddress: :8889
+webrtcEncryption: no
+webrtcAllowOrigin: "*"     # CORS for the browser UI
+
+# SRTP / ICE (v1.15.3 uses ONE UDP port)
+webrtcLocalUDPAddress: :8189
+
+# Advertise network interfaces and hosts for WebRTC
+# Set MEDIAMTX_INTERFACES and MEDIAMTX_ADDITIONAL_HOSTS in .env to configure
+# Example for local development: leave these commented out
+# Example for private network (ZeroTier/LAN): set to your network interfaces and IPs
+# Example for public network: set to your public-facing interfaces and IPs
+
+# Uncomment and configure based on your network setup:
+# webrtcIPsFromInterfaces: yes
+# webrtcIPsFromInterfacesList:
+#   - "eno1"            # Example: primary network interface
+#   - "wlp1s0"          # Example: wireless interface
+#   - "zt0"             # Example: ZeroTier interface
+# webrtcAdditionalHosts:
+#   - "192.168.10.2"    # Example: private IP
+#   - "130.240.94.235"  # Example: public IP
+
+# STUN servers (must be plain strings in 1.15.3)
+webrtcICEServers:
+  - stun:stun.l.google.com:19302
+  # - stun:stun.cloudflare.com:3478
+
+# Accept any publisher path
+paths:
+  all:
+    source: publisher
+
+
+# --- RTSP ---
+rtspTransports: [udp, tcp]
+
+# UDP sockets used for RTSP/UDP publishing/reading
+rtpAddress: :8000
+rtcpAddress: :8001
+
+# Lower the max UDP payload to avoid VXLAN/overlay fragmentation
+udpMaxPayloadSize: 1200

@@ -75,9 +75,9 @@ services:
     image: bluenviron/mediamtx:latest
     container_name: vision-hub-mediamtx
     ports:
-      - "8554:8554"
-      - "8889:8889" 
-      - "8189:8189/udp" 
+      - "${MEDIAMTX_RTSP_PORT:-8554}:8554"
+      - "${MEDIAMTX_HTTP_PORT:-8889}:8889" 
+      - "${MEDIAMTX_WEBRTC_PORT:-8189}:8189/udp" 
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/8554' || exit 1"]
@@ -97,7 +97,7 @@ services:
         - PUBLIC_CONTACT_EMAIL=${CONTACT_EMAIL:-tom.burellier@associated.ltu.se}
     container_name: vision-hub-ui-astro
     ports:
-      - "4321:4321"
+      - "${FRONTEND_PORT:-4321}:4321"
     restart: unless-stopped
     depends_on: [mediamtx, api]
     networks: [hub]
@@ -109,7 +109,7 @@ services:
     build: ./yolo
     container_name: vision-hub-yolo
     ports:
-      - "6000:6000"
+      - "${YOLO_PORT:-6000}:6000"
     environment:
     - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
@@ -132,7 +132,7 @@ services:
     build: ./pose
     container_name: vision-hub-pose
     ports:
-      - "6001:6000" # Flask/webSocket port for poses
+      - "${POSE_PORT:-6001}:6000" # Flask/webSocket port for poses
     environment:
     - CAMERA=${RTSP_URL:-rtsp://mediamtx:8554/cam}
     - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp|fflags;nobuffer|flush_packets;1|reorder_queue_size;0|max_delay;0|probesize;32000|analyzeduration;0|stimeout;2000000
@@ -166,11 +166,11 @@ services:
     image: vision-hub/price-api:latest
     container_name: vision-hub-price-api
     ports:
-      - "8080:8080"
+      - "${PRICE_API_PORT:-8080}:8080"
     environment:
       - TZ=Europe/Stockholm
       - MODEL_DIR=/app/model
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+      - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321}
     volumes:
       - ./price-estimation/model:/app/model:ro
     healthcheck:
@@ -190,17 +190,17 @@ services:
     ports: ["8090:8090"]
     environment:
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+      - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321}
       - IDLE_SECONDS=${IDLE_SECONDS:-120}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - CONSENT_SECRET=${CONSENT_SECRET}
       - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS}
       - CONSENT_AUD=${CONSENT_AUD}
-      - CAPTURE_NAME=vision-hub-capture
+      - CAPTURE_NAME=${CAPTURE_NAME:-vision-hub-capture}
       - CAPTURE_IDLE_GRACE=180        # keep capture up 3 min after last demo
-      - CAPTURE_MIN_DOWN=20           # don’t restart within 20s of stopping
-      - CAPTURE_MIN_UP=60             # keep at least 60s up before stopping
-      - CAPTURE_STARTUP_SETTLE=3      # wait 3s after start to let camera settle
+      - CAPTURE_MIN_DOWN=${CAPTURE_MIN_DOWN:-20}           # don’t restart within 20s of stopping
+      - CAPTURE_MIN_UP=${CAPTURE_MIN_UP:-60}             # keep at least 60s up before stopping
+      - CAPTURE_STARTUP_SETTLE=${CAPTURE_STARTUP_SETTLE:-3}      # wait 3s after start to let camera settle
 
 
     volumes:

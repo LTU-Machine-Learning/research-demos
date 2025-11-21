@@ -93,7 +93,7 @@ services:
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
       - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321}
       - STACK_NAME=${STACK_NAME:-vision-hub}
-      - PUBLIC_BASE=${PUBLIC_BASE:-http://${FRONTEND_HOST:-localhost}}
+      - PUBLIC_BASE=${PUBLIC_BASE:-http://localhost}
       - IDLE_SECONDS=${IDLE_SECONDS:-120}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - CONSENT_SECRET=${CONSENT_SECRET}

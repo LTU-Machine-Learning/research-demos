@@ -201,7 +201,7 @@ services:
       - CAPTURE_MIN_DOWN=${CAPTURE_MIN_DOWN:-20}           # don’t restart within 20s of stopping
       - CAPTURE_MIN_UP=${CAPTURE_MIN_UP:-60}             # keep at least 60s up before stopping
       - CAPTURE_STARTUP_SETTLE=${CAPTURE_STARTUP_SETTLE:-3}      # wait 3s after start to let camera settle
-      - PUBLIC_BASE=${PUBLIC_BASE:-http://${FRONTEND_HOST:-localhost}}
+      - PUBLIC_BASE=${PUBLIC_BASE:-http://localhost}
 
 
     volumes:

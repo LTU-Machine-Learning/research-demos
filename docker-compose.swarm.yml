@@ -135,7 +135,7 @@ services:
 
       # --- Swarm awareness ---
       - STACK_NAME=${STACK_NAME:-vision-hub}
-      - PUBLIC_BASE=${PUBLIC_BASE:-http://${FRONTEND_HOST:-localhost}}
+      - PUBLIC_BASE=${PUBLIC_BASE:-http://localhost}
 
       # --- Idle / Capture config ---
       - IDLE_SECONDS=${IDLE_SECONDS:-120}

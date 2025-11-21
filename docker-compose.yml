@@ -187,7 +187,7 @@ services:
   api:
     build: ./API
     container_name: vision-hub-api
-    ports: ["8090:8090"]
+    ports: ["${API_PORT:-8090}:8090"]
     environment:
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
       - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321}
@@ -197,10 +197,11 @@ services:
       - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS}
       - CONSENT_AUD=${CONSENT_AUD}
       - CAPTURE_NAME=${CAPTURE_NAME:-vision-hub-capture}
-      - CAPTURE_IDLE_GRACE=180        # keep capture up 3 min after last demo
+      - CAPTURE_IDLE_GRACE=${CAPTURE_IDLE_GRACE:-180}        # keep capture up 3 min after last demo
       - CAPTURE_MIN_DOWN=${CAPTURE_MIN_DOWN:-20}           # don’t restart within 20s of stopping
       - CAPTURE_MIN_UP=${CAPTURE_MIN_UP:-60}             # keep at least 60s up before stopping
       - CAPTURE_STARTUP_SETTLE=${CAPTURE_STARTUP_SETTLE:-3}      # wait 3s after start to let camera settle
+      - PUBLIC_BASE=${PUBLIC_BASE:-http://${FRONTEND_HOST:-localhost}}
 
 
     volumes:

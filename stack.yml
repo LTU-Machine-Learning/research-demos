@@ -183,3 +183,26 @@ services:
         parallelism: 1
         delay: 2s
     init: true
+  
+  chang-demo:
+    image: chang-demo:local
+    networks:
+      hub:
+        aliases: [chang-demo]
+    environment:
+      - CAMERA_RTSP=rtsp://mediamtx:8554/cam
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    deploy:
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      restart_policy:
+        condition: any
+        delay: 2s
+        max_attempts: 0
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+    init: true

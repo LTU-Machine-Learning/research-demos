@@ -8,9 +8,11 @@ import time
 # RTSP from mediamtx (Vision Hub input)
 CAMERA_RTSP = os.getenv("CAMERA_RTSP", "rtsp://mediamtx:8554/cam")
 
-# Local UDP endpoints inside the container
-UDP_IN_URL = "udp://127.0.0.1:12345?pkt_size=1316&reuse=1"
-UIMAIN_INPUT = "udp://127.0.0.1:12345?fifo_size=5000000&overrun_nonfatal=1"
+# ffmpeg writes to this
+UDP_IN_URL = "udp://127.0.0.1:12345"
+
+# uimain reads this (simple URL for OpenCV)
+UIMAIN_INPUT = "udp://127.0.0.1:12345"
 
 # Port where uimain outputs (we assume this from its CLI, default 12346)
 UIMAIN_OUTPUT_PORT = os.getenv("UIMAIN_OUTPUT_PORT", "12346")

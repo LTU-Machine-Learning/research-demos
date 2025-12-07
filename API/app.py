@@ -42,7 +42,7 @@ CAPTURE_STARTUP_SETTLE  = int(os.getenv("CAPTURE_STARTUP_SETTLE", "3")) # settle
 # CORS
 ALLOW_ORIGINS = [o for o in os.getenv(
     "ALLOW_ORIGINS",
-    "http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321,http://192.168.10.1:4321"
+    "http://localhost:4321,http://127.0.0.1:4321"
 ).split(",") if o]
 ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", "")
 
@@ -98,7 +98,7 @@ def _stop_need(name: str):
     else:
         _service_scale(name, 0)
 
-PUBLIC_BASE = os.getenv("PUBLIC_BASE", "http://192.168.10.2")  # your frontend host
+PUBLIC_BASE = os.getenv("PUBLIC_BASE", "http://localhost")  # your frontend host
 def _browser_url_for(demo_id: str) -> Optional[str]:
     if demo_id == "yolo": return f"{PUBLIC_BASE}:6000/"
     if demo_id == "pose": return f"{PUBLIC_BASE}:6001/"

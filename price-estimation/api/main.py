@@ -33,7 +33,7 @@ app = FastAPI(title=APP_TITLE, version=APP_VERSION)
 # CORS
 allowed = os.getenv(
     "ALLOW_ORIGINS",
-    "http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321",
+    "http://localhost:4321,http://127.0.0.1:4321",
 ).split(",")
 
 allow_origin_regex = os.getenv("ALLOW_ORIGIN_REGEX")  # e.g. r"^https?://192\.168\.10\.\d+:4321$"

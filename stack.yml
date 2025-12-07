@@ -15,16 +15,16 @@ services:
         aliases: [mediamtx]
     ports:
       - target: 8554
-        published: 8554
+        published: ${MEDIAMTX_RTSP_PORT:-8554}
         protocol: tcp   # RTSP
       - target: 8889
-        published: 8889
+        published: ${MEDIAMTX_HTTP_PORT:-8889}
         protocol: tcp   # WHEP/WHIP HTTP
       - target: 8189
-        published: 8189
+        published: ${MEDIAMTX_WEBRTC_PORT:-8189}
         protocol: udp   # WebRTC (UN SEUL port en 1.15.3)
       - target: 8189
-        published: 8189
+        published: ${MEDIAMTX_WEBRTC_PORT:-8189}
         protocol: tcp   # WebRTC TCP (TEMP while debugging)
     deploy:
       placement:
@@ -39,7 +39,7 @@ services:
         aliases: [ui-astro]
     ports:
       - target: 4321
-        published: 4321
+        published: ${FRONTEND_PORT:-4321}
         protocol: tcp
     deploy:
       placement:
@@ -61,10 +61,10 @@ services:
     environment:
       - TZ=Europe/Stockholm
       - MODEL_DIR=/app/model
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321,http://ui-astro:4321,http://api:8090
+      - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321,http://ui-astro:4321,http://api:8090}
     ports:
       - target: 8080
-        published: 8080
+        published: ${PRICE_API_PORT:-8080}
         protocol: tcp
     volumes:
       - /srv/vision-hub/model:/app/model:ro
@@ -91,22 +91,22 @@ services:
     networks: [hub]
     environment:
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321
-      - STACK_NAME=vision-hub
-      - PUBLIC_BASE=http://192.168.10.2:4321
+      - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321}
+      - STACK_NAME=${STACK_NAME:-vision-hub}
+      - PUBLIC_BASE=${PUBLIC_BASE:-http://localhost}
       - IDLE_SECONDS=${IDLE_SECONDS:-120}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - CONSENT_SECRET=${CONSENT_SECRET}
       - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS:-600}
       - CONSENT_AUD=${CONSENT_AUD}
-      - CAPTURE_NAME=vision-hub-capture
-      - CAPTURE_IDLE_GRACE=180
-      - CAPTURE_MIN_DOWN=20
-      - CAPTURE_MIN_UP=60
-      - CAPTURE_STARTUP_SETTLE=3
+      - CAPTURE_NAME=${CAPTURE_NAME:-vision-hub-capture}
+      - CAPTURE_IDLE_GRACE=${CAPTURE_IDLE_GRACE:-180}
+      - CAPTURE_MIN_DOWN=${CAPTURE_MIN_DOWN:-20}
+      - CAPTURE_MIN_UP=${CAPTURE_MIN_UP:-60}
+      - CAPTURE_STARTUP_SETTLE=${CAPTURE_STARTUP_SETTLE:-3}
     ports:
       - target: 8090
-        published: 8090
+        published: ${API_PORT:-8090}
         protocol: tcp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -138,7 +138,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - target: 6000
-        published: 6002
+        published: ${YOLO_PORT:-6002}
         protocol: tcp
     deploy:
       placement:
@@ -170,7 +170,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - target: 6000
-        published: 6001
+        published: ${POSE_PORT:-6001}
         protocol: tcp
     deploy:
       placement:

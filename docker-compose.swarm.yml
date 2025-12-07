@@ -12,13 +12,13 @@ services:
     networks: [hub]
     ports:
       - target: 8554
-        published: 8554
+        published: ${MEDIAMTX_RTSP_PORT:-8554}
         protocol: tcp
       - target: 8889
-        published: 8889
+        published: ${MEDIAMTX_HTTP_PORT:-8889}
         protocol: tcp
       - target: 8189
-        published: 8189
+        published: ${MEDIAMTX_WEBRTC_PORT:-8189}
         protocol: udp
     deploy:
       placement:
@@ -33,7 +33,7 @@ services:
     networks: [hub]
     ports:
       - target: 4321
-        published: 4321
+        published: ${FRONTEND_PORT:-4321}
         protocol: tcp
     # depends_on is ignored by Swarm; startup order handled by retries
     deploy:
@@ -57,7 +57,7 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
       - target: 6000
-        published: 6000
+        published: ${YOLO_PORT:-6000}
         protocol: tcp
     deploy:
       placement:
@@ -88,7 +88,7 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
       - target: 6000
-        published: 6001
+        published: ${POSE_PORT:-6001}
         protocol: tcp
     deploy:
       placement:
@@ -108,10 +108,10 @@ services:
     environment:
       - TZ=Europe/Stockholm
       - MODEL_DIR=/app/model
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+      - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321}
     ports:
       - target: 8080
-        published: 8080
+        published: ${PRICE_API_PORT:-8080}
         protocol: tcp
     volumes:
       - /srv/vision-hub/model:/app/model:ro
@@ -131,11 +131,11 @@ services:
       - ORCH_TOKEN=${ORCH_TOKEN:-dev-token}
 
       # --- CORS ---
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321
+      - ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:4321,http://127.0.0.1:4321}
 
       # --- Swarm awareness ---
-      - STACK_NAME=vision-hub
-      - PUBLIC_BASE=http://192.168.10.2:4321
+      - STACK_NAME=${STACK_NAME:-vision-hub}
+      - PUBLIC_BASE=${PUBLIC_BASE:-http://localhost}
 
       # --- Idle / Capture config ---
       - IDLE_SECONDS=${IDLE_SECONDS:-120}
@@ -143,14 +143,14 @@ services:
       - CONSENT_SECRET=${CONSENT_SECRET}
       - CONSENT_TTL_SECONDS=${CONSENT_TTL_SECONDS}
       - CONSENT_AUD=${CONSENT_AUD}
-      - CAPTURE_NAME=vision-hub-capture
-      - CAPTURE_IDLE_GRACE=180
-      - CAPTURE_MIN_DOWN=20
-      - CAPTURE_MIN_UP=60
-      - CAPTURE_STARTUP_SETTLE=3
+      - CAPTURE_NAME=${CAPTURE_NAME:-vision-hub-capture}
+      - CAPTURE_IDLE_GRACE=${CAPTURE_IDLE_GRACE:-180}
+      - CAPTURE_MIN_DOWN=${CAPTURE_MIN_DOWN:-20}
+      - CAPTURE_MIN_UP=${CAPTURE_MIN_UP:-60}
+      - CAPTURE_STARTUP_SETTLE=${CAPTURE_STARTUP_SETTLE:-3}
     ports:
       - target: 8090
-        published: 8090
+        published: ${API_PORT:-8090}
         protocol: tcp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

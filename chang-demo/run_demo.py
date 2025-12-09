@@ -5,6 +5,7 @@ import signal
 import sys
 import time
 import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # RTSP from mediamtx (Vision Hub input)
 CAMERA_RTSP = os.getenv("CAMERA_RTSP", "rtsp://192.168.10.2:8554/cam")
@@ -30,6 +31,7 @@ ffmpeg_in_proc = None
 ffmpeg_out_proc = None
 uimain_proc = None
 stop_all = False
+health_server = None  # <- important so shutdown() never sees an undefined name
 
 
 def start_ffmpeg_in():
@@ -43,7 +45,7 @@ def start_ffmpeg_in():
         "-probesize", "1000000",
         "-i", CAMERA_RTSP,
         "-map", "0:v:0",
-        "-c:v", "copy",          # <== NO re-encode, low latency
+        "-c:v", "copy",  # <== NO re-encode, low latency
         "-f", "mpegts",
         "-mpegts_flags", "+resend_headers+initial_discontinuity",
         "-muxdelay", "0",
@@ -117,11 +119,19 @@ def kill_proc(p):
 
 def shutdown(signum, frame):
     print(f"[chang-demo] Caught signal {signum}, shutting down...", flush=True)
-    global ffmpeg_in_proc, ffmpeg_out_proc, uimain_proc, stop_all
-    stop_all = True
-    kill_proc(ffmpeg_out_proc)
-    kill_proc(uimain_proc)
-    kill_proc(ffmpeg_in_proc)
+    global ffmpeg_in_proc, ffmpeg_out_proc, uimain_proc, health_server
+
+    # Use kill_proc helper for all three
+    for p in (uimain_proc, ffmpeg_out_proc, ffmpeg_in_proc):
+        kill_proc(p)
+
+    if health_server is not None:
+        try:
+            health_server.shutdown()
+        except Exception:
+            pass
+        health_server = None
+
     sys.exit(0)
 
 
@@ -155,9 +165,54 @@ def watch_uimain(proc, ready_flag, failed_flag, timeout_s=10):
         failed_flag["v"] = True
 
 
+def pipeline_ok() -> bool:
+    """Return True if all 3 subprocesses appear alive."""
+    if ffmpeg_in_proc is None or ffmpeg_in_proc.poll() is not None:
+        return False
+    if uimain_proc is None or uimain_proc.poll() is not None:
+        return False
+    if ffmpeg_out_proc is None or ffmpeg_out_proc.poll() is not None:
+        return False
+    return True
+
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path != "/healthz":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        ok = pipeline_ok()
+        body = (b'{"ok":true}' if ok else b'{"ok":false}')
+
+        self.send_response(200 if ok else 503)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    # avoid noisy logs on stdout
+    def log_message(self, fmt, *args):
+        return
+
+
+def start_health_server():
+    global health_server
+    port = int(os.getenv("HEALTH_PORT", "7000"))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    th = threading.Thread(target=server.serve_forever, daemon=True)
+    th.start()
+    health_server = server
+    print(f"[chang-demo] health server listening on 0.0.0.0:{port}/healthz", flush=True)
+
+
 def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
+
+    # start HTTP /healthz in the background
+    start_health_server()
 
     print(f"[chang-demo] CAMERA_RTSP={CAMERA_RTSP}", flush=True)
     print(f"[chang-demo] OUTPUT_RTSP={OUTPUT_RTSP}", flush=True)

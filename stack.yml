@@ -190,7 +190,10 @@ services:
       hub:
         aliases: [chang-demo]
     environment:
-      - CAMERA_RTSP=rtsp://mediamtx:8554/cam
+      - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
+      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot
+      - UIMAIN_OUTPUT_PORT=12346
+      - HEALTH_PORT=7000
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
     deploy:
@@ -205,4 +208,12 @@ services:
         order: start-first
         parallelism: 1
         delay: 2s
+      # 👇 avoid log files going infinite
+      labels: {}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     init: true
+

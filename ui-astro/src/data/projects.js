@@ -69,6 +69,61 @@ export default [
 
   },
   {
+    slug: 'chang',
+    title: "Chang's ONNX Pose Pipeline",
+    description:
+      'Real-time human pose estimation using a C++/ONNX Runtime pipeline (uimain), fed by a low-latency RTSP stream and re-published as an annotated H.264 stream via MediaMTX.',
+    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    author: {
+      name: 'Tom Burellier',
+      url: 'https://github.com/balmine',
+      role: 'Integrator (Vision Hub)',
+    },
+    contributors: ['Chang'],
+    repo: 'https://github.com/chang/idk',
+    upstreams: [
+      {
+        name: 'uimain ONNX pose demo',
+        url: 'https://github.com/…', // optional: fill real URL if you want
+        role: 'Base C++ ONNX pose pipeline',
+      },
+      {
+        name: 'ONNX Runtime',
+        url: 'https://onnxruntime.ai/',
+        role: 'Inference backend (CPU / CUDA)',
+      },
+      {
+        name: 'FFmpeg',
+        url: 'https://ffmpeg.org/',
+        role: 'RTSP ingest + UDP MPEG-TS + H.264 re-encode',
+      },
+      {
+        name: 'MediaMTX',
+        url: 'https://github.com/bluenviron/mediamtx',
+        role: 'RTSP/WebRTC hub for annotated stream',
+      },
+      {
+        name: 'CUDA / NVIDIA stack',
+        url: 'https://developer.nvidia.com/',
+        role: 'Hardware acceleration for ONNX Runtime',
+      },
+    ],
+    history: [
+      {
+        date: '2025-12-09',
+        event:
+          'First working integration: RTSP cam → FFmpeg (copy) → UDP → uimain (ONNX) → UDP → FFmpeg → MediaMTX (chang_annot).',
+      },
+      {
+        date: '2025-12-09',
+        event:
+          'Added health endpoint and orchestration via Vision Hub API (start/stop through /demos/chang).',
+      },
+    ],
+    video: '/videos/chang-demo.mp4', // optional: add when you have a recording
+    demoUrl: '/demo/chang',
+  },
+  {
   slug: 'price',
   title: 'House Price Estimation (Sweden / Luleå demo)',
   description: 'Tabular ML pipeline (LightGBM + FastAPI) that estimates home prices and returns prediction intervals. Trained on a Sweden-wide dataset; easily swappable to Luleå/Norrbotten when data access is granted.',

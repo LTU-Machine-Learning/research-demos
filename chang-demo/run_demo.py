@@ -35,28 +35,30 @@ def start_ffmpeg_in():
     global ffmpeg_in_proc
     cmd = [
         "ffmpeg",
-        "-fflags", "nobuffer",
-        "-flags", "low_delay",
-        "-rtsp_transport", "udp",
+        "-loglevel", "info",
+
+        # Less aggressive low-latency, allow enough data to parse the stream:
+        "-rtsp_transport", "tcp",
+        "-analyzeduration", "1000000",  # 1s in microseconds
+        "-probesize", "1000000",        # 1 MB
+
         "-i", CAMERA_RTSP,
+
         "-map", "0:v:0",
-        "-c:v", "libx264",
-        "-preset", "veryfast",
-        "-tune", "zerolatency",
-        "-pix_fmt", "yuv420p",
-        "-r", "30",
-        "-g", "30",
-        "-keyint_min", "30",
-        "-x264-params", "repeat-headers=1:scenecut=0:open_gop=0",
+        # For now, don't even re-encode: just copy H264 from the camera
+        "-c:v", "copy",
+
         "-f", "mpegts",
         "-mpegts_flags", "+resend_headers+initial_discontinuity",
         "-muxdelay", "0",
         "-muxpreload", "0",
         "-flush_packets", "1",
-        UDP_IN_URL,
+
+        "udp://127.0.0.1:12345",
     ]
     print("[chang-demo] ffmpeg_in:", " ".join(cmd), flush=True)
     ffmpeg_in_proc = subprocess.Popen(cmd)
+
 
 
 def start_uimain():

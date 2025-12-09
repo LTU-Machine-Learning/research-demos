@@ -10,8 +10,8 @@ WORKDIR /root/chang-demo
 
 COPY run_demo.py /root/chang-demo/run_demo.py
 
-ENV CAMERA_RTSP=rtsp://mediamtx:8554/cam \
-    OUTPUT_RTSP=rtsp://mediamtx:8554/chang_annot \
+ENV CAMERA_RTSP=rtsp://192.168.10.2:8554/cam \
+    OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot \
     UIMAIN_OUTPUT_PORT=12346
 
 ENTRYPOINT ["/usr/bin/env", "python3", "/root/chang-demo/run_demo.py"]

@@ -142,7 +142,7 @@ _capture_stop_timer: Optional[threading.Timer] = None
 _capture_lock = threading.Lock()
 
 # ================== AUTH / CONSENT ==================
-def _auth(x_token: Optb22ed3fb5c6bional[str] = Header(None), token: Optional[str] = Query(None)):
+def _auth(x_token: Optional[str] = Header(None), token: Optional[str] = Query(None)):
     tok = x_token or token
     if tok != API_TOKEN:
         raise HTTPException(401, "Unauthorized")

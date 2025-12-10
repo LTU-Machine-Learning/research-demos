@@ -103,12 +103,13 @@ def _stop_need(name: str):
     else:
         _service_scale(name, 0)
 
-PUBLIC_BASE = os.getenv("PUBLIC_BASE", "http://192.168.10.2")  # your frontend host
+PUBLIC_BASE_NO_GPU = os.getenv("PUBLIC_BASE_NO_GPU", "http://192.168.10.2")  # your frontend host
+PUBLIC_BASE_GPU = os.getenv("PUBLIC_BASE_GPU", "http://192.168.10.1")  # your frontend host for GPU demos
 def _browser_url_for(demo_id: str) -> Optional[str]:
-    if demo_id == "yolo": return f"{PUBLIC_BASE}:6000/"
-    if demo_id == "pose": return f"{PUBLIC_BASE}:6001/"
-    if demo_id == "price": return f"{PUBLIC_BASE}:8080/healthz"
-    if demo_id == "chang": return f"{PUBLIC_BASE}:7000/healthz"
+    if demo_id == "yolo": return f"{PUBLIC_BASE_GPU}:6000/"
+    if demo_id == "pose": return f"{PUBLIC_BASE_GPU}:6001/"
+    if demo_id == "price": return f"{PUBLIC_BASE_NO_GPU}:8080/healthz"
+    if demo_id == "chang": return f"{PUBLIC_BASE_GPU}:7000/healthz"
     return None
 
 # ================== FASTAPI / CORS ==================
@@ -141,7 +142,7 @@ _capture_stop_timer: Optional[threading.Timer] = None
 _capture_lock = threading.Lock()
 
 # ================== AUTH / CONSENT ==================
-def _auth(x_token: Optional[str] = Header(None), token: Optional[str] = Query(None)):
+def _auth(x_token: Optb22ed3fb5c6bional[str] = Header(None), token: Optional[str] = Query(None)):
     tok = x_token or token
     if tok != API_TOKEN:
         raise HTTPException(401, "Unauthorized")

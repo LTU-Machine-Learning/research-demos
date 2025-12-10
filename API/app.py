@@ -108,7 +108,7 @@ def _browser_url_for(demo_id: str) -> Optional[str]:
     if demo_id == "yolo": return f"{PUBLIC_BASE}:6000/"
     if demo_id == "pose": return f"{PUBLIC_BASE}:6001/"
     if demo_id == "price": return f"{PUBLIC_BASE}:8080/healthz"
-    if demo_id == "chang": return f"{PUBLIC_BASE}:7000/"
+    if demo_id == "chang": return f"{PUBLIC_BASE}:7000/healthz"
     return None
 
 # ================== FASTAPI / CORS ==================

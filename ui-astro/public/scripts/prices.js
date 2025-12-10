@@ -116,8 +116,10 @@ form?.addEventListener('submit', async (e) => {
 
 // --- Heartbeat (keep demo “active” like yolo/pose) ---
 function beat() {
-  if (!orch) return;
-  fetch(`${orch}/demos/${demo}/heartbeat?token=${encodeURIComponent(token)}`, {
+  // on force un endpoint direct vers l'orchestrateur,
+  // on n'utilise PLUS orch pour le heartbeat
+  const base = 'http://192.168.10.2:8090';   // <-- IP/port de ton orch
+  fetch(`${base}/demos/${demo}/heartbeat?token=${encodeURIComponent(token)}`, {
     method: 'POST',
     headers: { 'x-token': token }
   }).catch(() => {});

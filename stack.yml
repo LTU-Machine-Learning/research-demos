@@ -196,6 +196,9 @@ services:
       - HEALTH_PORT=7000
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    ports:
+      - target: 7000
+        published: 7000
     deploy:
       placement:
         constraints:

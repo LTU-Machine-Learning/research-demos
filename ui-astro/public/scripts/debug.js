@@ -235,14 +235,12 @@ async function doStartDemo(id, btnStart, btnStop) {
       orchStatusEl && (orchStatusEl.textContent = err.message);
       alert(err.message);
     } else if (err.status === 401) {
-      // backend says token invalid/expired -> wipe local and tell user to re-consent
-      clearLocalConsent(id);
-      const msg =
+    const msg =
         `Start ${id} failed: consent token rejected by orchestrator.\n\n` +
-        `Open the ${id} demo on the main screen, accept the camera consent again, ` +
-        `then retry from this debug page.`;
-      orchStatusEl && (orchStatusEl.textContent = msg);
-      alert(msg);
+        `Either the token actually expired, or the backend disagrees with the local state.\n` +
+        `Check /privacy for the token status and/or re-accept consent on the ${id} demo page.`;
+    orchStatusEl && (orchStatusEl.textContent = msg);
+    alert(msg);
     } else {
       orchStatusEl && (orchStatusEl.textContent = `Start ${id} failed: ${err.message || err}`);
       alert(`Start ${id} failed: ${err.message || err}`);
@@ -276,13 +274,12 @@ async function doStopDemo(id, btnStart, btnStop) {
       orchStatusEl && (orchStatusEl.textContent = err.message);
       alert(err.message);
     } else if (err.status === 401) {
-      clearLocalConsent(id);
-      const msg =
-        `Stop ${id} failed: consent token rejected by orchestrator.\n\n` +
-        `The previous consent probably expired. Open the ${id} demo, re-accept consent, ` +
-        `then retry from this debug page.`;
-      orchStatusEl && (orchStatusEl.textContent = msg);
-      alert(msg);
+        const msg =
+            `Stop ${id} failed: consent token rejected by orchestrator.\n\n` +
+            `The backend no longer accepts this consent token.\n` +
+            `You can inspect the token on /privacy and/or re-accept consent on the ${id} demo page.`;
+        orchStatusEl && (orchStatusEl.textContent = msg);
+        alert(msg);
     } else {
       orchStatusEl && (orchStatusEl.textContent = `Stop ${id} failed: ${err.message || err}`);
       alert(`Stop ${id} failed: ${err.message || err}`);
@@ -330,12 +327,11 @@ async function doRestartDemo(id, btnStart, btnStop) {
       orchStatusEl && (orchStatusEl.textContent = err.message);
       alert(err.message);
     } else if (err.status === 401) {
-      clearLocalConsent(id);
-      const msg =
-        `Restart ${id} failed: consent token rejected.\n\n` +
-        `Open the ${id} demo, re-accept consent, then retry.`;
-      orchStatusEl && (orchStatusEl.textContent = msg);
-      alert(msg);
+        const msg =
+            `Restart ${id} failed: consent token rejected.\n\n` +
+            `The backend no longer accepts this token. Use /privacy + demo UI to re-sync consent.`;
+        orchStatusEl && (orchStatusEl.textContent = msg);
+        alert(msg);
     } else {
       orchStatusEl && (orchStatusEl.textContent = `Restart ${id} failed: ${err.message || err}`);
       alert(`Restart ${id} failed: ${err.message || err}`);
@@ -362,7 +358,6 @@ btnStopAll?.addEventListener('click', async () => {
       });
     } catch (e) {
       console.warn('[debug] stop-all: failed for', id, e);
-      if (e.status === 401) clearLocalConsent(id);
     }
   }
   await loadDemosIntoTable();
@@ -383,11 +378,10 @@ btnRestartGpu?.addEventListener('click', async () => {
         });
       } catch (e) {
         if (e.status === 401) {
-          clearLocalConsent(id);
-          throw e;
+            throw e; // just bubble the error, don't wipe local consent
         }
-        console.warn('[debug] gpu restart: stop failed (ignored)', id, e);
-      }
+        console.warn('[debug] restart: stop failed (ignored)', id, e);
+    }
 
       await sleep(300);
       const freshToken = getConsentTokenOrThrow(id);
@@ -397,7 +391,6 @@ btnRestartGpu?.addEventListener('click', async () => {
       });
     } catch (e) {
       console.warn('[debug] gpu restart: failed for', id, e);
-      if (e.status === 401) clearLocalConsent(id);
     }
   }
   await loadDemosIntoTable();

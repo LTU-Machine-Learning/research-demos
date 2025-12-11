@@ -9,7 +9,7 @@ type DemoCfg = {
   orch?: string;   // e.g. ":8090"
   token?: string;
   demoId: string;
-  wsKind?: "boxes" | "pose";
+  wsKind?: "boxes" | "pose" | "none";  
   kind?: "video" | "form";  // UI kind
 };
 
@@ -61,6 +61,8 @@ export default function demos(slug: string): DemoCfg {
       token: "dev-token",
       demoId: "chang",
       kind: "video",
+      ws: '',
+      wsKind: "none",
     },
 
   };

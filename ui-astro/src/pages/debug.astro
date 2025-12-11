@@ -1,38 +1,258 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
-import DebugLayout from '../layouts/DebugLayout.astro';
-import VideoCard from '../components/VideoCard.astro';
 
-const TITLE = 'Vision Hub - Démos - Debug';
-const NOTE  = 'Aperçu faible latence (WebRTC) – cam & annot + compteur FPS.';
+const title = 'Vision Hub – Debug';
+const description = 'Internal control center for demos & streams';
 ---
-<DebugLayout title={TITLE} note={NOTE}>
-  <div class="grid">
-    <VideoCard title="Preview (WebRTC – cam)"
-      videoId="webrtc" fpsId="fpsCam" qualityId="qCam" stateId="rtcCam" />
-    <VideoCard title="Annotation (WebRTC – annot)"
-      videoId="annotRtc" fpsId="fpsAnnot" qualityId="qAnnot" stateId="rtcAnnot" />
-  </div>
 
-  <div class="card" style="margin-top:16px">
-    <h3 style="margin:6px 0 12px">Endpoints</h3>
-    <div class="kvs">
-      <b>WHEP cam</b><span id="epCam">—</span>
-      <b>WHEP annot</b><span id="epAnnot">—</span>
-      <b>Tips</b><span>Ouvre 8889/TCP et 8189/UDP (ICE) sur MediaMTX.</span>
+<SiteLayout {title} {description}>
+  <style>
+    .debug-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      margin-top: 12px;
+    }
+    .debug-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .debug-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .card {
+      background: linear-gradient(150deg, #10131d 0%, #0c0f18 100%);
+      border-radius: 18px;
+      border: 1px solid #222a3e;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.45);
+      padding: 18px 20px;
+    }
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 1.2rem;
+    }
+    .card p {
+      margin: 0 0 12px;
+      font-size: .9rem;
+      color: #9fb2da;
+    }
+    .demo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    .demo-table th,
+    .demo-table td {
+      padding: 6px 4px;
+      border-bottom: 1px solid #1e2536;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .demo-table th:first-child,
+    .demo-table td:first-child {
+      padding-left: 0;
+    }
+    .demo-table th:last-child,
+    .demo-table td:last-child {
+      padding-right: 0;
+      text-align: right;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: .78rem;
+      border: 1px solid transparent;
+    }
+    .badge.on     { background: #103521; color: #7df7b0; border-color:#1f7d46; }
+    .badge.off    { background: #1b1f2d; color: #a2b0d5; border-color:#2a3248; }
+    .badge.miss   { background: #3a1414; color: #ffc4c4; border-color:#7b2f2f; }
+
+    .btn {
+      border-radius: 999px;
+      padding: 4px 10px;
+      border: 1px solid #2a3652;
+      background: #121728;
+      color: #d6e2ff;
+      font-size: .8rem;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: linear-gradient(120deg, #27d07d, #1fb86b);
+      border-color: transparent;
+      color: #061118;
+    }
+    .btn.danger {
+      background: #3a1420;
+      border-color: #7b2f46;
+      color: #ffd6e1;
+    }
+    .btn.small {
+      padding: 3px 8px;
+      font-size: .78rem;
+    }
+    .btn[disabled] {
+      opacity: .45;
+      cursor: default;
+    }
+    .btn-row {
+      display: inline-flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    /* Probe */
+    .probe-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .probe-controls select,
+    .probe-controls input[type="text"] {
+      background:#0e1422;
+      color:#e8eefc;
+      border:1px solid #2a3652;
+      border-radius:10px;
+      padding:6px 8px;
+      font-size:.85rem;
+    }
+    .probe-controls input[type="text"] {
+      flex: 1;
+      min-width: 180px;
+    }
+    .probe-meta {
+      display:flex;
+      gap:12px;
+      font-size:.8rem;
+      color:#9fb2da;
+      margin-top:4px;
+      margin-bottom:8px;
+    }
+    .probe-video-wrap {
+      position:relative;
+      width:100%;
+      aspect-ratio:16/9;
+      min-height:180px;
+      background:#000;
+      border-radius:12px;
+      overflow:hidden;
+    }
+    #probe-video {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      border-radius:12px;
+      background:#000;
+    }
+    .probe-overlay-label {
+      position:absolute;
+      top:8px;
+      left:8px;
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:.75rem;
+      background:rgba(3,8,20,0.85);
+      color:#d6e2ff;
+      border:1px solid #2a3652;
+    }
+    .probe-error {
+      margin-top:8px;
+      font-size:.8rem;
+      color:#ffb3c1;
+    }
+
+    .tagline {
+      font-size:.85rem;
+      color:#8fa3ce;
+    }
+  </style>
+
+  <div class="debug-wrap">
+    <header>
+      <h1>Debug & Control</h1>
+      <p class="tagline">
+        Internal view to poke the orchestrator, restart demos, and probe raw WebRTC streams.
+      </p>
+    </header>
+
+    <div class="debug-grid">
+      {/* --- DEMO / ORCHESTRATOR CONTROL --- */}
+      <section
+        class="card"
+        id="debug-orch"
+        data-orch=":8090"
+        data-token="dev-token"
+      >
+        <h2>Demo & Orchestrator control</h2>
+        <p>Start / stop / restart demos via the orchestrator API.</p>
+
+        <div style="margin-bottom:8px; display:flex; justify-content:space-between; gap:8px; align-items:center;">
+          <span id="orch-status" style="font-size:.8rem; color:#9fb2da;">Loading orchestrator status…</span>
+          <button class="btn small" id="btn-refresh-demos">Refresh</button>
+        </div>
+
+        <table class="demo-table">
+          <thead>
+            <tr>
+              <th>Demo</th>
+              <th>Status</th>
+              <th>URL</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="demo-table-body">
+            {/* filled by debug.js */}
+          </tbody>
+        </table>
+
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn small danger" id="btn-stop-all">Stop all demos</button>
+          <button class="btn small" id="btn-restart-yolo-pose">Restart GPU demos (yolo + pose)</button>
+        </div>
+      </section>
+
+      {/* --- WHEP PROBE --- */}
+      <section class="card" id="debug-probe">
+        <h2>WHEP Stream probe</h2>
+        <p>Connect to raw MediaMTX WHEP endpoints to inspect the live camera / annot streams.</p>
+
+        <div class="probe-controls">
+          <label style="font-size:.8rem;">
+            Stream:
+            {' '}
+            <select id="probe-kind">
+              <option value="cam">Camera (cam)</option>
+              <option value="annot">Annotation (annot)</option>
+            </select>
+          </label>
+          <input id="probe-url" type="text" spellcheck="false" />
+          <button class="btn primary small" id="probe-connect">Connect</button>
+          <button class="btn small" id="probe-disconnect" disabled>Disconnect</button>
+        </div>
+
+        <div class="probe-meta">
+          <span>State: <b id="probe-state">idle</b></span>
+          <span>FPS: <b id="probe-fps">—</b></span>
+        </div>
+
+        <div class="probe-video-wrap">
+          <video id="probe-video" autoplay playsinline muted></video>
+          <div class="probe-overlay-label" id="probe-overlay-label">—</div>
+        </div>
+
+        <div id="probe-error" class="probe-error" hidden></div>
+      </section>
     </div>
   </div>
 
-  <div class="card">
-    <h3 style="margin:6px 0 12px">Cam (Overlay client – WebRTC + canvas)</h3>
-    <div class="stack">
-      <video id="camOverlay" autoplay playsinline muted></video>
-      <canvas id="ovl"></canvas>
-    </div>
-    <div class="kvs" style="margin-top:8px">
-      <b>Qualité</b><span id="qOverlay">—</span>
-    </div>
-  </div>
-
-  <script type="module" src="/scripts/debug-entry.js"></script>
-</DebugLayout>
+  <script type="module" src="/scripts/debug.js"></script>
+</SiteLayout>

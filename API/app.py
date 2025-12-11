@@ -538,6 +538,168 @@ def heartbeat_demo(
     _reconcile_shared_deps()
     return {"ok": True, "id": demo_id, "lastBeat": int(_last_beat[demo_id])}
 
+# ================== DEBUG ROUTES (admin-style, token-protected) ==================
+
+class DebugActionResult(BaseModel):
+    ok: bool
+    detail: Optional[str] = None
+
+def _demo_service_short(demo_id: str) -> Optional[str]:
+    spec = DEMOS.get(demo_id) or {}
+    return spec.get("service")
+
+@app.get("/debug/demos", response_model=list[DemoStatus])
+def debug_list_demos(
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    """
+    Same as /demos but without touching heartbeat / idle logic.
+    Intended for the admin debug UI.
+    """
+    _auth(x_token, token)
+    out: list[DemoStatus] = []
+    for demo_id, spec in DEMOS.items():
+        exists = running = False
+        if _demo_has_service(demo_id):
+            exists = _service_get(spec["service"]) is not None
+            running = _service_running(spec["service"])
+        out.append(DemoStatus(
+            id=demo_id,
+            exists=exists,
+            running=running,
+            url=_browser_url_for(demo_id),
+        ))
+    return out
+
+@app.post("/debug/demos/{demo_id}/start", response_model=DebugActionResult)
+def debug_start_demo(
+    demo_id: str,
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    """
+    Force-start a demo service (no consent, admin-only).
+    Does NOT manage capture/mediamtx hysteresis, just scales the service.
+    """
+    _auth(x_token, token)
+    svc_short = _demo_service_short(demo_id)
+    if not svc_short:
+        raise HTTPException(404, "Unknown or non-service demo id")
+    if not _service_scale(svc_short, 1):
+        raise HTTPException(404, f"Service '{_svc_name(svc_short)}' not found.")
+    return DebugActionResult(ok=True, detail=f"demo={demo_id} start requested")
+
+@app.post("/debug/demos/{demo_id}/stop", response_model=DebugActionResult)
+def debug_stop_demo(
+    demo_id: str,
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    """
+    Force-stop a demo service (no consent), admin-only.
+    """
+    _auth(x_token, token)
+    svc_short = _demo_service_short(demo_id)
+    if not svc_short:
+        raise HTTPException(404, "Unknown or non-service demo id")
+    if not _service_scale(svc_short, 0):
+        raise HTTPException(404, f"Service '{_svc_name(svc_short)}' not found.")
+    _last_beat.pop(demo_id, None)
+    _active_demos.discard(demo_id)
+    _schedule_capture_stop_if_idle()
+    _reconcile_shared_deps()
+    return DebugActionResult(ok=True, detail=f"demo={demo_id} stop requested")
+
+@app.post("/debug/demos/{demo_id}/restart", response_model=DebugActionResult)
+def debug_restart_demo(
+    demo_id: str,
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    """
+    Hard restart: scale demo to 0 then 1.
+    """
+    _auth(x_token, token)
+    svc_short = _demo_service_short(demo_id)
+    if not svc_short:
+        raise HTTPException(404, "Unknown or non-service demo id")
+
+    if not _service_scale(svc_short, 0):
+        raise HTTPException(404, f"Service '{_svc_name(svc_short)}' not found.")
+
+    time.sleep(1.0)
+    _service_scale(svc_short, 1)
+
+    _last_beat[demo_id] = time.time()
+    _active_demos.add(demo_id)
+    _ensure_idle_monitor()
+    _reconcile_shared_deps()
+    return DebugActionResult(ok=True, detail=f"demo={demo_id} restarted")
+
+@app.post("/debug/capture/restart", response_model=DebugActionResult)
+def debug_restart_capture(
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    """
+    Restart the shared capture container (local-only).
+    """
+    _auth(x_token, token)
+    _stop_if_exists(CAPTURE_NAME)
+    time.sleep(1.0)
+    _start_if_exists(CAPTURE_NAME)
+    return DebugActionResult(ok=True, detail="capture restarted")
+
+@app.post("/debug/core/{name}/restart", response_model=DebugActionResult)
+def debug_restart_core(
+    name: str,
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    """
+    Restart core dependencies (e.g., mediamtx).
+    """
+    _auth(x_token, token)
+    if name not in CORE:
+        raise HTTPException(404, "Unknown core dependency")
+    _service_scale(name, 0)
+    time.sleep(1.0)
+    _service_scale(name, 1)
+    return DebugActionResult(ok=True, detail=f"core={name} restarted")
+
+@app.post("/debug/all/soft-restart", response_model=DebugActionResult)
+def debug_soft_restart_all(
+    x_token: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+):
+    """
+    'Soft restart' of the whole demo stack:
+    - scale all demo services to 0
+    - restart core services
+    - do NOT auto-restart demos (they'll start on demand via front).
+    """
+    _auth(x_token, token)
+
+    # stop all demos
+    for demo_id, spec in DEMOS.items():
+        svc = spec.get("service")
+        if svc:
+            _service_scale(svc, 0)
+            _last_beat.pop(demo_id, None)
+            _active_demos.discard(demo_id)
+
+    # restart core deps
+    for dep in CORE:
+        _service_scale(dep, 0)
+        time.sleep(0.5)
+        _service_scale(dep, 1)
+
+    _schedule_capture_stop_if_idle()
+    _reconcile_shared_deps()
+    return DebugActionResult(ok=True, detail="soft restart of demos/core done")
+
+
 # ================== STARTUP ==================
 @app.on_event("startup")
 def _on_startup():

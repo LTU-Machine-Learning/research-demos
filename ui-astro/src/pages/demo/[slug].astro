@@ -105,6 +105,7 @@ const description = cfg.subtitle ?? '';
       cursor:pointer;
     }
 
+    /* Popup panel */
     #dbg-panel {
       position:absolute;
       right:0;
@@ -112,31 +113,53 @@ const description = cfg.subtitle ?? '';
       background:#020617;
       border:1px solid #1f2937;
       border-radius:12px;
-      padding:8px 10px;
+      padding:10px 12px;
       box-shadow:0 10px 22px #000a;
       z-index:50;
+      min-width: 190px;
     }
 
+    /* Header row inside panel */
+    .debug-chip-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:6px;
+    }
+
+    .debug-chip-header span {
+      font-size:.75rem;
+      opacity:.7;
+    }
+
+    /* Column of buttons */
     .debug-chip-row {
       display:flex;
-      flex-wrap:wrap;
+      flex-direction:column;
       gap:6px;
     }
 
+    /* Buttons */
     .debug-chip-btn {
-      font-size:.75rem;
-      padding:4px 8px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      width:100%;
+      padding:6px 10px;
       border-radius:999px;
       border:1px solid #374151;
       background:#111827;
       color:#e5e7eb;
+      font-size:.78rem;
       cursor:pointer;
+      white-space:nowrap;
     }
 
     .debug-chip-btn[disabled] {
       opacity:.45;
       cursor:default;
     }
+
   </style>
 
   <div class="wrap">
@@ -154,8 +177,8 @@ const description = cfg.subtitle ?? '';
             <div class="debug-wrap">
               <button type="button" id="dbg-toggle">Debug</button>
               <div id="dbg-panel" style="display:none;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                  <span style="font-size:.75rem;opacity:.7;">Debug controls</span>
+                <div class="debug-chip-header">
+                  <span>Debug controls</span>
                   <button
                     type="button"
                     id="dbg-close"

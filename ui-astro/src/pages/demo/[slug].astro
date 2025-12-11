@@ -88,6 +88,55 @@ const description = cfg.subtitle ?? '';
     @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
 
     .helper{ font-size:.8rem; opacity:.7; margin-top:-4px; }
+
+    /* Debug chip + panel (video demos) */
+    .debug-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    #dbg-toggle {
+      background:#1f2937;
+      border:1px solid #374151;
+      color:#e5e7eb;
+      border-radius:999px;
+      font-size:.8rem;
+      padding:5px 10px;
+      cursor:pointer;
+    }
+
+    #dbg-panel {
+      position:absolute;
+      right:0;
+      top:120%;
+      background:#020617;
+      border:1px solid #1f2937;
+      border-radius:12px;
+      padding:8px 10px;
+      box-shadow:0 10px 22px #000a;
+      z-index:50;
+    }
+
+    .debug-chip-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .debug-chip-btn {
+      font-size:.75rem;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid #374151;
+      background:#111827;
+      color:#e5e7eb;
+      cursor:pointer;
+    }
+
+    .debug-chip-btn[disabled] {
+      opacity:.45;
+      cursor:default;
+    }
   </style>
 
   <div class="wrap">
@@ -103,25 +152,25 @@ const description = cfg.subtitle ?? '';
 
             <!-- Debug toggle + panel -->
             <div class="debug-wrap">
-              <button
-                type="button"
-                id="dbg-toggle"
-                style="background:#1f2937;border:1px solid #374151;color:#e5e7eb;
-                      border-radius:999px;font-size:.8rem;padding:5px 10px;cursor:pointer;">
-                Debug
-              </button>
-              <div
-                id="dbg-panel"
-                style="display:none;position:absolute;right:0;top:32px;
-                      background:#020617;border:1px solid #1f2937;border-radius:12px;
-                      padding:8px 10px;box-shadow:0 10px 22px #000a;z-index:50;"
-              >
-                <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                  <button type="button" id="btn-start"  style="font-size:.75rem;padding:4px 8px;">Start</button>
-                  <button type="button" id="btn-stop"   style="font-size:.75rem;padding:4px 8px;">Stop</button>
-                  <button type="button" id="btn-reconn" style="font-size:.75rem;padding:4px 8px;">Reconnect WS</button>
-                  <button type="button" id="btn-restart" style="font-size:.75rem;padding:4px 8px;">Restart demo</button>
-                  <button type="button" id="btn-reset-overlay" style="font-size:.75rem;padding:4px 8px;">Reset overlay</button>
+              <button type="button" id="dbg-toggle">Debug</button>
+              <div id="dbg-panel" style="display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-size:.75rem;opacity:.7;">Debug controls</span>
+                  <button
+                    type="button"
+                    id="dbg-close"
+                    class="debug-chip-btn"
+                    aria-label="Close debug panel"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div class="debug-chip-row">
+                  <button type="button" id="btn-start"         class="debug-chip-btn">Start</button>
+                  <button type="button" id="btn-stop"          class="debug-chip-btn">Stop</button>
+                  <button type="button" id="btn-reconn"        class="debug-chip-btn">Reconnect WS</button>
+                  <button type="button" id="btn-restart"       class="debug-chip-btn">Restart demo</button>
+                  <button type="button" id="btn-reset-overlay" class="debug-chip-btn">Reset overlay</button>
                 </div>
               </div>
             </div>
@@ -276,15 +325,34 @@ const description = cfg.subtitle ?? '';
   <>
     <script type="module" src="/scripts/viewer.js" is:inline></script>
     <script is:inline>
-      const toggle = document.getElementById('dbg-toggle');
-      const panel  = document.getElementById('dbg-panel');
-      if (toggle && panel) {
-        toggle.addEventListener('click', () => {
-          panel.style.display = panel.style.display === 'none' || !panel.style.display
-            ? 'block'
-            : 'none';
+      (function () {
+        const toggle = document.getElementById('dbg-toggle');
+        const panel  = document.getElementById('dbg-panel');
+        const close  = document.getElementById('dbg-close');
+
+        if (!toggle || !panel) return;
+
+        const hide = () => { panel.style.display = 'none'; };
+        const show = () => { panel.style.display = 'block'; };
+
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (panel.style.display === 'none' || !panel.style.display) show();
+          else hide();
         });
-      }
+
+        close?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          hide();
+        });
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+          if (!panel.contains(e.target) && e.target !== toggle) {
+            hide();
+          }
+        });
+      })();
     </script>
   </>
   )}

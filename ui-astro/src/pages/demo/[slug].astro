@@ -361,40 +361,43 @@ const description = cfg.subtitle ?? '';
   </div>
 
   {cfg.kind === 'video' && (
-  <>
-    <script type="module" src="/scripts/viewer.js" is:inline></script>
-    <script is:inline>
-      (function () {
-        const toggle = document.getElementById('dbg-toggle');
-        const panel  = document.getElementById('dbg-panel');
-        const close  = document.getElementById('dbg-close');
+    <>
+      {/* COCO class map → exposes window.overlayClassMap */}
+      <script src="/scripts/overlay-classmap.js" is:inline></script>
 
-        if (!toggle || !panel) return;
+      {/* Viewer logic (uses globalThis.overlayClassMap if present) */}
+      <script type="module" src="/scripts/viewer.js" is:inline></script>
 
-        const hide = () => { panel.style.display = 'none'; };
-        const show = () => { panel.style.display = 'block'; };
+      <script is:inline>
+        (function () {
+          const toggle = document.getElementById('dbg-toggle');
+          const panel  = document.getElementById('dbg-panel');
+          const close  = document.getElementById('dbg-close');
 
-        toggle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (panel.style.display === 'none' || !panel.style.display) show();
-          else hide();
-        });
+          if (!toggle || !panel) return;
 
-        close?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          hide();
-        });
+          const hide = () => { panel.style.display = 'none'; };
+          const show = () => { panel.style.display = 'block'; };
 
-        // Click outside to close
-        document.addEventListener('click', (e) => {
-          if (!panel.contains(e.target) && e.target !== toggle) {
+          toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (panel.style.display === 'none' || !panel.style.display) show();
+            else hide();
+          });
+
+          close?.addEventListener('click', (e) => {
+            e.stopPropagation();
             hide();
-          }
-        });
-      })();
-    </script>
-  </>
+          });
+
+          document.addEventListener('click', (e) => {
+            if (!panel.contains(e.target) && e.target !== toggle) hide();
+          });
+        })();
+      </script>
+    </>
   )}
+
   {cfg.kind !== 'video' && (
   <>
     <script type="module" src="/scripts/prices.js" is:inline></script>

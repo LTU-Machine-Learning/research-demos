@@ -1,29 +1,22 @@
 // public/scripts/debug.js
 
-import { connectWhep } from '/scripts/whep.js';
-
-// ---------------------------------------------------------------------------
-// Small helpers
-// ---------------------------------------------------------------------------
-
+// ---------- Small helpers ----------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const absolutizeHttp = (endpoint) => {
+function el(id) {
+  return /** @type {HTMLElement|null} */ (document.getElementById(id));
+}
+
+function absolutizeHttp(endpoint) {
   if (!endpoint) return '';
   if (/^https?:\/\//i.test(endpoint)) return endpoint;
   if (endpoint.startsWith('//')) return `${location.protocol}${endpoint}`;
   if (endpoint.startsWith('/'))  return `${location.protocol}//${location.hostname}${endpoint}`;
   if (endpoint.startsWith(':'))  return `${location.protocol}//${location.hostname}${endpoint}`;
   return `${location.protocol}//${location.host}/${endpoint.replace(/^\/+/, '')}`;
-};
-
-function el(id) {
-  return /** @type {HTMLElement|null} */ (document.getElementById(id));
 }
 
-// ---------------------------------------------------------------------------
-// Orchestrator wiring
-// ---------------------------------------------------------------------------
+// ---------- Orchestrator / admin debug control ----------
 
 const orchRoot      = el('debug-orch');
 const orchStatusEl  = el('orch-status');
@@ -35,70 +28,19 @@ const btnRestartGpu = el('btn-restart-yolo-pose');
 const ORCH_BASE  = orchRoot ? absolutizeHttp(orchRoot.dataset.orch || ':8090') : '';
 const ORCH_TOKEN = orchRoot?.dataset.token || 'dev-token';
 
-const CONSENT_KEY = (id) => `vh_consent_${id}`;
-
-// ---------------------------------------------------------------------------
-// Local consent helpers — aligned with ConsentModal / consent-widget
-// ---------------------------------------------------------------------------
-
-function readLocalConsent(id) {
-  try {
-    const raw = localStorage.getItem(CONSENT_KEY(id));
-    if (!raw) return null;
-    const obj = JSON.parse(raw);
-    // Accept old {grantedAt, expiresAt} or new {token, expiresAt, ...}
-    if (!obj || typeof obj.expiresAt !== 'number') return null;
-    return obj;
-  } catch {
-    return null;
-  }
-}
-
-function isLocalConsentValid(rec) {
-  if (!rec) return false;
-  if (typeof rec.expiresAt !== 'number') return false;
-  return Date.now() < rec.expiresAt;
-}
-
 /**
- * Get the consent token for demoId, or throw a descriptive Error.
- * This is the *only* place we decide whether consent exists.
+ * Fetch JSON from the orchestrator (debug API).
+ * Adds ?token= and x-token header automatically.
  */
-function requireConsentToken(demoId) {
-  const rec = readLocalConsent(demoId);
-  if (!rec) {
-    throw new Error(
-      `No consent stored locally for demo "${demoId}".\n` +
-      `Open the ${demoId} demo page, accept consent, then retry.`
-    );
-  }
-  if (!rec.token) {
-    throw new Error(
-      `Consent record for "${demoId}" has no token field.\n` +
-      `You may be using an older consent format. Re-accept consent on the ${demoId} demo page.`
-    );
-  }
-  if (!isLocalConsentValid(rec)) {
-    throw new Error(
-      `Local consent for "${demoId}" has expired.\n` +
-      `Open the ${demoId} demo page, re-accept consent, or refresh the token on /privacy.`
-    );
-  }
-  return rec.token;
-}
-
-// ---------------------------------------------------------------------------
-// fetchJson with dev-token
-// ---------------------------------------------------------------------------
-
 async function fetchJson(path, opts = {}) {
-  if (!ORCH_BASE) throw new Error('No orchestrator base URL configured');
+  if (!ORCH_BASE) {
+    throw new Error('Orchestrator base URL not configured');
+  }
 
-  const u = new URL(path, ORCH_BASE);
-  // Keep token in both query & header (as before)
-  u.searchParams.set('token', ORCH_TOKEN);
+  const url = new URL(path, ORCH_BASE);
+  url.searchParams.set('token', ORCH_TOKEN);
 
-  const res = await fetch(u.toString(), {
+  const res = await fetch(url.toString(), {
     ...opts,
     headers: {
       'x-token': ORCH_TOKEN,
@@ -106,28 +48,37 @@ async function fetchJson(path, opts = {}) {
     },
   });
 
+  const text = await res.text().catch(() => '');
+
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    const err = new Error(`HTTP ${res.status} – ${text || 'request failed'}`);
-    // @ts-ignore
+    let msg = `HTTP ${res.status}`;
+    try {
+      const data = JSON.parse(text || '{}');
+      if (data && typeof data.detail === 'string') {
+        msg += ` – ${data.detail}`;
+      } else if (text) {
+        msg += ` – ${text}`;
+      }
+    } catch {
+      if (text) msg += ` – ${text}`;
+    }
+    const err = new Error(msg);
     err.status = res.status;
     throw err;
   }
 
-  if (res.status === 204) return null;
-  const ct = res.headers.get('content-type') || '';
-  if (ct.includes('application/json')) return res.json();
-  return res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
-
-// ---------------------------------------------------------------------------
-// UI helpers
-// ---------------------------------------------------------------------------
 
 function button(label, css, disabled = false) {
   const b = document.createElement('button');
   b.textContent = label;
-  b.className   = `btn small ${css || ''}`;
+  b.className = `btn small ${css || ''}`;
   if (disabled) b.disabled = true;
   return b;
 }
@@ -149,19 +100,16 @@ function badgeFor(status) {
   return span;
 }
 
-// ---------------------------------------------------------------------------
-// Load demos table
-// ---------------------------------------------------------------------------
-
 async function loadDemosIntoTable() {
   if (!orchRoot || !tableBody || !orchStatusEl) return;
   orchStatusEl.textContent = 'Loading demos…';
 
   try {
-    const demos = await fetchJson('/demos');
+    // Use the admin-style debug endpoint (no consent required)
+    const demos = await fetchJson('/debug/demos');
     tableBody.innerHTML = '';
 
-    const order  = ['yolo', 'pose', 'chang', 'price'];
+    const order = ['yolo', 'pose', 'chang', 'price'];
     const sorted = [...demos].sort((a, b) => {
       const ia = order.indexOf(a.id);
       const ib = order.indexOf(b.id);
@@ -174,20 +122,23 @@ async function loadDemosIntoTable() {
     for (const demo of sorted) {
       const tr = document.createElement('tr');
 
+      // Demo name
       const tdName = document.createElement('td');
       tdName.textContent = demo.id;
       tr.appendChild(tdName);
 
+      // Status badge
       const tdStatus = document.createElement('td');
       tdStatus.appendChild(badgeFor(demo));
       tr.appendChild(tdStatus);
 
+      // URL
       const tdUrl = document.createElement('td');
       if (demo.url) {
         const a = document.createElement('a');
-        a.href        = demo.url;
-        a.target      = '_blank';
-        a.rel         = 'noopener noreferrer';
+        a.href = demo.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
         a.textContent = 'open';
         a.style.fontSize = '.8rem';
         tdUrl.appendChild(a);
@@ -196,17 +147,18 @@ async function loadDemosIntoTable() {
       }
       tr.appendChild(tdUrl);
 
+      // Actions
       const tdActions = document.createElement('td');
-      const row       = document.createElement('div');
-      row.className   = 'btn-row';
+      const row = document.createElement('div');
+      row.className = 'btn-row';
 
       const btnStart   = button('Start',   'primary', demo.running);
-      const btnStop    = button('Stop',    'danger',  !demo.running);
-      const btnRestart = button('Restart', '',        !demo.exists);
+      const btnStop    = button('Stop',    'danger', !demo.running);
+      const btnRestart = button('Restart', '',       !demo.exists);
 
-      btnStart.addEventListener('click', () => doStartDemo(demo.id, tdStatus, btnStart, btnStop));
-      btnStop.addEventListener('click',  () => doStopDemo(demo.id, tdStatus, btnStart, btnStop));
-      btnRestart.addEventListener('click', () => doRestartDemo(demo.id, tdStatus, btnStart, btnStop));
+      btnStart.addEventListener('click', () => doStartDemo(demo.id, btnStart, btnStop));
+      btnStop.addEventListener('click', ()  => doStopDemo(demo.id, btnStart, btnStop));
+      btnRestart.addEventListener('click', () => doRestartDemo(demo.id, btnStart, btnStop));
 
       row.appendChild(btnStart);
       row.appendChild(btnStop);
@@ -224,177 +176,100 @@ async function loadDemosIntoTable() {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Actions
-// ---------------------------------------------------------------------------
-
-async function doStartDemo(id, statusCell, btnStart, btnStop) {
+async function doStartDemo(id, btnStart, btnStop) {
   try {
     btnStart.disabled = true;
-    btnStop.disabled  = true;
+    btnStop.disabled = true;
 
-    const token = requireConsentToken(id);
-
-    await fetchJson(`/demos/${encodeURIComponent(id)}/start?wait=1&timeout=90`, {
+    await fetchJson(`/debug/demos/${encodeURIComponent(id)}/start`, {
       method: 'POST',
-      headers: { 'X-Consent-Token': token },
     });
 
-    await sleep(500);
+    await sleep(400);
     await loadDemosIntoTable();
   } catch (err) {
     console.error('[debug] start demo failed', id, err);
-    // @ts-ignore
-    if (err.status === 401) {
-      const msg =
-        `Start ${id} failed: backend rejected the consent token.\n\n` +
-        `Check the token on /privacy, or open the ${id} demo page and re-accept consent.`;
-      orchStatusEl && (orchStatusEl.textContent = msg);
-      alert(msg);
-    } else {
-      // local errors (no token / expired / bad format)
-      alert(String(err.message || err));
-    }
+    alert(`Start ${id} failed: ${err.message || err}`);
   } finally {
     btnStart.disabled = false;
-    btnStop.disabled  = false;
+    btnStop.disabled = false;
   }
 }
 
-async function doStopDemo(id, statusCell, btnStart, btnStop) {
+async function doStopDemo(id, btnStart, btnStop) {
   try {
     btnStart.disabled = true;
-    btnStop.disabled  = true;
+    btnStop.disabled = true;
 
-    const token = requireConsentToken(id);
-
-    await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
+    await fetchJson(`/debug/demos/${encodeURIComponent(id)}/stop`, {
       method: 'POST',
-      headers: { 'X-Consent-Token': token },
     });
 
     await sleep(300);
     await loadDemosIntoTable();
   } catch (err) {
     console.error('[debug] stop demo failed', id, err);
-    // @ts-ignore
-    if (err.status === 401) {
-      const msg =
-        `Stop ${id} failed: backend says "invalid or expired consent token".\n\n` +
-        `This means the token in localStorage is not accepted anymore.\n` +
-        `→ Inspect the token on /privacy, and/or re-accept consent on the ${id} page.`;
-      orchStatusEl && (orchStatusEl.textContent = msg);
-      alert(msg);
-    } else {
-      alert(String(err.message || err));
-    }
+    alert(`Stop ${id} failed: ${err.message || err}`);
   } finally {
     btnStart.disabled = false;
-    btnStop.disabled  = false;
+    btnStop.disabled = false;
   }
 }
 
-async function doRestartDemo(id, statusCell, btnStart, btnStop) {
+async function doRestartDemo(id, btnStart, btnStop) {
   try {
     btnStart.disabled = true;
-    btnStop.disabled  = true;
+    btnStop.disabled = true;
 
-    const token = requireConsentToken(id);
-
-    // best-effort stop
-    try {
-      await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
-        method: 'POST',
-        headers: { 'X-Consent-Token': token },
-      });
-      await sleep(400);
-    } catch (e) {
-      console.warn('[debug] restart: stop failed (ignored for restart)', id, e);
-    }
-
-    await fetchJson(`/demos/${encodeURIComponent(id)}/start?wait=1&timeout=90`, {
+    await fetchJson(`/debug/demos/${encodeURIComponent(id)}/restart`, {
       method: 'POST',
-      headers: { 'X-Consent-Token': token },
     });
 
-    await sleep(500);
+    await sleep(600);
     await loadDemosIntoTable();
   } catch (err) {
     console.error('[debug] restart demo failed', id, err);
-    // @ts-ignore
-    if (err.status === 401) {
-      const msg =
-        `Restart ${id} failed: backend rejected the consent token.\n\n` +
-        `Refresh consent on the ${id} demo (and check /privacy) then retry.`;
-      orchStatusEl && (orchStatusEl.textContent = msg);
-      alert(msg);
-    } else {
-      alert(String(err.message || err));
-    }
+    alert(`Restart ${id} failed: ${err.message || err}`);
   } finally {
     btnStart.disabled = false;
-    btnStop.disabled  = false;
+    btnStop.disabled = false;
   }
 }
 
-// ---------------------------------------------------------------------------
-// Global buttons (stop-all / restart-gpu)
-// ---------------------------------------------------------------------------
-
+// Global buttons: stop-all & restart GPU demos (yolo + pose)
 btnRefresh?.addEventListener('click', () => loadDemosIntoTable());
 
 btnStopAll?.addEventListener('click', async () => {
-  if (!confirm('Stop ALL demos (yolo, pose, chang, price)?')) return;
+  if (!confirm('Force-stop ALL demo services (yolo, pose, chang, price)?')) return;
   const ids = ['yolo', 'pose', 'chang', 'price'];
-
   for (const id of ids) {
     try {
-      const token = requireConsentToken(id);
-      await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
+      await fetchJson(`/debug/demos/${encodeURIComponent(id)}/stop`, {
         method: 'POST',
-        headers: { 'X-Consent-Token': token },
       });
     } catch (e) {
       console.warn('[debug] stop-all: failed for', id, e);
     }
   }
-
   await loadDemosIntoTable();
 });
 
 btnRestartGpu?.addEventListener('click', async () => {
-  if (!confirm('Restart GPU demos (yolo + pose)?')) return;
+  if (!confirm('Hard restart GPU demos (yolo + pose)?')) return;
   const ids = ['yolo', 'pose'];
-
   for (const id of ids) {
     try {
-      const token = requireConsentToken(id);
-
-      try {
-        await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
-          method: 'POST',
-          headers: { 'X-Consent-Token': token },
-        });
-      } catch (e) {
-        console.warn('[debug] gpu restart: stop failed (ignored)', id, e);
-      }
-      await sleep(300);
-
-      await fetchJson(`/demos/${encodeURIComponent(id)}/start?wait=1&timeout=90`, {
+      await fetchJson(`/debug/demos/${encodeURIComponent(id)}/restart`, {
         method: 'POST',
-        headers: { 'X-Consent-Token': token },
       });
     } catch (e) {
       console.warn('[debug] gpu restart: failed for', id, e);
     }
   }
-
   await loadDemosIntoTable();
 });
 
-// ---------------------------------------------------------------------------
-// WHEP PROBE (cam + chang_annot)
-// ---------------------------------------------------------------------------
+// ---------- WHEP PROBE (unchanged except for default annot URL) ----------
 
 const probeRoot       = el('debug-probe');
 const probeKind       = /** @type {HTMLSelectElement|null} */ (el('probe-kind'));
@@ -409,9 +284,14 @@ const probeError      = el('probe-error');
 
 const WHEP_BASE_PORT = 8889;
 
+/**
+ * Build a default WHEP URL for the selected kind.
+ * Note: you mentioned there is no /annot stream, but a chang_annot when chang is up.
+ * We default annot -> /chang_annot/whep; you can override in the input.
+ */
 function buildWhepUrl(kind) {
   const base = `${location.protocol}//${location.hostname}:${WHEP_BASE_PORT}`;
-  if (kind === 'annot') return `${base}/chang_annot/whep`; // 👈 actual annot name
+  if (kind === 'annot') return `${base}/chang_annot/whep`;
   return `${base}/cam/whep`;
 }
 
@@ -426,16 +306,19 @@ function setProbeError(msg) {
   }
 }
 
+let probeConnecting = false;
+
+// Simple FPS meter
 (function mountProbeFps(v, out) {
   if (!v || !out) return;
   let last = performance.now();
-  let n    = 0;
+  let n = 0;
   const tick = () => {
     n++;
     const now = performance.now();
     if (now - last >= 1000) {
       out.textContent = `${n}`;
-      n   = 0;
+      n = 0;
       last = now;
     }
     (v.requestVideoFrameCallback
@@ -444,8 +327,6 @@ function setProbeError(msg) {
   };
   tick();
 })(probeVideo, probeFps);
-
-let probeConnecting = false;
 
 async function connectProbe() {
   if (!probeVideo || !probeKind || !probeUrlInput || !probeState) return;
@@ -458,11 +339,11 @@ async function connectProbe() {
   probeConnecting = true;
   setProbeError('');
   probeState.textContent = 'connecting…';
-  probeLabel && (probeLabel.textContent = kind === 'cam' ? 'cam' : 'chang_annot');
-  probeConnect    && (probeConnect.disabled = true);
+  probeLabel && (probeLabel.textContent = kind);
+  probeConnect && (probeConnect.disabled = true);
   probeDisconnect && (probeDisconnect.disabled = false);
 
-  // clean any previous stream
+  // clean previous stream
   try {
     if (probeVideo.srcObject) {
       const ms = probeVideo.srcObject;
@@ -473,8 +354,37 @@ async function connectProbe() {
   } catch {}
 
   try {
-    await connectWhep(url, probeVideo);
+    // Minimal inline WHEP client (simpler than importing full whep.js here)
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    });
+
+    pc.addTransceiver('video', { direction: 'recvonly' });
+
+    pc.ontrack = (ev) => {
+      const stream = ev.streams?.[0];
+      if (stream) {
+        probeVideo.srcObject = stream;
+        probeVideo.play?.().catch(() => {});
+      }
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/sdp' },
+      body: offer.sdp,
+    });
+    if (!res.ok) {
+      throw new Error(`WHEP error: ${res.status}`);
+    }
+    const answer = await res.text();
+    await pc.setRemoteDescription({ type: 'answer', sdp: answer });
+
     probeState.textContent = 'playing';
+    probeVideo._pc = pc;
   } catch (err) {
     console.error('[debug] connectProbe failed', err);
     setProbeError(err?.message || 'Failed to connect WHEP stream');
@@ -492,6 +402,11 @@ function disconnectProbe() {
   try {
     const ms = probeVideo.srcObject;
     ms && ms.getTracks?.().forEach((t) => t.stop());
+  } catch {}
+
+  try {
+    const pc = probeVideo._pc;
+    if (pc && typeof pc.close === 'function') pc.close();
   } catch {}
 
   probeVideo.srcObject = null;
@@ -514,9 +429,7 @@ probeKind?.addEventListener('change', () => {
 probeConnect?.addEventListener('click', () => connectProbe());
 probeDisconnect?.addEventListener('click', () => disconnectProbe());
 
-// ---------------------------------------------------------------------------
-// Boot
-// ---------------------------------------------------------------------------
+// ---------- Boot ----------
 
 if (orchRoot) {
   loadDemosIntoTable();

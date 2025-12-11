@@ -318,7 +318,7 @@ async function ensureWhep(v, url) {
 }
 
 // Initial connection with retry – useful for slower pipelines like "chang"
-async function connectWhepWithRetry(url, v, maxTries = 3) {
+async function connectWhepWithRetry(url, v, { maxTries = 3, delayMs = 1000 } = {}) {
   for (let i = 1; i <= maxTries; i++) {
     stateEl && (stateEl.textContent = `connecting… (try ${i})`);
     log(`connectWhep attempt ${i} →`, url);
@@ -337,7 +337,10 @@ async function connectWhepWithRetry(url, v, maxTries = 3) {
           v.srcObject = null;
         }
       } catch {}
-      if (i < maxTries) await sleep(1000);
+
+      if (i < maxTries) {
+        await sleep(delayMs);
+      }
     }
   }
   stateEl && (stateEl.textContent = "failed to connect");
@@ -447,8 +450,14 @@ function drawPoseFrame() {
 
   // WebRTC
   stateEl && (stateEl.textContent = "connecting…");
-  const whepTries = DEMO_ID === "chang" ? 4 : 2;
-  const okWhep = await connectWhepWithRetry(camUrl, video, whepTries);
+
+  // chang pipeline is slower to expose /chang_annot/whep → more retries + longer delay
+  const whepOpts =
+    DEMO_ID === "chang"
+      ? { maxTries: 10, delayMs: 1500 }   // ≈ up to 15 s total
+      : { maxTries: 2,  delayMs: 800 };   // yolo / pose are quick
+
+  const okWhep = await connectWhepWithRetry(camUrl, video, whepOpts);
   if (!okWhep) {
     warn("Giving up on WHEP after retries");
   }

@@ -100,8 +100,34 @@ const description = cfg.subtitle ?? '';
           <h3 style="margin:0;">Live Stream</h3>
           <div style="display:flex;gap:12px;align-items:center;">
             <span>FPS: <b id="fps">—</b></span>
+
+            <!-- Debug toggle + panel -->
+            <div class="debug-wrap">
+              <button
+                type="button"
+                id="dbg-toggle"
+                style="background:#1f2937;border:1px solid #374151;color:#e5e7eb;
+                      border-radius:999px;font-size:.8rem;padding:5px 10px;cursor:pointer;">
+                Debug
+              </button>
+              <div
+                id="dbg-panel"
+                style="display:none;position:absolute;right:0;top:32px;
+                      background:#020617;border:1px solid #1f2937;border-radius:12px;
+                      padding:8px 10px;box-shadow:0 10px 22px #000a;z-index:50;"
+              >
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <button type="button" id="btn-start"  style="font-size:.75rem;padding:4px 8px;">Start</button>
+                  <button type="button" id="btn-stop"   style="font-size:.75rem;padding:4px 8px;">Stop</button>
+                  <button type="button" id="btn-reconn" style="font-size:.75rem;padding:4px 8px;">Reconnect WS</button>
+                  <button type="button" id="btn-restart" style="font-size:.75rem;padding:4px 8px;">Restart demo</button>
+                  <button type="button" id="btn-reset-overlay" style="font-size:.75rem;padding:4px 8px;">Reset overlay</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
         <div
           id="yolo-root"
           class="stack"
@@ -123,6 +149,33 @@ const description = cfg.subtitle ?? '';
       </div>
     ) : (
       <div class="card">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+          <div class="debug-wrap">
+            <button
+              type="button"
+              id="price-debug-toggle"
+              style="background:#1f2937;border:1px solid #374151;color:#e5e7eb;
+                    border-radius:999px;font-size:.8rem;padding:4px 10px;cursor:pointer;">
+              Debug
+            </button>
+          </div>
+        </div>
+        <div
+          id="price-debug-panel"
+          style="display:none;margin-bottom:8px;padding:8px 10px;border-radius:10px;
+                border:1px dashed #374151;background:#020617;font-size:.8rem;"
+        >
+          <strong style="display:block;margin-bottom:6px;">Debug actions</strong>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button type="button" id="price-restart" style="font-size:.75rem;padding:4px 8px;">
+              Ensure demo running
+            </button>
+            <button type="button" id="price-health" style="font-size:.75rem;padding:4px 8px;">
+              Check /healthz
+            </button>
+          </div>
+          <div id="price-debug-status" style="margin-top:6px;opacity:.7;"></div>
+        </div>
         <h3 style="margin-top:0;">House Price Estimation</h3>
 
         <div id="p-error" class="error" hidden role="alert"></div>
@@ -220,9 +273,33 @@ const description = cfg.subtitle ?? '';
   </div>
 
   {cfg.kind === 'video' && (
+  <>
     <script type="module" src="/scripts/viewer.js" is:inline></script>
+    <script is:inline>
+      const toggle = document.getElementById('dbg-toggle');
+      const panel  = document.getElementById('dbg-panel');
+      if (toggle && panel) {
+        toggle.addEventListener('click', () => {
+          panel.style.display = panel.style.display === 'none' || !panel.style.display
+            ? 'block'
+            : 'none';
+        });
+      }
+    </script>
+  </>
   )}
   {cfg.kind !== 'video' && (
+  <>
     <script type="module" src="/scripts/prices.js" is:inline></script>
+    <script is:inline>
+      const t = document.getElementById('price-debug-toggle');
+      const p = document.getElementById('price-debug-panel');
+      if (t && p) {
+        t.addEventListener('click', () => {
+          p.style.display = p.style.display === 'none' || !p.style.display ? 'block' : 'none';
+        });
+      }
+    </script>
+  </>
   )}
 </SiteLayout>

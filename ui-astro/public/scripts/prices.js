@@ -126,3 +126,65 @@ function beat() {
 }
 beat();
 setInterval(beat, 25000);
+
+
+// --- Debug UI for price demo ---
+const dbgToggle   = document.getElementById('price-debug-toggle');
+const dbgPanel    = document.getElementById('price-debug-panel');
+const dbgRestart  = document.getElementById('price-restart');
+const dbgHealth   = document.getElementById('price-health');
+const dbgStatus   = document.getElementById('price-debug-status');
+
+// Same orchestrator base as heartbeat
+const ORCH_BASE = 'http://192.168.10.2:8090';
+
+// Helper for status line
+function setDbgStatus(msg) {
+  if (dbgStatus) dbgStatus.textContent = msg || '';
+}
+
+// Ensure demo container is running (uses /demos/{id}/start; idempotent)
+dbgRestart?.addEventListener('click', async () => {
+  setDbgStatus('Ensuring demo is running…');
+  try {
+    const url = `${ORCH_BASE}/demos/${demo}/start?wait=1&timeout=90&token=${encodeURIComponent(token)}`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'x-token': token }
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(() => '');
+      setDbgStatus(`Restart failed (HTTP ${r.status}) ${txt}`);
+      return;
+    }
+    setDbgStatus('Demo is running (start succeeded).');
+  } catch (e) {
+    setDbgStatus(`Restart error: ${e?.message || e}`);
+  }
+});
+
+// Call public /healthz of the price API (derived from data-api /predict)
+dbgHealth?.addEventListener('click', async () => {
+  setDbgStatus('Checking /healthz…');
+  try {
+    let healthUrl = api;
+    try {
+      const u = new URL(api, window.location.href);
+      u.pathname = u.pathname.replace(/\/predict$/, '/healthz');
+      healthUrl = u.toString();
+    } catch {
+      // fallback: naive replace if URL constructor fails
+      healthUrl = api.replace(/\/predict$/, '/healthz');
+    }
+
+    const r = await fetch(healthUrl, { method: 'GET' });
+    const text = await r.text().catch(() => '');
+    if (r.ok) {
+      setDbgStatus(`/healthz OK (HTTP ${r.status}) ${text || ''}`);
+    } else {
+      setDbgStatus(`/healthz FAILED (HTTP ${r.status}) ${text || ''}`);
+    }
+  } catch (e) {
+    setDbgStatus(`Health check error: ${e?.message || e}`);
+  }
+});

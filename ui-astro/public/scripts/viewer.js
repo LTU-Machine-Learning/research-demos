@@ -457,6 +457,8 @@ function drawPoseFrame() {
       ? { maxTries: 10, delayMs: 1500 }   // ≈ up to 15 s total
       : { maxTries: 2,  delayMs: 800 };   // yolo / pose are quick
 
+      log("whepOpts", DEMO_ID, whepOpts); 
+
   const okWhep = await connectWhepWithRetry(camUrl, video, whepOpts);
   if (!okWhep) {
     warn("Giving up on WHEP after retries");

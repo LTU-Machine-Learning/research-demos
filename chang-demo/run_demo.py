@@ -25,7 +25,7 @@ OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot")
 
 # Paths for uimain
 UIMAIN_WORKDIR = "/root/project_nep/cside"
-UIMAIN_MODEL = "backends/yolov8-onnx-cpp/checkpoints/yolov8n-pose.onnx"
+UIMAIN_MODEL = "backends/yolov8-onnx-cpp/checkpoints/stephen-arab-12n-seg.onnx"
 
 ffmpeg_in_proc = None
 ffmpeg_out_proc = None

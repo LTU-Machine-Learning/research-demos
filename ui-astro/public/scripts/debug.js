@@ -21,21 +21,25 @@ function el(id) {
 
 // --- orchestrator control -----------------------------------------------
 
-const orchRoot = el('debug-orch');
-const orchStatusEl = el('orch-status');
-const tableBody = el('demo-table-body');
-const btnRefresh = el('btn-refresh-demos');
-const btnStopAll = el('btn-stop-all');
-const btnRestartGpu = el('btn-restart-yolo-pose');
+const orchRoot       = el('debug-orch');
+const orchStatusEl   = el('orch-status');
+const tableBody      = el('demo-table-body');
+const btnRefresh     = el('btn-refresh-demos');
+const btnStopAll     = el('btn-stop-all');
+const btnRestartGpu  = el('btn-restart-yolo-pose');
 
-const ORCH_BASE = orchRoot ? absolutizeHttp(orchRoot.dataset.orch || ':8090') : '';
+const ORCH_BASE  = orchRoot ? absolutizeHttp(orchRoot.dataset.orch || ':8090') : '';
 const ORCH_TOKEN = orchRoot?.dataset.token || 'dev-token';
 
-const CONSENT_CACHE = new Map(); // demoId -> { token, expiresAt }
+// demoId -> { token, expiresAt }
+const CONSENT_CACHE = new Map();
 
-async function fetchJson(url, opts = {}) {
-  const u = new URL(url, ORCH_BASE);
-  // Keep token in both query & header for simplicity
+/**
+ * Fetch JSON from the orchestrator, with x-token + ?token=
+ */
+async function fetchJson(path, opts = {}) {
+  const u = new URL(path, ORCH_BASE);
+  // keep token in query for convenience
   u.searchParams.set('token', ORCH_TOKEN);
 
   const res = await fetch(u.toString(), {
@@ -46,31 +50,68 @@ async function fetchJson(url, opts = {}) {
     },
   });
 
+  const raw = await res.text().catch(() => '');
+  let payload = null;
+  try {
+    payload = raw ? JSON.parse(raw) : null;
+  } catch {
+    payload = raw || null;
+  }
+
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    const err = new Error(`HTTP ${res.status} – ${text || 'request failed'}`);
-    // attach status if you want to branch on it
+    let msg = '';
+    if (payload && typeof payload === 'object') {
+      msg = payload.detail || JSON.stringify(payload);
+    } else {
+      msg = payload || `HTTP ${res.status}`;
+    }
+    const err = new Error(`HTTP ${res.status} – ${msg}`);
     err.status = res.status;
+    err.payload = payload;
     throw err;
   }
+
   if (res.status === 204) return null;
-  return res.json();
+  return payload;
 }
 
+/**
+ * Ensure that we have a valid consent token for demoId.
+ * Cached in-memory (Map), not persisted.
+ */
 async function ensureConsent(demoId) {
   const cached = CONSENT_CACHE.get(demoId);
   const now = Date.now();
-  if (cached && cached.expiresAt && now < cached.expiresAt) return cached;
+  if (cached && cached.expiresAt && now < cached.expiresAt && cached.token) {
+    return cached;
+  }
 
   const u = new URL('/consent', ORCH_BASE);
   u.searchParams.set('demo', demoId);
+  // if your /consent also wants token, we send it here too
+  u.searchParams.set('token', ORCH_TOKEN);
 
-  const res = await fetch(u.toString(), { method: 'POST' });
-  if (!res.ok) throw new Error(`consent error: ${res.status}`);
-  const data = await res.json(); // { token, expiresAt (ms) }
+  const res = await fetch(u.toString(), {
+    method: 'POST',
+    headers: { 'x-token': ORCH_TOKEN },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`consent error: HTTP ${res.status} – ${text || 'request failed'}`);
+  }
+
+  const data = await res.json(); // expected: { token, expiresAt (ms) }
+  if (!data || !data.token || !data.expiresAt) {
+    throw new Error('consent error: invalid payload from /consent');
+  }
 
   CONSENT_CACHE.set(demoId, data);
   return data;
+}
+
+function invalidateConsent(demoId) {
+  CONSENT_CACHE.delete(demoId);
 }
 
 function button(label, css, disabled = false) {
@@ -145,8 +186,8 @@ async function loadDemosIntoTable() {
       const row = document.createElement('div');
       row.className = 'btn-row';
 
-      const btnStart = button('Start', 'primary', demo.running);
-      const btnStop = button('Stop', 'danger', !demo.running);
+      const btnStart   = button('Start',   'primary', demo.running);
+      const btnStop    = button('Stop',    'danger', !demo.running);
       const btnRestart = button('Restart', '', !demo.exists);
 
       btnStart.addEventListener('click', () => doStartDemo(demo.id, tdStatus, btnStart, btnStop));
@@ -169,11 +210,10 @@ async function loadDemosIntoTable() {
   }
 }
 
-async function doStartDemo(id, statusCell, btnStart, btnStop) {
-  try {
-    btnStart.disabled = true;
-    btnStop.disabled = true;
+// --- Start / Stop / Restart with 401 consent retry -----------------------
 
+async function doStartDemo(id, statusCell, btnStart, btnStop) {
+  const tryOnce = async () => {
     const consent = await ensureConsent(id);
     await fetchJson(`/demos/${encodeURIComponent(id)}/start?wait=1&timeout=90`, {
       method: 'POST',
@@ -181,12 +221,29 @@ async function doStartDemo(id, statusCell, btnStart, btnStop) {
         'X-Consent-Token': consent.token,
       },
     });
+  };
+
+  try {
+    btnStart.disabled = true;
+    btnStop.disabled = true;
+
+    try {
+      await tryOnce();
+    } catch (err) {
+      if (err && err.status === 401) {
+        console.warn('[debug] start demo got 401, refreshing consent token for', id);
+        invalidateConsent(id);
+        await tryOnce(); // retry once with fresh /consent
+      } else {
+        throw err;
+      }
+    }
 
     await sleep(500);
-    // refresh row status
     await loadDemosIntoTable();
   } catch (err) {
     console.error('[debug] start demo failed', id, err);
+    orchStatusEl && (orchStatusEl.textContent = `Start ${id} failed: ${err.message || err}`);
     alert(`Start ${id} failed: ${err.message || err}`);
   } finally {
     btnStart.disabled = false;
@@ -195,10 +252,7 @@ async function doStartDemo(id, statusCell, btnStart, btnStop) {
 }
 
 async function doStopDemo(id, statusCell, btnStart, btnStop) {
-  try {
-    btnStart.disabled = true;
-    btnStop.disabled = true;
-
+  const tryOnce = async () => {
     const consent = await ensureConsent(id);
     await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
       method: 'POST',
@@ -206,11 +260,29 @@ async function doStopDemo(id, statusCell, btnStart, btnStop) {
         'X-Consent-Token': consent.token,
       },
     });
+  };
+
+  try {
+    btnStart.disabled = true;
+    btnStop.disabled = true;
+
+    try {
+      await tryOnce();
+    } catch (err) {
+      if (err && err.status === 401) {
+        console.warn('[debug] stop demo got 401, refreshing consent token for', id);
+        invalidateConsent(id);
+        await tryOnce();
+      } else {
+        throw err;
+      }
+    }
 
     await sleep(300);
     await loadDemosIntoTable();
   } catch (err) {
     console.error('[debug] stop demo failed', id, err);
+    orchStatusEl && (orchStatusEl.textContent = `Stop ${id} failed: ${err.message || err}`);
     alert(`Stop ${id} failed: ${err.message || err}`);
   } finally {
     btnStart.disabled = false;
@@ -219,12 +291,10 @@ async function doStopDemo(id, statusCell, btnStart, btnStop) {
 }
 
 async function doRestartDemo(id, statusCell, btnStart, btnStop) {
-  try {
-    btnStart.disabled = true;
-    btnStop.disabled = true;
-
+  const tryOnce = async () => {
     const consent = await ensureConsent(id);
-    // best-effort stop (ignore errors, e.g., already stopped)
+
+    // best-effort stop (ignore non-401 errors)
     try {
       await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
         method: 'POST',
@@ -232,6 +302,10 @@ async function doRestartDemo(id, statusCell, btnStart, btnStop) {
       });
       await sleep(500);
     } catch (e) {
+      if (e && e.status === 401) {
+        // if stop says token expired, let outer logic handle it
+        throw e;
+      }
       console.warn('[debug] restart: stop failed (ignored)', id, e);
     }
 
@@ -239,11 +313,29 @@ async function doRestartDemo(id, statusCell, btnStart, btnStop) {
       method: 'POST',
       headers: { 'X-Consent-Token': consent.token },
     });
+  };
+
+  try {
+    btnStart.disabled = true;
+    btnStop.disabled = true;
+
+    try {
+      await tryOnce();
+    } catch (err) {
+      if (err && err.status === 401) {
+        console.warn('[debug] restart demo got 401, refreshing consent token for', id);
+        invalidateConsent(id);
+        await tryOnce();
+      } else {
+        throw err;
+      }
+    }
 
     await sleep(500);
     await loadDemosIntoTable();
   } catch (err) {
     console.error('[debug] restart demo failed', id, err);
+    orchStatusEl && (orchStatusEl.textContent = `Restart ${id} failed: ${err.message || err}`);
     alert(`Restart ${id} failed: ${err.message || err}`);
   } finally {
     btnStart.disabled = false;
@@ -253,11 +345,14 @@ async function doRestartDemo(id, statusCell, btnStart, btnStop) {
 
 // global buttons
 btnRefresh?.addEventListener('click', () => loadDemosIntoTable());
+
 btnStopAll?.addEventListener('click', async () => {
   if (!confirm('Stop ALL demos (yolo, pose, chang, price)?')) return;
   const ids = ['yolo', 'pose', 'chang', 'price'];
+
   for (const id of ids) {
     try {
+      // for stop-all we don’t bother with 401 retry; this is “best effort”
       const consent = await ensureConsent(id);
       await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
         method: 'POST',
@@ -265,6 +360,7 @@ btnStopAll?.addEventListener('click', async () => {
       });
     } catch (e) {
       console.warn('[debug] stop-all: failed for', id, e);
+      invalidateConsent(id);
     }
   }
   await loadDemosIntoTable();
@@ -273,6 +369,7 @@ btnStopAll?.addEventListener('click', async () => {
 btnRestartGpu?.addEventListener('click', async () => {
   if (!confirm('Restart GPU demos (yolo + pose)?')) return;
   const ids = ['yolo', 'pose'];
+
   for (const id of ids) {
     try {
       const consent = await ensureConsent(id);
@@ -282,15 +379,28 @@ btnRestartGpu?.addEventListener('click', async () => {
           headers: { 'X-Consent-Token': consent.token },
         });
       } catch (e) {
-        console.warn('[debug] gpu restart: stop failed (ignored)', id, e);
+        if (e && e.status === 401) {
+          console.warn('[debug] gpu restart: stop 401 for', id);
+          invalidateConsent(id);
+          // try with a fresh token:
+          const fresh = await ensureConsent(id);
+          await fetchJson(`/demos/${encodeURIComponent(id)}/stop`, {
+            method: 'POST',
+            headers: { 'X-Consent-Token': fresh.token },
+          });
+        } else {
+          console.warn('[debug] gpu restart: stop failed (ignored)', id, e);
+        }
       }
       await sleep(300);
+      const fresh2 = await ensureConsent(id);
       await fetchJson(`/demos/${encodeURIComponent(id)}/start?wait=1&timeout=90`, {
         method: 'POST',
-        headers: { 'X-Consent-Token': consent.token },
+        headers: { 'X-Consent-Token': fresh2.token },
       });
     } catch (e) {
       console.warn('[debug] gpu restart: failed for', id, e);
+      invalidateConsent(id);
     }
   }
   await loadDemosIntoTable();
@@ -298,16 +408,16 @@ btnRestartGpu?.addEventListener('click', async () => {
 
 // --- WHEP PROBE ----------------------------------------------------------
 
-const probeRoot = el('debug-probe');
-const probeKind = /** @type {HTMLSelectElement|null} */ (el('probe-kind'));
-const probeUrlInput = /** @type {HTMLInputElement|null} */ (el('probe-url'));
-const probeConnect = el('probe-connect');
-const probeDisconnect = el('probe-disconnect');
-const probeState = el('probe-state');
-const probeFps = el('probe-fps');
-const probeVideo = /** @type {HTMLVideoElement|null} */ (el('probe-video'));
-const probeLabel = el('probe-overlay-label');
-const probeError = el('probe-error');
+const probeRoot      = el('debug-probe');
+const probeKind      = /** @type {HTMLSelectElement|null} */ (el('probe-kind'));
+const probeUrlInput  = /** @type {HTMLInputElement|null} */ (el('probe-url'));
+const probeConnect   = el('probe-connect');
+const probeDisconnect= el('probe-disconnect');
+const probeState     = el('probe-state');
+const probeFps       = el('probe-fps');
+const probeVideo     = /** @type {HTMLVideoElement|null} */ (el('probe-video'));
+const probeLabel     = el('probe-overlay-label');
+const probeError     = el('probe-error');
 
 const WHEP_BASE_PORT = 8889;
 
@@ -329,7 +439,6 @@ function setProbeError(msg) {
 }
 
 let probeConnecting = false;
-let probeConnected = false;
 
 // simple FPS meter like viewer.js
 (function mountProbeFps(v, out) {
@@ -378,7 +487,6 @@ async function connectProbe() {
 
   try {
     await connectWhep(url, probeVideo);
-    probeConnected = true;
     probeState.textContent = 'playing';
   } catch (err) {
     console.error('[debug] connectProbe failed', err);
@@ -405,7 +513,6 @@ function disconnectProbe() {
     probeVideo.load?.();
   } catch {}
 
-  probeConnected = false;
   probeState.textContent = 'idle';
   probeDisconnect && (probeDisconnect.disabled = true);
   setProbeError('');

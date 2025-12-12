@@ -7,9 +7,38 @@ export interface Props {
 }
 const { image, title, description, href } = Astro.props;
 ---
+
 <article class="proj-card">
-  <img src={image} alt={title} loading="lazy" />
+  <div class="proj-card-image">
+    <img src={image} alt={title} loading="lazy" />
+  </div>
+
   <h2>{title}</h2>
   <p>{description}</p>
-  <a href={href} aria-label={`See details & demo for ${title}`}>See details & demo →</a>
+  <a href={href} aria-label={`See details & demo for ${title}`}>
+    See details & demo →
+  </a>
 </article>
+
+<style>
+  .proj-card-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #0f1422;
+  }
+
+  .proj-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.25s ease;
+  }
+
+  .proj-card:hover .proj-card-image img {
+    transform: scale(1.05);
+  }
+</style>

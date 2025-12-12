@@ -14,6 +14,42 @@ const links = [
   { href: '/debug',       label: 'Debug' },
 ];
 
+type CmdType = "project" | "demo" | "tool";
+
+type Command = {
+  type: CmdType;
+  label: string;
+  href: string;
+  desc?: string;        // preview soft
+  keywords?: string[];  // aide au search
+};
+
+const commands: Command[] = [
+  // Projects (pages explicatives)
+  { type: "project", label: "Object detection", href: "/project/yolo",
+    desc: "YOLO-based real-time object detection pipeline.", keywords: ["yolo", "detection", "coco", "boxes"] },
+
+  { type: "project", label: "Pose estimation", href: "/project/pose",
+    desc: "YOLO-pose keypoints & real-time skeleton overlays.", keywords: ["pose", "keypoints", "skeleton", "yolo"] },
+
+  { type: "project", label: "House price estimation", href: "/project/price",
+    desc: "Predict housing prices with ML models & Swedish datasets.", keywords: ["price", "housing", "ml", "real estate"] },
+
+  // Demos (lancement direct)
+  { type: "demo", label: "Run: Object detection", href: "/demo/yolo",
+    desc: "Launch the live detection demo.", keywords: ["run", "demo", "yolo", "detection"] },
+
+  { type: "demo", label: "Run: Pose estimation", href: "/demo/pose",
+    desc: "Launch the live pose demo.", keywords: ["run", "demo", "pose"] },
+
+  { type: "demo", label: "Run: House price estimation", href: "/demo/price",
+    desc: "Launch the pricing demo.", keywords: ["run", "demo", "price"] },
+
+  // Tools
+  { type: "tool", label: "Debug panel", href: "/debug",
+    desc: "Diagnostics & integration checks.", keywords: ["debug", "tools", "health"] },
+];
+
 const pathname = Astro.url.pathname;
 const isActive = (href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -47,6 +83,112 @@ const ltuUrl = 'https://www.ltu.se/';
       .page { max-width: 1100px; margin: 24px auto; padding: 0 16px 64px; }
       .burger{ display:none; background:none; border:none; color:var(--text); font-size:20px; }
       @media (max-width: 800px) { nav{ display:none; } .burger{ display:inline-flex; } }
+      
+      /* --- Nav layout --- */
+      .main-nav { display:flex; gap:6px; align-items:center; }
+      @media (max-width: 900px){ .main-nav { display:none; } }
+
+      /* --- Search bar --- */
+      .search-wrap{ position:relative; flex: 0 1 520px; margin: 0 10px; }
+      @media (max-width: 900px){ .search-wrap{ flex:1; } }
+
+      .search{
+        display:flex; align-items:center; gap:10px;
+        padding: 8px 10px;
+        border-radius: 14px;
+        background:#0f1422;
+        border:1px solid #1f2a44;
+        box-shadow: inset 0 0 0 1px #0000;
+      }
+      .search:focus-within{
+        border-color:#5aa4ff;
+        box-shadow: 0 0 0 3px #5aa4ff22;
+      }
+      .search-ico{ opacity:.8; }
+      .search-input{
+        width: 100%;
+        background: transparent;
+        border: 0;
+        outline: none;
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+      .search-kbd{
+        font-size: 11px;
+        padding: 3px 6px;
+        border-radius: 8px;
+        border: 1px solid #1f2a44;
+        background: #122035;
+        color: #cfe7ff;
+        opacity: .85;
+      }
+
+      /* --- Results dropdown --- */
+      .results{
+        display:none;
+        position:absolute;
+        top: calc(100% + 10px);
+        left:0;
+        right:0;
+        background:#0f1422;
+        border:1px solid #1f2a44;
+        border-radius: 16px;
+        overflow:hidden;
+        box-shadow: 0 24px 80px #000a;
+        z-index: 60;
+      }
+      .results.open{ display:block; }
+      .results .section{
+        padding: 10px 12px 6px;
+        font-size: 12px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color:#9cb0d8;
+        border-top: 1px solid #15223b;
+      }
+      .results .item{
+        display:flex;
+        gap:10px;
+        padding:10px 12px;
+        align-items:flex-start;
+        cursor:pointer;
+      }
+      .results .item:hover,
+      .results .item.active{
+        background:#132342;
+      }
+      .results .tag{
+        min-width: 56px;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid #1f2a44;
+        background:#122035;
+        color:#cfe7ff;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+      .results .tag.demo{ color:#27d07d; border-color:#27d07d66; background:#0f1e1a; }
+      .results .tag.tool{ color:#ffce5a; border-color:#ffce5a66; background:#201a0f; }
+
+      .results .meta{ display:flex; flex-direction:column; gap:2px; }
+      .results .label{ color:#e8eefc; font-weight:700; }
+      .results .desc{ color:#9cb0d8; font-size: 12.5px; line-height: 1.25; }
+      .results .href{ color:#6f88b8; font-size: 12px; opacity:.9; }
+
+      /* --- Debug button distinct --- */
+      .debug-btn{
+        display:inline-flex; align-items:center; gap:8px;
+        padding: 7px 11px;
+        border-radius: 12px;
+        text-decoration:none;
+        font-weight: 800;
+        border:1px solid #1f2a44;
+        background:#151018;
+        color:#ffce5a;
+      }
+      .debug-btn:hover{ background:#1b1523; border-color:#ffce5a66; }
 
       /* ===== Footer ===== */
       .vh-footer{
@@ -115,6 +257,148 @@ const ltuUrl = 'https://www.ltu.se/';
         el.classList.add('reveal'); io.observe(el);
       });
     </script>
+    <script type="module" define:vars={{ commands }}>
+      const input = document.getElementById("vh-search");
+      const results = document.getElementById("vh-results");
+
+      let activeIndex = -1;
+      let flat = [];
+
+      const typeLabel = (t) => t === "project" ? "Project" : (t === "demo" ? "Demo" : "Tool");
+      const typeClass = (t) => t;
+
+      const normalize = (s) => (s || "").toLowerCase().trim();
+
+      function score(cmd, q){
+        if (!q) return 1;
+        const hay = [
+          cmd.label,
+          cmd.href,
+          ...(cmd.keywords || []),
+          cmd.desc || ""
+        ].join(" ").toLowerCase();
+        if (hay.includes(q)) return 10;
+        // mini scoring: match by words
+        const parts = q.split(/\s+/).filter(Boolean);
+        let hits = 0;
+        for (const p of parts) if (hay.includes(p)) hits++;
+        return hits;
+      }
+
+      function groupByType(cmds){
+        const g = { project: [], demo: [], tool: [] };
+        for (const c of cmds) g[c.type].push(c);
+        return g;
+      }
+
+      function render(q){
+        const qq = normalize(q);
+        const ranked = commands
+          .map(c => ({ c, s: score(c, qq) }))
+          .filter(x => x.s > 0)
+          .sort((a,b)=> b.s - a.s)
+          .map(x => x.c)
+          .slice(0, 12);
+
+        const g = groupByType(ranked);
+        flat = [];
+
+        const sections = [
+          ["Projects", g.project],
+          ["Demos", g.demo],
+          ["Tools", g.tool],
+        ].filter(([,arr]) => arr.length);
+
+        if (!sections.length){
+          results.innerHTML = `<div class="section">No results</div>`;
+          results.classList.add("open");
+          activeIndex = -1;
+          return;
+        }
+
+        let html = "";
+        for (const [title, arr] of sections){
+          html += `<div class="section">${title}</div>`;
+          for (const cmd of arr){
+            flat.push(cmd);
+            html += `
+              <div class="item" data-href="${cmd.href}">
+                <div class="tag ${typeClass(cmd.type)}">${typeLabel(cmd.type)}</div>
+                <div class="meta">
+                  <div class="label">${cmd.label}</div>
+                  ${cmd.desc ? `<div class="desc">${cmd.desc}</div>` : ""}
+                  <div class="href">${cmd.href}</div>
+                </div>
+              </div>`;
+          }
+        }
+        results.innerHTML = html;
+        results.classList.add("open");
+        setActive(0);
+      }
+
+      function setActive(i){
+        const items = results.querySelectorAll(".item");
+        items.forEach(el => el.classList.remove("active"));
+        if (!items.length) { activeIndex = -1; return; }
+        activeIndex = Math.max(0, Math.min(i, items.length - 1));
+        items[activeIndex].classList.add("active");
+      }
+
+      function close(){
+        results.classList.remove("open");
+        activeIndex = -1;
+      }
+
+      // Input events
+      input.addEventListener("input", () => render(input.value));
+      input.addEventListener("focus", () => render(input.value));
+
+      // Click on item
+      results.addEventListener("mousedown", (e) => {
+        const item = e.target.closest(".item");
+        if (!item) return;
+        const href = item.getAttribute("data-href");
+        if (href) location.href = href;
+      });
+
+      // Keyboard nav
+      input.addEventListener("keydown", (e) => {
+        if (!results.classList.contains("open") && (e.key === "ArrowDown" || e.key === "Enter")){
+          render(input.value);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "ArrowDown"){ setActive(activeIndex + 1); e.preventDefault(); }
+        if (e.key === "ArrowUp"){ setActive(activeIndex - 1); e.preventDefault(); }
+        if (e.key === "Escape"){ close(); }
+        if (e.key === "Enter"){
+          const cmd = flat[activeIndex];
+          if (cmd?.href) location.href = cmd.href;
+        }
+      });
+
+      // Ctrl/⌘K focus
+      addEventListener("keydown", (e) => {
+        const isK = (e.key || "").toLowerCase() === "k";
+        if ((e.ctrlKey || e.metaKey) && isK){
+          e.preventDefault();
+          input.focus();
+          input.select?.();
+          render(input.value);
+        }
+        if (e.key === "Escape" && document.activeElement === input){
+          close();
+          input.blur();
+        }
+      });
+
+      // Click outside closes
+      document.addEventListener("mousedown", (e) => {
+        if (e.target.closest(".search-wrap")) return;
+        close();
+      });
+    </script>
   </head>
   <body>
     <header class="topbar">
@@ -124,17 +408,37 @@ const ltuUrl = 'https://www.ltu.se/';
           <span>Vision Hub</span>
         </a>
 
-        <nav data-nav>
-          {links.map(l => (
-            <a href={l.href} class={`nav-link ${isActive(l.href) ? 'active' : ''}`}>{l.label}</a>
-          ))}
-        </nav>
+          <nav data-nav class="main-nav" aria-label="Main">
+            <a href="/" class={`nav-link ${isActive("/") ? "active" : ""}`}>Home</a>
+            <a href="/projects" class={`nav-link ${isActive("/projects") ? "active" : ""}`}>Projects</a>
+            <a href="/docs" class={`nav-link ${isActive("/docs") ? "active" : ""}`}>Documentation</a>
+          </nav>
 
-        <div class="spacer"></div>
+          <div class="search-wrap" role="search">
+            <div class="search">
+              <span class="search-ico" aria-hidden="true">⌕</span>
+              <input
+                id="vh-search"
+                class="search-input"
+                type="search"
+                placeholder="Search projects, demos, tools… (Ctrl/⌘ K)"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="Search and launch"
+              />
+              <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
+            </div>
 
-        <div class="pill">App</div>
+            <div id="vh-results" class="results" role="listbox" aria-label="Search results"></div>
+          </div>
 
-        <button class="burger" data-burger aria-label="Menu">☰</button>
+          <div class="spacer"></div>
+
+          <a class="debug-btn" href="/debug" aria-label="Open debug panel">
+            🛠 Debug
+          </a>
+
+          <button class="burger" data-burger aria-label="Menu">☰</button>
       </div>
     </header>
 

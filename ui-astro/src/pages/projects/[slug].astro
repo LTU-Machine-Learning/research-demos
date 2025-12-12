@@ -96,10 +96,12 @@ const isHttpUrl = (u: unknown): u is string =>
     <img src={project.image} alt={project.title} class="project-detail-img" />
     <div class="project-detail-desc">{project.description}</div>
 
-    <div class="project-detail-section">
-      <h3>Demo video</h3>
-      <video src={project.video} controls class="project-detail-video"></video>
-    </div>
+    {project.video && (
+      <div class="project-detail-section">
+        <h3>Demo video</h3>
+        <video src={project.video} controls class="project-detail-video"></video>
+      </div>
+    )}
 
     {project.author && (
       <div class="project-detail-section">

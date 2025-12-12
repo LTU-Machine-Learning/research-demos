@@ -26,14 +26,17 @@ type Command = {
 
 const commands: Command[] = [
   // Projects (pages explicatives)
-  { type: "project", label: "Object detection", href: "/project/yolo",
+  { type: "project", label: "Object detection", href: "/projects/yolo",
     desc: "YOLO-based real-time object detection pipeline.", keywords: ["yolo", "detection", "coco", "boxes"] },
 
-  { type: "project", label: "Pose estimation", href: "/project/pose",
+  { type: "project", label: "Pose estimation", href: "/projects/pose",
     desc: "YOLO-pose keypoints & real-time skeleton overlays.", keywords: ["pose", "keypoints", "skeleton", "yolo"] },
 
-  { type: "project", label: "House price estimation", href: "/project/price",
+  { type: "project", label: "House price estimation", href: "/projects/price",
     desc: "Predict housing prices with ML models & Swedish datasets.", keywords: ["price", "housing", "ml", "real estate"] },
+
+  { type: "project", label: "Arabic handwritten text recognition", href: "/projects/chang",
+    desc: "Handwritten Arabic text recognition using deep learning.", keywords: ["arabic", "handwriting", "ocr", "text", "yolo"] },
 
   // Demos (lancement direct)
   { type: "demo", label: "Run: Object detection", href: "/demo/yolo",
@@ -44,6 +47,9 @@ const commands: Command[] = [
 
   { type: "demo", label: "Run: House price estimation", href: "/demo/price",
     desc: "Launch the pricing demo.", keywords: ["run", "demo", "price"] },
+
+  { type: "demo", label: "Run: Arabic handwritten text recognition", href: "/demo/chang",
+    desc: "Launch the handwritten text recognition demo.", keywords: ["run", "demo", "arabic", "handwriting", "ocr"] },
 
   // Tools
   { type: "tool", label: "Debug panel", href: "/debug",

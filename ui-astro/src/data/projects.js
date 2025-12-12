@@ -60,15 +60,6 @@ export default [
   demoUrl: '/demo/pose'
   },
   {
-    slug: "Chang's Project",
-    title: "Chang's Project",
-    description: 'Description of Chang\'s project goes here.',
-    image: '/images/chang-demo.jpg',
-    contributors: ['Chang'],
-    repo: 'https://github.com/chang/idk'
-
-  },
-  {
     slug: 'chang',
     title: "Chang's ONNX Pose Pipeline",
     description:

@@ -190,6 +190,46 @@ const ltuUrl = 'https://www.ltu.se/';
       }
       .debug-btn:hover{ background:#1b1523; border-color:#ffce5a66; }
 
+      /* === HEADER LAYOUT === */
+      .vh-header{
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 32px;
+        min-height: 64px;
+      }
+
+      /* LEFT */
+      .vh-left{
+        display:flex;
+        align-items:center;
+        white-space: nowrap;
+      }
+
+      /* CENTER */
+      .vh-center{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap: 24px;
+        min-width: 0; /* IMPORTANT pour éviter les wraps */
+      }
+
+      /* RIGHT */
+      .vh-right{
+        display:flex;
+        align-items:center;
+        white-space: nowrap;
+      }
+
+      /* Prevent wrapping everywhere */
+      .brand,
+      .main-nav,
+      .search-wrap,
+      .debug-btn{
+        white-space: nowrap;
+      }
+
       /* ===== Footer ===== */
       .vh-footer{
         margin-top: 24px;
@@ -439,6 +479,51 @@ const ltuUrl = 'https://www.ltu.se/';
           </a>
 
           <button class="burger" data-burger aria-label="Menu">☰</button>
+      </div>
+    </header>
+    <header class="topbar">
+      <div class="topbar-inner vh-header">
+        
+        <!-- LEFT -->
+        <div class="vh-left">
+          <a class="brand" href="/">
+            <img src="/images/LTU_logo.png" alt="" width="24" height="24" />
+            <span>Vision Hub</span>
+          </a>
+        </div>
+
+        <!-- CENTER -->
+        <div class="vh-center">
+          <nav class="main-nav">
+            <a href="/" class="nav-link active">Home</a>
+            <a href="/projects" class="nav-link">Projects</a>
+            <a href="/docs" class="nav-link">Documentation</a>
+          </nav>
+
+          <div class="search-wrap" role="search">
+            <div class="search">
+              <span class="search-ico" aria-hidden="true">⌕</span>
+              <input
+                id="vh-search"
+                class="search-input"
+                type="search"
+                placeholder="Search projects, demos, tools… (Ctrl/⌘ K)"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="Search and launch"
+              />
+              <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
+            </div>
+
+            <div id="vh-results" class="results" role="listbox" aria-label="Search results"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="vh-right">
+          <a class="debug-btn" href="/debug">🛠 Debug</a>
+        </div>
+
       </div>
     </header>
 

@@ -82,15 +82,37 @@ const ltuUrl = 'https://www.ltu.se/';
         background:#122035; border:1px solid var(--border); }
       .page { max-width: 1100px; margin: 24px auto; padding: 0 16px 64px; }
       .burger{ display:none; background:none; border:none; color:var(--text); font-size:20px; }
-      @media (max-width: 800px) { nav{ display:none; } .burger{ display:inline-flex; } }
-      
+      @media (max-width: 800px) { 
+        .main-nav{ display:none; } 
+        .burger{ display:inline-flex; } 
+      }      
       /* --- Nav layout --- */
       .main-nav { display:flex; gap:6px; align-items:center; }
       @media (max-width: 900px){ .main-nav { display:none; } }
 
       /* --- Search bar --- */
-      .search-wrap{ position:relative; flex: 0 1 520px; margin: 0 10px; }
-      @media (max-width: 900px){ .search-wrap{ flex:1; } }
+      .search-wrap{
+        position:relative;
+        flex: 1 1 520px;     /* peut grandir ET rétrécir */
+        max-width: 560px;
+        min-width: 220px;    /* limite pour rester utilisable */
+        margin: 0;
+      }
+      @media (max-width: 1000px){
+        .search-wrap{ max-width: 420px; }
+      }
+
+      @media (max-width: 820px){
+        .search-wrap{ max-width: 320px; }
+        .search-kbd{ display:none; } /* gagne de la place */
+      }
+
+      /* mobile: on masque la nav, on garde search + burger */
+      @media (max-width: 720px){
+        .main-nav{ display:none; }
+        .search-wrap{ max-width: none; min-width: 0; }
+        .burger{ display:inline-flex; }
+      }
 
       .search{
         display:flex; align-items:center; gap:10px;
@@ -191,28 +213,22 @@ const ltuUrl = 'https://www.ltu.se/';
       .debug-btn:hover{ background:#1b1523; border-color:#ffce5a66; }
 
       /* === HEADER LAYOUT === */
+      
       .vh-header{
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        align-items: center;
-        gap: 32px;
+        display:grid;
+        grid-template-columns: auto minmax(360px, 1fr) auto;
+        align-items:center;
+        column-gap: 48px;          /* + d’air entre L / C / R */
         min-height: 64px;
       }
 
-      /* LEFT */
-      .vh-left{
-        display:flex;
-        align-items:center;
-        white-space: nowrap;
-      }
-
-      /* CENTER */
+      .vh-left, .vh-right{ white-space:nowrap; display:flex; align-items:center; gap:12px; }
       .vh-center{
         display:flex;
         align-items:center;
         justify-content:center;
-        gap: 24px;
-        min-width: 0; /* IMPORTANT pour éviter les wraps */
+        gap: 18px;
+        min-width: 0;
       }
 
       /* RIGHT */
@@ -442,13 +458,16 @@ const ltuUrl = 'https://www.ltu.se/';
   </head>
   <body>
     <header class="topbar">
-      <div class="topbar-inner">
-        <a class="brand" href="/" aria-label="Vision Hub home">
-          <img src="/images/LTU_logo.png" alt="" class="brand-logo" width="24" height="24" />
-          <span>Vision Hub</span>
-        </a>
+      <div class="topbar-inner vh-header">
+        <div class="vh-left">
+          <a class="brand" href="/" aria-label="Vision Hub home">
+            <img src="/images/LTU_logo.png" alt="" class="brand-logo" width="24" height="24" />
+            <span>Vision Hub</span>
+          </a>
+        </div>
 
-          <nav data-nav class="main-nav" aria-label="Main">
+        <div class="vh-center">
+          <nav class="main-nav" data-nav aria-label="Main">
             <a href="/" class={`nav-link ${isActive("/") ? "active" : ""}`}>Home</a>
             <a href="/projects" class={`nav-link ${isActive("/projects") ? "active" : ""}`}>Projects</a>
             <a href="/docs" class={`nav-link ${isActive("/docs") ? "active" : ""}`}>Documentation</a>
@@ -457,73 +476,19 @@ const ltuUrl = 'https://www.ltu.se/';
           <div class="search-wrap" role="search">
             <div class="search">
               <span class="search-ico" aria-hidden="true">⌕</span>
-              <input
-                id="vh-search"
-                class="search-input"
-                type="search"
+              <input id="vh-search" class="search-input" type="search"
                 placeholder="Search projects, demos, tools… (Ctrl/⌘ K)"
-                autocomplete="off"
-                spellcheck="false"
-                aria-label="Search and launch"
-              />
+                autocomplete="off" spellcheck="false" aria-label="Search and launch" />
               <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
             </div>
-
-            <div id="vh-results" class="results" role="listbox" aria-label="Search results"></div>
-          </div>
-
-          <div class="spacer"></div>
-
-          <a class="debug-btn" href="/debug" aria-label="Open debug panel">
-            🛠 Debug
-          </a>
-
-          <button class="burger" data-burger aria-label="Menu">☰</button>
-      </div>
-    </header>
-    <header class="topbar">
-      <div class="topbar-inner vh-header">
-        
-        <!-- LEFT -->
-        <div class="vh-left">
-          <a class="brand" href="/">
-            <img src="/images/LTU_logo.png" alt="" width="24" height="24" />
-            <span>Vision Hub</span>
-          </a>
-        </div>
-
-        <!-- CENTER -->
-        <div class="vh-center">
-          <nav class="main-nav">
-            <a href="/" class="nav-link active">Home</a>
-            <a href="/projects" class="nav-link">Projects</a>
-            <a href="/docs" class="nav-link">Documentation</a>
-          </nav>
-
-          <div class="search-wrap" role="search">
-            <div class="search">
-              <span class="search-ico" aria-hidden="true">⌕</span>
-              <input
-                id="vh-search"
-                class="search-input"
-                type="search"
-                placeholder="Search projects, demos, tools… (Ctrl/⌘ K)"
-                autocomplete="off"
-                spellcheck="false"
-                aria-label="Search and launch"
-              />
-              <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
-            </div>
-
             <div id="vh-results" class="results" role="listbox" aria-label="Search results"></div>
           </div>
         </div>
 
-        <!-- RIGHT -->
         <div class="vh-right">
-          <a class="debug-btn" href="/debug">🛠 Debug</a>
+          <a class="debug-btn" href="/debug" aria-label="Open debug panel">🛠 Debug</a>
+          <button class="burger" data-burger aria-label="Menu">☰</button>
         </div>
-
       </div>
     </header>
 

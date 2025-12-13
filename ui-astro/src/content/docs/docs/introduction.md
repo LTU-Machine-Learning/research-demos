@@ -1,14 +1,11 @@
 ---
 title: Introduction
 description: Vision Hub documentation overview
-slug: introduction
 ---
 
 # Vision Hub
 
-Welcome to the Vision Hub documentation.
-
-This site documents:
+This documentation covers:
 - Frontend (Astro UI)
 - Backend demos
 - Orchestration API

@@ -7,7 +7,10 @@ export default defineConfig({
     starlight({
       title: 'Vision Hub Docs',
       sidebar: [
-        { label: 'Getting Started', items: ['introduction'] },
+        {
+          label: 'Getting Started',
+          items: ['introduction'],
+        },
       ],
     }),
   ],

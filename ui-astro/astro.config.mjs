@@ -6,14 +6,8 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Vision Hub Docs',
-      defaultLocale: 'en',
       sidebar: [
-        {
-          label: 'Getting Started',
-          items: [
-            { label: 'Introduction', slug: 'introduction' },
-          ],
-        },
+        { label: 'Getting Started', items: ['introduction'] },
       ],
     }),
   ],

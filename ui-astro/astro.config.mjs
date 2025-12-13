@@ -21,13 +21,13 @@ export default defineConfig({
     mdx(),
     starlight({
       title: 'Vision Hub Documentation',
-      defaultLocale: 'en',
       sidebar: [
         {
           label: 'Overview',
-          items: [{ label: 'Introduction', slug: 'introduction' }],
+          items: [
+            { label: 'Introduction', link: '/docs/introduction' },
+          ],
         },
-        // add your pages later
       ],
     }),
   ],

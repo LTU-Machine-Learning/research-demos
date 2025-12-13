@@ -1,22 +1,23 @@
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# ---- Node (any subdir) ----
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
 
-# Astro
-.astro/
-dist/
+# ---- Astro (any subdir) ----
+**/.astro/
+**/dist/
 
-# Build artifacts
-.cache/
-.tmp/
+# ---- Common build/cache ----
+**/.cache/
+**/.tmp/
+**/.vite/
+**/.turbo/
 
-# OS
+# ---- OS ----
 .DS_Store
 Thumbs.db
 
-# Env
-.env
-.env.*
-.env
+# ---- Env ----
+**/.env
+**/.env.*

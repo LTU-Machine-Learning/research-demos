@@ -20,13 +20,10 @@ export default defineConfig({
 
   integrations: [
     astroExpressiveCode(),
-
     mdx(),
 
     starlight({
       title: 'Vision Hub Documentation',
-
-      routeBase: 'docs',
 
       sidebar: [
         {

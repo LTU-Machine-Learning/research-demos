@@ -1,11 +1,23 @@
-// astro.config.mjs
+// ui-astro/astro.config.mjs
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import mdx from '@astrojs/mdx';
+import astroExpressiveCode from 'astro-expressive-code';
 
 export default defineConfig({
+  server: {
+    port: 4321,
+    host: true,
+  },
   output: 'static',
+  vite: {
+    build: {
+      assetsInlineLimit: 0,
+    },
+  },
+
   integrations: [
+    astroExpressiveCode(), 
     mdx(),
     starlight({
       title: 'Vision Hub Documentation',
@@ -13,19 +25,9 @@ export default defineConfig({
       sidebar: [
         {
           label: 'Overview',
-          items: [
-            { label: 'Introduction', slug: 'introduction' },
-            { label: 'Architecture', slug: 'architecture' },
-          ],
+          items: [{ label: 'Introduction', slug: 'introduction' }],
         },
-        {
-          label: 'Demos',
-          items: [
-            { label: 'YOLO & Pose', slug: 'demos/yolo' },
-            { label: 'Price Estimation', slug: 'demos/price' },
-            { label: 'Arabic OCR', slug: 'demos/chang' },
-          ],
-        },
+        // add your pages later
       ],
     }),
   ],

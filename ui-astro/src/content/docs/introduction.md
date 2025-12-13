@@ -1,6 +1,7 @@
 ---
 title: Introduction
 description: Vision Hub documentation overview
+slug: introduction
 ---
 
 # Vision Hub

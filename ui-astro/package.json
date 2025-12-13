@@ -8,8 +8,8 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^4.10.0",
-    "@astrojs/starlight": "^0.25.0",
+    "astro": "^4.16.0",
+    "@astrojs/starlight": "^0.31.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   }

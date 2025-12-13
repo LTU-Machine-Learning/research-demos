@@ -39,15 +39,12 @@ body {
 }
 .cta:hover { background: var(--cta-hover); }
 
-.projects-preview {
+.projects-preview{
   max-width: 1100px;
-  margin: 0 auto 48px auto;
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
-  justify-content: center;
+  margin: 0 auto 48px;
   padding: 0 16px;
 }
+
 
 .proj-card {
   background: var(--card);

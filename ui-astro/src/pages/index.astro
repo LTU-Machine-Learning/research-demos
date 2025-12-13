@@ -6,20 +6,34 @@ import projects from '../data/projects.js';
 const title = 'Vision Hub – Welcome';
 const description = 'Discover and interact with real-time computer vision demos.';
 ---
+
 <SiteLayout {title} {description}>
   <section class="hero">
     <h1>Vision Hub</h1>
     <p>
-      Welcome to Vision Hub, a platform to discover and interact with cutting-edge AI research demos. 
-      Explore real-time computer vision projects, learn about their contributors, and try live video demos
-      directly on this app! 
+      Welcome to Vision Hub, a platform to discover and interact with cutting-edge AI research demos.
+      Explore real-time computer vision projects, learn about their contributors, and try live demos.
     </p>
     <a href="/projects" class="cta">Browse all projects</a>
   </section>
 
   <section class="projects-preview" aria-label="Project previews">
-    {projects.map((p) => (
-      <ProjectCard image={p.image} title={p.title} description={p.description} href={`/projects/${p.slug}`} />
+    {projects.map(p => (
+      <ProjectCard
+        image={p.image}
+        title={p.title}
+        description={p.description}
+        href={`/projects/${p.slug}`}
+      />
     ))}
   </section>
+
+  <style>
+    .projects-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 32px;
+      margin-top: 48px;
+    }
+  </style>
 </SiteLayout>

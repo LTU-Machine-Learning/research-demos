@@ -1,8 +1,10 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
+
 const title = "Privacy & Data Protection";
-const description = "How Vision Hub demos handle camera data, consent, and integrity in compliance with EU and Swedish law.";
-const CONTACT_NAME = import.meta.env.PUBLIC_CONTACT_NAME || 'Your Name';
+const description = "How Vision Hub demos handle data, consent, and integrity in compliance with EU and Swedish law.";
+
+const CONTACT_NAME  = import.meta.env.PUBLIC_CONTACT_NAME  || 'Your Name';
 const CONTACT_EMAIL = import.meta.env.PUBLIC_CONTACT_EMAIL || 'your.email@example.com';
 ---
 
@@ -11,89 +13,124 @@ const CONTACT_EMAIL = import.meta.env.PUBLIC_CONTACT_EMAIL || 'your.email@exampl
     <h1>Privacy & Data Protection</h1>
 
     <p>
-      This page describes how <b>Vision Hub</b> processes visual data in compliance with the
+      This page describes how <b>Vision Hub</b> processes data in compliance with the
       <b>European Union’s General Data Protection Regulation (GDPR, Regulation (EU) 2016/679)</b>
       and Sweden’s national implementation, <b>Dataskyddsförordningen</b>.
-      The system follows the integrity principles defined by
+      The system follows the integrity principles promoted by
       <b>Integritetsskyddsmyndigheten (IMY)</b>, Sweden’s data protection authority.
     </p>
 
-    <h2>1. Purpose of the demonstration</h2>
+    <h2>1. Purpose of the demonstrations</h2>
     <p>
       The Vision Hub installation at Luleå University of Technology showcases interactive
-      <b>AI-based computer vision models</b> that operate in real time. The purpose is purely
-      educational and research-oriented — to demonstrate how modern AI systems can detect
-      objects, track movement, or estimate human poses visually.
+      <b>AI-based research demonstrations</b> that operate in real time. The purpose is purely
+      educational and research-oriented — to illustrate how modern AI systems can detect
+      objects, track movement, recognize handwritten text, or estimate values using machine learning.
     </p>
 
     <h2>2. Type of data processed</h2>
     <p>
-      The demo processes <b>live video frames</b> from a fixed camera connected to the installation.
-      These frames are analyzed instantly in memory to draw overlays (such as boxes or skeletons)
-      on a live screen.  
-      <u>No videos, images, or identifying information are ever saved or transmitted.</u>
+      Depending on the demonstration, Vision Hub processes either:
+    </p>
+    <ul>
+      <li>
+        <b>Live camera frames</b> from a fixed on-site camera (for computer vision demos), or
+      </li>
+      <li>
+        <b>User-provided non-identifying input data</b> (for non-visual demos such as house price estimation).
+      </li>
+    </ul>
+
+    <p>
+      For camera-based demonstrations, video frames are analyzed instantly in memory to produce
+      visual overlays (such as boxes or skeletons) or on-screen text output (for handwritten text recognition).
+      <u>No videos or images are saved or exported.</u>
     </p>
 
     <p>
-      Once you step out of view or the demo resets, all visual data is discarded immediately.
+      For non-visual demonstrations (e.g. house price estimation), only anonymous numerical inputs
+      (such as housing features) are processed by a machine learning model. These inputs are not intended
+      to identify any person and are not linked to an account or identity.
     </p>
+
+    <h3>Demo-specific processing</h3>
+    <ul>
+      <li>
+        <b>Object detection & pose estimation:</b> live camera frames analyzed in real time to display
+        bounding boxes or skeletal keypoints.
+      </li>
+      <li>
+        <b>Arabic handwritten text recognition:</b> live camera frames analyzed to recognize handwritten
+        characters; no recognized text or images are stored.
+      </li>
+      <li>
+        <b>House price estimation:</b> anonymous, user-provided numerical inputs (e.g. area, room count,
+        location indicators) processed by a machine learning model; no camera, no personal identifiers.
+      </li>
+    </ul>
 
     <h2>3. Legal basis for processing</h2>
     <p>
-      The visual processing is based on <b>Article 6(1)(a) of the GDPR</b> — your
-      <b>explicit consent</b> to participate in a live, camera-based AI demonstration.
+      For camera-based demonstrations, processing is based on <b>Article 6(1)(a) of the GDPR</b> — your
+      <b>explicit consent</b> to participate in a live demonstration.
       The processing serves no commercial or surveillance purpose.
     </p>
 
     <p>
-      Participation is entirely voluntary. You may withdraw consent at any time by asking
-      a staff member to stop the demo or by stepping away from the camera area.
+      Participation is entirely voluntary. You may withdraw consent at any time by asking a staff member
+      to stop the demo or by stepping away from the camera area.
     </p>
 
     <h2>4. Consent management</h2>
     <p>
-      When a visitor gives consent to participate, a short-lived <b>consent token</b> is created
-      within the <b>local demo environment</b> (on the lab’s computer).  
-      This token:
+      When a visitor gives consent to participate in a camera-based demo, a short-lived <b>consent token</b>
+      is created within the <b>local demo environment</b> (on the lab’s computer). This token:
     </p>
     <ul>
       <li>Is valid for approximately 10 minutes.</li>
       <li>Contains no personal or identifying data.</li>
-      <li>Is used only to temporarily authorize the live demo.</li>
-      <li>Expires automatically and is not stored anywhere after the session.</li>
+      <li>Is used only to temporarily authorize the live demo on this device.</li>
+      <li>Expires automatically and is not retained after the session.</li>
     </ul>
 
     <p>
-      The consent is therefore <b>entirely local to the installation</b> and cannot be accessed
-      or linked to any external system, individual, or network.
+      No consent tokens are shared externally. Consent is <b>local to the installation</b> and cannot be
+      linked to any external system, individual, or network.
     </p>
 
     <h2>5. Data retention and storage</h2>
     <ul>
       <li>No image, audio, or video data is stored or transmitted.</li>
-      <li>No identifiers such as IP addresses, cookies, or session IDs are collected.</li>
-      <li>The system does not log any personal activity, face, or biometric pattern.</li>
-      <li>All AI processing occurs in real time and in memory only.</li>
+      <li>No persistent tracking identifiers (e.g. cookies for analytics) are used.</li>
+      <li>
+        Short-lived consent tokens may be stored locally on the device solely to manage demo access and
+        expire automatically.
+      </li>
+      <li>The system does not perform identity verification, face recognition, or biometric identification.</li>
+      <li>All AI processing occurs in real time and primarily in memory.</li>
     </ul>
 
     <p>
-      The demo computer is isolated within the lab network and used solely for on-site research
-      and exhibition purposes.
+      The demo computer is used solely for on-site research and exhibition purposes. Network access is
+      restricted to what is needed to operate the demo environment.
     </p>
 
     <h2>6. Your rights under EU and Swedish law</h2>
     <p>
-      Under the GDPR and Swedish Data Protection Act, you have the right to:
+      Under the GDPR and Swedish data protection rules, you have the right to:
     </p>
     <ul>
-      <li>Be informed about how visual data is used.</li>
-      <li>Withdraw consent at any time.</li>
-      <li>Request erasure or restriction of any personal data (not applicable here, as none is stored).</li>
+      <li>Be informed about how data is used in the demonstration.</li>
+      <li>Withdraw consent at any time (for camera-based demos).</li>
+      <li>
+        Request erasure or restriction of any personal data (generally not applicable here, as no personal
+        data is stored).
+      </li>
       <li>Contact <b>Integritetsskyddsmyndigheten (IMY)</b> if you believe your rights are violated.</li>
     </ul>
 
     <p>
-      Since no data is stored or transferred, withdrawing consent simply ends the live session.
+      Since camera frames are not stored or transferred, withdrawing consent simply ends the live session.
     </p>
 
     <h2>7. Contact information</h2>
@@ -104,26 +141,28 @@ const CONTACT_EMAIL = import.meta.env.PUBLIC_CONTACT_EMAIL || 'your.email@exampl
     <p>
       <b>{CONTACT_NAME}</b><br/>
       Vision Hub Project – Luleå University of Technology<br/>
-      Email: <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>
+      Email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
     </p>
 
     <p style="margin-top:32px;color:#9cb0d8;font-size:0.9rem;">
-      Last updated: October 2025 — compliant with the EU GDPR and Swedish Data Protection Act (Dataskyddsförordningen).
+      Last updated: December 2025 — aligned with the EU GDPR and Swedish data protection rules (Dataskyddsförordningen).
     </p>
   </div>
 
-<link rel="modulepreload" href="/scripts/consent-widget.js" />
-<script type="module" src="/scripts/consent-widget.js"></script>
+  <link rel="modulepreload" href="/scripts/consent-widget.js" />
+  <script type="module" src="/scripts/consent-widget.js"></script>
 
-<h1>Privacy & Consent</h1>
-<p class="sub">This demo setup uses short-lived local consent tokens. You can see and withdraw them below.</p>
+  <h1>Privacy & Consent</h1>
+  <p class="sub">
+    This station uses short-lived local consent tokens for camera-based demos. You can review and withdraw them below.
+  </p>
 
-<!-- Configure via attributes -->
-<consent-status
-  demos="yolo,pose,price"
-  orch=":8090"
-  token="dev-token"
-  stop="true"
-  intro="Below is your consent status on this station. Tokens are short-lived and stored locally. You can withdraw at any time."
-></consent-status>
+  <!-- Configure via attributes -->
+  <consent-status
+    demos="yolo,pose,price,chang"
+    orch=":8090"
+    token="dev-token"
+    stop="true"
+    intro="Below is your consent status on this station. Tokens are short-lived and stored locally. You can withdraw at any time."
+  ></consent-status>
 </SiteLayout>

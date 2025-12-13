@@ -31,6 +31,8 @@ const { image, title, description, href } = Astro.props;
     color: inherit;
     box-shadow: 0 4px 24px #0004;
     transition: box-shadow .18s ease, transform .18s ease;
+    width: 100%;
+    max-width: 380px; 
   }
 
   .proj-card:hover {
@@ -84,4 +86,5 @@ const { image, title, description, href } = Astro.props;
     color: #5aa4ff;
     text-decoration: underline;
   }
+
 </style>

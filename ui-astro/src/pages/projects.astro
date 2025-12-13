@@ -55,10 +55,20 @@ const description = 'Browse all real-time AI demos';
 
     .projects-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 32px;
+
+      grid-template-columns: repeat(3, minmax(260px, 380px));
+
+      justify-content: center;
     }
 
+    @media (max-width: 760px) {
+      .projects-grid {
+        grid-template-columns: 1fr;
+        justify-content: stretch;
+      }
+    }
+    
     .back-link {
       display: inline-block;
       padding: 10px 28px;

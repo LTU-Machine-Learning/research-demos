@@ -9,7 +9,9 @@ export default defineConfig({
     port: 4321,
     host: true,
   },
+
   output: 'static',
+
   vite: {
     build: {
       assetsInlineLimit: 0,
@@ -17,15 +19,20 @@ export default defineConfig({
   },
 
   integrations: [
-    astroExpressiveCode(), 
+    astroExpressiveCode(),
+
     mdx(),
+
     starlight({
       title: 'Vision Hub Documentation',
+
+      routeBase: 'docs',
+
       sidebar: [
         {
           label: 'Overview',
           items: [
-            { label: 'Introduction', link: '/docs/introduction' },
+            { label: 'Introduction', link: '/docs/introduction/' },
           ],
         },
       ],

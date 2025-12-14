@@ -7,11 +7,13 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Vision Hub Docs',
-      routeBase: '/docs', 
+
+      disable404Route: true,
+
       sidebar: [
         {
           label: 'Getting Started',
-          items: ['introduction'], 
+          items: ['docs/introduction'],
         },
       ],
     }),

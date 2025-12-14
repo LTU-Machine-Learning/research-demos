@@ -5,4 +5,4 @@ description: Documentation for the Vision Hub platform (architecture, demos, API
 
 Welcome to the Vision Hub documentation.
 
-Start here: [Introduction](./introduction)
+Start here: [Introduction](/docs/introduction)

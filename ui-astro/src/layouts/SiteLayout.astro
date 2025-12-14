@@ -282,6 +282,19 @@ const ltuUrl = 'https://www.ltu.se/';
       @media (max-width: 640px){
         .vh-footer .vh-right{ width:100%; justify-content:flex-start; flex-wrap:wrap; gap:10px; }
       }
+      html, body {
+        height: 100%;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      main.page {
+        flex: 1; 
+      }
     </style>
     <script type="module">
       const initMenu = () => {

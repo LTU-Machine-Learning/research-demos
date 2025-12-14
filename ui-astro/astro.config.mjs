@@ -7,18 +7,21 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Vision Hub Docs',
-
       disable404Route: true,
 
       sidebar: [
-        {
-          label: 'Getting Started',
-          items: ['docs/introduction'],
-        },
+        { label: 'Getting started', autogenerate: { directory: '' } },
+
+        // ou mieux : sections explicites
+        { label: 'Project',      autogenerate: { directory: 'projets' } },
+        { label: 'Architecture', autogenerate: { directory: 'architecture' } },
+        { label: 'Frontend',     autogenerate: { directory: 'frontend' } },
+        { label: 'API',          autogenerate: { directory: 'api' } },
+        // plus tard:
+        // { label: 'Video',         autogenerate: { directory: 'video' } },
+        // { label: 'Infrastructure', autogenerate: { directory: 'infrastructure' } },
       ],
     }),
   ],
-  vite: {
-    build: { assetsInlineLimit: 0 },
-  },
+  vite: { build: { assetsInlineLimit: 0 } },
 });

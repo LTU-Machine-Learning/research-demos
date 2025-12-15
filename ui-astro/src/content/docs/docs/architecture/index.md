@@ -1,191 +1,128 @@
 ---
 title: Global Architecture
-description: High-level system architecture of the Vision Hub platform, including components, responsibilities, and data flows.
+description: System-level architecture of Vision Hub: components, responsibilities, and control/video flows.
 ---
 
 ## Architectural Overview
 
-Vision Hub is designed as a **distributed, service-oriented system** where each major responsibility is isolated into a dedicated component.  
-The architecture prioritizes explicit boundaries, predictable data flows, and controlled interactions between subsystems.
+Vision Hub is a distributed, container-based platform where each major responsibility is isolated into a dedicated component:
 
-At a high level, the platform is composed of four major layers:
+1. Frontend (Astro UI)
+2. Control API (FastAPI orchestrator)
+3. Runtime backend (Docker Swarm services)
+4. Connectivity layer (virtual LAN + Swarm overlay networking)
 
-1. **Frontend application**
-2. **Control and orchestration API**
-3. **Runtime backend (Docker Swarm)**
-4. **Overlay network layer**
-
-Each layer is independently deployable and replaceable.
+The goal is a predictable, low-latency demo runtime with explicit boundaries between UI, orchestration, media transport, and inference.
 
 ---
 
 ## Component Responsibilities
 
-### Frontend Application (Astro)
+### Frontend application (Astro)
 
-The frontend is a **pure client-facing application** responsible for:
-
+Responsibilities:
 - navigation and documentation pages,
-- demo selection and activation,
-- live visualization (video + overlays),
-- user consent interaction.
+- demo selection and activation UX,
+- live visualization (WebRTC/WHEP video + overlay metadata),
+- consent UX (camera-based demos).
 
-The frontend:
-- does **not** perform AI inference,
-- does **not** manage infrastructure state,
-- does **not** directly communicate with Docker or GPU resources.
+Non-responsibilities:
+- no inference execution,
+- no Docker access,
+- no direct scaling/placement decisions.
 
-All infrastructure interactions are delegated to the control API.
-
-Detailed frontend responsibilities are described in  
-→ [Frontend architecture](/docs/frontend)
+Related: /docs/frontend
 
 ---
 
-### Control API
+### Control API (FastAPI)
 
-The control API acts as the **single orchestration authority** of the platform.
+The control API is the single orchestration authority.
 
-Its responsibilities include:
-- maintaining a registry of available demos,
-- managing demo lifecycle (start, stop, status),
-- exposing health and heartbeat endpoints,
-- handling user consent and short-lived tokens,
-- acting as a controlled gateway to the Docker Swarm.
+Responsibilities:
+- demo registry (mapping demo id → Swarm service + dependencies),
+- lifecycle endpoints (start/stop/status/heartbeat),
+- consent tokens (short-lived JWT) to gate camera-based actions,
+- shared dependency coordination (MediaMTX + capture).
 
-The API intentionally does not:
-- process video streams,
-- perform inference,
-- expose low-level Docker internals to the frontend.
+Non-responsibilities:
+- no video processing,
+- no inference,
+- no UI.
 
-This separation ensures that infrastructure control remains centralized and auditable.
-
-Further details are provided in  
-→ [Control API design](/docs/api)
+Related: /docs/api
 
 ---
 
-### Runtime Backend (Docker Swarm)
+### Runtime backend (Docker Swarm)
 
-All runtime services are hosted inside a Docker Swarm cluster.
+The backend runs all runtime services as containers (Swarm services for most workloads, plus a local-only capture container on the frontend node).
 
-This includes:
-- the video capture service,
-- the media distribution service,
-- AI demo services (GPU-bound or CPU-bound).
+Properties:
+- demos are scaled to 0 by default and started on demand,
+- GPU placement is enforced by Swarm node labels/constraints,
+- services communicate over a common Swarm overlay network (vision-hub-net).
 
-Key properties of the backend:
-- no demo runs by default,
-- services are started on demand,
-- GPU scheduling is enforced at the Swarm level,
-- services are isolated and stateless whenever possible.
-
-The Swarm configuration defines:
-- service placement constraints,
-- resource limits,
-- network attachments.
-
-More details are provided in  
-→ [Docker Swarm architecture](/docs/infrastructure/swarm)
+Related: /docs/infrastructure/swarm
 
 ---
 
-### Overlay Network Layer
+### Connectivity layer (virtual LAN)
 
-Frontend and backend nodes may be deployed on physically separate machines.  
-To maintain a consistent execution model, Vision Hub relies on a **virtual overlay network**.
+Nodes may be physically remote. Vision Hub assumes a “LAN-like” addressing model across nodes to keep service endpoints stable.
 
-Characteristics:
-- all nodes appear as part of the same logical LAN,
-- fixed private IP addressing is used,
-- Swarm services communicate without relying on public routing.
+In practice:
+- a virtual LAN (ZeroTier) is used to provide private, routable node-to-node connectivity,
+- Swarm’s overlay network provides service discovery (DNS) and east-west traffic between services.
 
-The overlay network enables:
-- multi-node Swarm operation,
-- remote GPU usage,
-- transparent service discovery.
+Important: the project is designed so most internal links are expressed as if all components were on the same LAN (initially developed on localhost / 192.168.10.0/24), then extended to remote nodes via ZeroTier without rewriting the application logic.
 
-Primary connectivity is provided by ZeroTier.  
-A secondary VPN solution (Headscale / Tailscale) is maintained for administrative access only.
-
-Network design is detailed in  
-→ [Network and connectivity](/docs/infrastructure/network)
+Related: /docs/infrastructure/network
 
 ---
 
-## Data and Control Flows
+## Control Flow (demo lifecycle)
 
-### Control Flow (Lifecycle)
+The control path is intentionally centralized:
 
-1. The user selects a demo from the frontend.
-2. The frontend requests demo activation via the control API.
-3. The API validates the request and triggers the corresponding Swarm service.
-4. The frontend polls or subscribes to demo status updates.
-5. When the demo is stopped, the API tears down the service.
+1. Frontend calls the Control API (start/stop/status/heartbeat).
+2. Control API scales Swarm services and coordinates shared deps.
+3. Frontend only consumes resulting endpoints (video stream + overlay WS).
 
-The frontend never directly controls backend services.
+The frontend never interacts directly with Docker or Swarm.
 
 ---
 
-### Video and Inference Flow
+## Video and Inference Flow
 
-Vision Hub explicitly separates **video transport** from **inference output**.
+Vision Hub separates video transport from inference output:
 
-- Video is captured once and distributed centrally.
-- AI services subscribe to the video stream as input only.
-- Inference results are emitted as structured metadata (e.g. bounding boxes, keypoints).
-- The frontend overlays inference metadata on top of the live video stream.
+- one camera feed is captured once and published to MediaMTX,
+- demos subscribe to the same source stream as input,
+- inference results are emitted as metadata (WebSocket payloads),
+- the frontend renders overlays on top of the live video.
 
-This avoids:
-- feedback loops,
-- re-encoding latency,
-- compounded processing delays.
+This keeps video transport stable while allowing demos to change independently.
 
-The full pipeline is detailed in  
-→ [Video pipeline](/docs/video)
+Related: /docs/video
 
 ---
 
 ## Architectural Boundaries
 
-Several boundaries are strictly enforced:
-
-- **Frontend ↔ Infrastructure**  
-  No direct Docker or GPU access from the frontend.
-
-- **Inference ↔ Video distribution**  
-  AI services never emit video streams.
-
-- **Demo ↔ Demo**  
-  Demos are isolated and unaware of each other.
-
-- **Network ↔ Application logic**  
-  Network configuration is externalized and not embedded in application code.
-
-These boundaries are intentional and central to the platform’s maintainability.
+Enforced boundaries:
+- UI cannot access Docker (only the API can).
+- Demos do not depend on each other.
+- Inference services do not own global video distribution (MediaMTX does).
+- Network topology is externalized (virtual LAN + Swarm overlay), not hardcoded into the UI logic.
 
 ---
 
-## Scalability and Limitations
+## Related pages
 
-The architecture supports:
-- horizontal scaling of demos,
-- controlled GPU sharing,
-- addition of new demos without modifying existing ones.
-
-However, the platform is not designed for:
-- large-scale public exposure,
-- untrusted multi-user environments,
-- high-availability guarantees.
-
-These limitations are a consequence of deliberate scope choices.
-
----
-
-## Next sections
-
-- [Frontend architecture](/docs/frontend)
-- [Control API design](/docs/api)
-- [Video pipeline](/docs/video)
-- [Docker Swarm backend](/docs/infrastructure/swarm)
-- [Network and connectivity](/docs/infrastructure/network)
+- /docs/frontend
+- /docs/api
+- /docs/video
+- /docs/infrastructure/swarm
+- /docs/infrastructure/network
+- /docs/demos

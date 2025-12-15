@@ -5,116 +5,74 @@ description: Architecture, design decisions, and implementation details of the V
 
 ## Overview
 
-Vision Hub is a modular, container-based platform designed to host and operate multiple real-time AI demonstrations from a single web interface.  
-Its primary objective is to expose computer vision and machine learning demos in a **low-latency**, **resource-efficient**, and **on-demand** manner, while keeping the frontend lightweight and the backend scalable.
+Vision Hub is a modular, container-based platform used to run multiple real-time AI demonstrations from a single web interface.
 
-The platform is built around a clear separation of concerns:
-- a **frontend web application** responsible for user interaction and visualization ([Frontend]( /docs/frontend/overview )),
-- a **control API** responsible for orchestration ([API]( /docs/api/overview )),
-- a **Docker Swarm backend** hosting compute-intensive services, including GPU-based inference ([Swarm]( /docs/infrastructure/swarm )).
+The platform is split into three main concerns:
+- an **Astro frontend** for navigation and visualization ([Frontend](/docs/frontend)),
+- a **control API** that orchestrates demo lifecycle ([API](/docs/api)),
+- a **Docker Swarm backend** that hosts media + inference services ([Swarm](/docs/infrastructure/swarm)).
 
-No AI workload is executed directly on the frontend node.
+No AI workload runs on the frontend node.
 
 ---
 
-## Core Design Principles
+## Core design principles
 
 ### On-demand execution
-AI demos are **not running by default**.  
-Each demo is instantiated as a Docker service and started only when explicitly requested by the frontend via the control API.
+Demos are **not** running by default. Each demo is a Swarm service scaled up only when requested by the frontend through the control API.
 
-This design choice is detailed in the section  
-→ [Demo lifecycle and orchestration](/docs/infrastructure/swarm#service-lifecycle)
-
----
+See: [Service lifecycle](/docs/infrastructure/swarm#service-lifecycle)
 
 ### Low-latency video pipeline
-Real-time interaction is a core constraint of the platform.  
-To minimize latency:
-- video capture is performed once, from a single source,
-- the raw video stream is never re-encoded by AI services,
-- inference results are transmitted separately as metadata overlays.
+A single capture source feeds a media relay (MediaMTX). Demos subscribe to the stream as input and emit inference results as metadata overlays.
 
-The full video architecture is described in  
-→ [Video pipeline architecture](/docs/video/overview)
-
----
+See: [Video pipeline](/docs/video)
 
 ### Stateless frontend
-The frontend does not maintain any persistent state related to demos or infrastructure.  
-All runtime information (demo availability, status, consent, lifecycle) is retrieved from the API.
+The frontend holds no persistent infrastructure state; demo status and lifecycle are retrieved from the API.
 
-Frontend structure and responsibilities are detailed in  
-→ [Frontend architecture](/docs/frontend/overview)
+See: [Frontend architecture](/docs/frontend)
 
 ---
 
-## High-Level Architecture
+## High-level architecture
 
-At a high level, Vision Hub is composed of the following elements:
+- **Frontend (Astro)** — UI, live playback (WHEP/WebRTC), overlays, consent UX.
+- **Control API** — demo registry + lifecycle endpoints (start/stop/status/heartbeat).
+- **Swarm runtime** — MediaMTX, capture, inference demos, and auxiliary services.
+- **Connectivity** — nodes joined into a single overlay network for service-to-service traffic.
 
-- **Frontend (Astro)**  
-  Web application responsible for navigation, visualization, and user interaction.  
-  Displays live video streams and AI overlays, and triggers demo lifecycle actions via the API.  
-  → [Frontend documentation](/docs/frontend/overview)
-
-- **Control API**  
-  Central orchestration component maintaining the registry of available demos and exposing lifecycle endpoints.  
-  → [API documentation](/docs/api/overview)
-
-- **Docker Swarm Backend**  
-  Hosts all runtime services, including capture, media distribution, and AI demos.  
-  → [Swarm architecture](/docs/infrastructure/swarm)
-
-- **Overlay Network**  
-  Virtual LAN interconnecting frontend and backend nodes.  
-  → [Network and connectivity](/docs/infrastructure/network)
+See:
+- [Architecture](/docs/architecture)
+- [Network](/docs/infrastructure/network)
 
 ---
 
-## Video and Data Flow
+## Video and data flow
 
-The platform relies on a centralized video distribution model:
+1. Capture container publishes the camera stream to MediaMTX (RTSP publish).
+2. Browser consumes live video via WHEP/WebRTC (MediaMTX).
+3. Inference services consume RTSP and emit metadata (WebSocket/HTTP).
+4. Frontend renders overlays on top of the live stream.
 
-1. A dedicated capture container acquires video from a local camera using FFmpeg.
-2. The stream is forwarded to a media server responsible for protocol handling and redistribution.
-3. AI services subscribe to the stream as input only.
-4. Inference results are emitted through WebSocket connections.
-5. The frontend overlays AI metadata on top of the live video stream.
-
-A detailed breakdown of this pipeline is available in  
-→ [Capture and MediaMTX pipeline](/docs/video/pipeline)
+See: [Video pipeline](/docs/video)
 
 ---
 
-## Deployment Model
+## Deployment model
 
-The frontend is typically deployed on a local demonstration machine, while GPU-enabled backend nodes are hosted remotely.  
-All nodes are joined into a single Docker Swarm cluster and connected through an overlay network.
+- Swarm nodes are connected through **ZeroTier** to provide stable private-LAN semantics across hosts.
+- Services communicate on the Swarm overlay network (`vision-hub-net`).
 
-- Primary overlay network: ZeroTier  
-- Backup administrative access: Headscale / Tailscale (SSH only)
-
-Network design and rationale are detailed in  
-→ [Network architecture](/docs/infrastructure/network)
-
----
-
-## Scope of This Documentation
-
-This documentation focuses on:
-- architectural decisions and their rationale,
-- internal component interactions,
-- deployment and orchestration details,
-- technical constraints and limitations.
-
-It does **not** aim to be a step-by-step tutorial for end users, but rather a technical reference.
+See: [Network architecture](/docs/infrastructure/network)
 
 ---
 
 ## Next sections
 
-- [Project overview and constraints](/docs/projects)
-- [Global architecture](/docs/architecture/global)
-- [Frontend application](/docs/frontend)
+- [Projects (scope & constraints)](/docs/projects)
+- [Architecture](/docs/architecture)
+- [Demos catalog](/docs/demos)
+- [Frontend](/docs/frontend)
 - [Control API](/docs/api)
+- [Swarm infrastructure](/docs/infrastructure/swarm)

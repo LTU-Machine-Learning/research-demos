@@ -3,237 +3,211 @@ title: Control API
 description: FastAPI orchestrator for demo lifecycle, consent enforcement, and Docker Swarm control.
 ---
 
-## Purpose
+## Scope
 
-The Control API (FastAPI) is the **single orchestration authority** of Vision Hub.  
-It is the only component allowed to interact with Docker (Swarm) and it exposes a small HTTP surface to:
+The Control API is the **single control-plane** of Vision Hub:
+- exposes a small HTTP surface to the frontend (start/stop/status/heartbeat),
+- scales Docker Swarm services (0 ↔ 1 replicas),
+- manages the **local capture container** (hysteresis / idle stop),
+- issues and validates **short-lived consent JWTs**.
 
-- list demos and their running state,
-- start/stop demos on demand,
-- enforce **camera consent** using short-lived JWTs,
-- reclaim resources automatically through an idle/heartbeat mechanism,
-- coordinate shared services (MediaMTX, capture).
+Code location:
+- `api/app.py` (FastAPI app + orchestration logic)
+- `api/Dockerfile` + `api/requirements.txt`
 
 Related:
-- [Global architecture](/docs/architecture)
-- [Frontend architecture](/docs/frontend)
-- [Projects: constraints](/docs/projets)
+- [Architecture](/docs/architecture)
+- [Frontend](/docs/frontend)
+- [Swarm](/docs/infrastructure/swarm)
+- [Network](/docs/infrastructure/network)
+- [Projects](/docs/projects)
 
 ---
 
-## Runtime Model
+## Auth model
 
-### Demo registry (static)
-Demos are defined in an in-memory registry (`DEMOS`) containing, for each demo:
-- `service`: Swarm service short name (scaled 0↔1)
-- `health_url`: internal health probe URL (in-cluster DNS)
-- `needs`: dependencies to start before the demo (e.g. `mediamtx`, `capture`)
+### Orchestrator token
+All control endpoints are protected by the orchestrator token:
+- header: `X-Token: <token>`
+- or query: `?token=<token>`
 
-Registered demos:
-- `yolo` → service `yolo`, needs `mediamtx` + `capture`
-- `pose` → service `pose`, needs `mediamtx` + `capture`
-- `chang` → service `chang-demo`, needs `mediamtx` + `capture`
-- `price` → service `price-api`, no shared deps
-
-A small helper computes a browser-facing URL per demo (`_browser_url_for`) using:
-- `PUBLIC_BASE_GPU` (GPU node / backend host)
-- `PUBLIC_BASE_NO_GPU` (frontend / non-GPU host)
+Configured via `ORCH_TOKEN` (defaults to `dev-token`).
 
 ---
 
-## Authentication
+## Demo registry
 
-### Orchestrator token (required)
-All non-public endpoints require an orchestrator token:
-- `X-Token: <token>` header **or**
-- `?token=<token>` query param
+Demos are registered in-process via `DEMOS` (in `api/app.py`). Each entry defines:
+- `service`: Swarm service short name (scaled 0 ↔ 1)
+- `health_url`: internal HTTP health probe (overlay DNS)
+- `needs`: dependencies to bring up before the demo (typically `mediamtx` + `capture`)
 
-Token value is read from `ORCH_TOKEN` (default: `dev-token`).  
-This token protects **infrastructure control**, not end-user identity.
+Current registered demos:
+- `yolo` → `service: yolo`, `needs: ["mediamtx", "capture"]`
+- `pose` → `service: pose`, `needs: ["mediamtx", "capture"]`
+- `chang` → `service: chang-demo`, `needs: ["mediamtx", "capture"]`
+- `price` → `service: price-api`, `needs: []`
 
----
+### Swarm service naming
+The API maps a short name to the deployed Swarm service name:
 
-## Consent Model (Camera / Recording)
-
-### Consent issuance
-`POST /consent?demo=<id|*>`
-
-Returns a short-lived JWT:
-
-- signed with `CONSENT_SECRET` (HS256),
-- audience `CONSENT_AUD` (default: `vision-hub`),
-- TTL `CONSENT_TTL_SECONDS` (default: 600s),
-- scoped to a demo via the `demo` claim (`demo_id` or `*`).
-
-Response shape:
-- `token` (JWT)
-- `expiresAt` (epoch ms, for browser storage)
-
-### Consent enforcement
-`POST /demos/{demo_id}/stop` requires:
-
-- `X-Token` (orchestrator token)
-- `X-Consent-Token` (consent JWT)
-
-The API validates:
-- signature + expiration,
-- audience,
-- demo scope (`claims.demo` must match `{demo_id}` or `*`).
-
-This ensures demo shutdown actions are tied to explicit user consent flows.
+- `STACK_NAME` defaults to `vision-hub`
+- service name becomes `<STACK_NAME>_<service>`, e.g. `vision-hub_yolo`
 
 ---
 
-## Lifecycle Endpoints (Overview)
+## Consent JWTs
+
+The API issues short-lived consent tokens to support explicit “camera consent” UX.
+
+### Issue token
+`POST /consent?demo=<id|*>` → `{ token, expiresAt }`
+
+Token properties:
+- HS256 signature (`CONSENT_SECRET`)
+- audience check (`CONSENT_AUD`, default `vision-hub`)
+- TTL (`CONSENT_TTL_SECONDS`, default 600s)
+- scope claim: `demo: "<demo_id>"` or `"*"`
+
+### Enforced endpoint
+Consent is currently enforced on:
+- `POST /demos/{demo_id}/stop` (requires `X-Consent-Token: <jwt>`)
+
+The API validates signature/expiration/audience + scope (`claims.demo` must match `{demo_id}` or `"*"`).
+
+---
+
+## Public endpoints
+
+- `GET /healthz` → liveness `{ ok: true }`
+
+---
+
+## Control endpoints
 
 ### List demos
 `GET /demos`
 
-Returns, for each demo:
+Returns a list of:
+- `id`
 - `exists` (service exists in Swarm)
-- `running` (at least one desired running task is actually running)
-- `url` (browser URL derived from `_browser_url_for`)
+- `running` (at least one task is in `running` state)
+- `url` (browser-facing URL derived by `_browser_url_for()`)
 
 ### Demo status
 `GET /demos/{demo_id}/status`
 
-Same shape as above, but for a single demo.  
-If a demo is running and no heartbeat exists yet, the API “adopts” it by setting an initial `_last_beat` entry (status-based adoption).
+Same as `/demos` but for one demo.
+
+If the demo is already running and the API has no heartbeat entry yet, it will “adopt” it by seeding `_last_beat[demo_id]` (so idle monitoring applies after API restarts).
 
 ### Start demo
 `POST /demos/{demo_id}/start?wait=1&timeout=90`
 
 Behavior:
-1. Auth (`X-Token`)
-2. Start core services (`CORE = ["mediamtx"]`)
-3. Start dependencies from `needs`:
-   - `mediamtx` is scaled in Swarm
-   - `capture` is managed locally (see below)
-4. Scale the demo service to `1`
-5. If `wait=1`, poll `health_url` until HTTP < 400 (or timeout)
-6. Mark demo active (`_active_demos`) and set heartbeat time (`_last_beat`)
-7. Ensure idle monitor is running + reconcile shared deps
-
-Returns:
-- `{ ok: true, id, url }`
+- starts core dependencies (`CORE = ["mediamtx"]`)
+- starts demo-specific dependencies from `needs`
+- scales the demo service to 1 replica
+- optional health wait (`wait=1`): polls `health_url` until HTTP status < 400 or `timeout`
+- records activity (`_active_demos`, `_last_beat`) and ensures idle monitoring is running
 
 ### Stop demo
 `POST /demos/{demo_id}/stop`
 
+Requirements:
+- orchestrator token (`X-Token`)
+- consent token (`X-Consent-Token`) for that demo (or `"*"`)
+
 Behavior:
-- auth + consent verification,
-- scale demo service to `0`,
-- remove heartbeat tracking,
-- remove from `_active_demos`,
-- schedule capture stop if needed,
-- reconcile shared deps.
+- scales demo service to 0
+- clears heartbeat + active state
+- triggers capture idle-stop scheduling (if no other demo is active)
 
 ### Heartbeat
 `POST /demos/{demo_id}/heartbeat`
 
-Used by the frontend while a demo page is “active”.
-- updates `_last_beat[demo_id]`,
-- ensures idle monitor is running,
-- keeps shared deps consistent.
+Frontend calls this periodically while the demo page is open.
+The heartbeat updates `_last_beat` and keeps shared dependencies consistent.
 
 ---
 
-## Idle / Auto-Stop Mechanism
+## Idle / auto-stop
 
-A background thread (“idle-monitor”) checks periodically:
+A background loop (“idle monitor”) checks `_last_beat` and stops demos that have been idle for:
+- `IDLE_SECONDS` (default 300s)
 
-- if `now - lastBeat > IDLE_SECONDS` (default: 300s),
-  then the demo service is scaled to `0`,
-  heartbeat state is cleared,
-  `_active_demos` is updated,
-  capture stop may be scheduled.
-
-This guarantees demos are not left running indefinitely when:
-- users close the tab,
-- the network disconnects,
-- the UI crashes.
+If a demo is stopped due to idle:
+- service is scaled to 0,
+- demo is removed from `_active_demos`,
+- capture stop may be scheduled (see below).
 
 ---
 
-## Shared Dependencies
+## Shared dependencies
 
-### MediaMTX (core service)
-MediaMTX is managed as a Swarm service and is always started before camera-based demos.
+### MediaMTX (Swarm service)
+`mediamtx` is treated as a core dependency and is scaled up before camera-based demos start.
 
-### Capture (local-only container with hysteresis)
-Capture is treated as `LOCAL_ONLY = {"capture"}` and is managed as a *container* (not a Swarm service) via Docker API.
+### Capture (local-only container)
+Capture is **not** a Swarm service here: it is a local container controlled via the Docker socket mounted into the API container (`/var/run/docker.sock`).
 
-To avoid flapping and stabilize the webcam pipeline, capture uses hysteresis:
-- `CAPTURE_MIN_DOWN`: minimum time capture must stay stopped before restarting
-- `CAPTURE_MIN_UP`: minimum time capture must stay running before it may be stopped
-- `CAPTURE_IDLE_GRACE`: delay before stopping capture once no demos are active
-- `CAPTURE_STARTUP_SETTLE`: small settle delay after starting
+Capture control uses hysteresis knobs:
+- `CAPTURE_MIN_DOWN` (avoid immediate restart after stop)
+- `CAPTURE_MIN_UP` (avoid immediate stop after start)
+- `CAPTURE_IDLE_GRACE` (delay before stopping capture once idle)
+- `CAPTURE_STARTUP_SETTLE` (settle time after start)
 
-In practice:
+Operationally:
 - capture starts when the first demo requiring it starts,
-- capture stops only after all demos become inactive and the grace timer expires,
-- rapid start/stop cycles are avoided.
+- capture stops only after *all* demos are inactive and the grace delay has elapsed.
 
 ---
 
-## Adoption on Startup
+## Debug endpoints
 
-On API startup, an optional adoption step can detect already-running demo services:
-- enabled by `ADOPT_ON_STARTUP=1`
-- after `ADOPT_DELAY_SEC`, the API checks each demo service and initializes `_last_beat`
-- this prevents the API from “forgetting” running workloads after a restart
-
----
-
-## Debug Endpoints
-
-The API exposes `/debug/*` routes (token-protected) intended for the frontend Debug panel.
-
-Notable properties:
-- no consent requirements (admin-style controls),
-- can force scale demos up/down,
-- can restart capture,
-- can restart core services (MediaMTX),
-- can soft-restart the stack (stop demos + restart core).
-
-Key routes:
+The API exposes token-protected debug routes intended for the UI debug panel:
 - `GET  /debug/demos`
-- `POST /debug/demos/{id}/start|stop|restart`
+- `POST /debug/demos/{id}/start`
+- `POST /debug/demos/{id}/stop`
+- `POST /debug/demos/{id}/restart`
 - `POST /debug/capture/restart`
 - `POST /debug/core/{name}/restart`
 - `POST /debug/all/soft-restart`
 
+These endpoints do not require consent (admin-style actions).
+
 ---
 
-## Environment Variables (Summary)
+## Configuration summary (env)
 
 Security:
 - `ORCH_TOKEN`
 - `CONSENT_SECRET`, `CONSENT_TTL_SECONDS`, `CONSENT_AUD`
 
-Networking / browser URL mapping:
-- `PUBLIC_BASE_GPU`
-- `PUBLIC_BASE_NO_GPU`
+Swarm:
+- `STACK_NAME`
 
 CORS:
 - `ALLOW_ORIGINS`
 - `ALLOW_ORIGIN_REGEX`
 
-Idle + adoption:
+Idle & adoption:
 - `IDLE_SECONDS`
 - `ADOPT_ON_STARTUP`, `ADOPT_DELAY_SEC`, `ADOPT_MODE`
 
-Capture hysteresis:
+Capture:
 - `CAPTURE_NAME`
 - `CAPTURE_IDLE_GRACE`, `CAPTURE_MIN_DOWN`, `CAPTURE_MIN_UP`, `CAPTURE_STARTUP_SETTLE`
 
-Swarm naming:
-- `STACK_NAME` (default: `vision-hub`)
+Public URL mapping:
+- `PUBLIC_BASE_GPU`
+- `PUBLIC_BASE_NO_GPU`
 
 ---
 
-## Next sections
+## Related pages
 
-- [Video pipeline](/docs/video)
-- [Docker Swarm backend](/docs/infrastructure/swarm)
-- [Network and connectivity](/docs/infrastructure/network)
+- [Demos](/docs/demos)
+- [Video](/docs/video)
+- [Swarm](/docs/infrastructure/swarm)
+- [Network](/docs/infrastructure/network)

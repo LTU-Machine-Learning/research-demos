@@ -1,6 +1,6 @@
 ---
 title: Global Architecture
-description: System-level architecture of Vision Hub: components, responsibilities, and control/video flows.
+description: System-level architecture of Vision Hub - components, responsibilities, and control/video flows.
 ---
 
 ## Architectural Overview

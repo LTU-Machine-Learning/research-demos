@@ -1,6 +1,6 @@
 ---
 title: Security & Privacy — Tokens, Consent, and Exposure
-description: Operational security model of Vision Hub: orchestrator token, consent JWTs, and what is (and is not) protected.
+description: Operational security model of Vision Hub - orchestrator token, consent JWTs, and what is (and is not) protected.
 ---
 
 ## Scope

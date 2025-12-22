@@ -139,6 +139,10 @@ const about = aboutBySlug[slug];
       border: 1px solid #1e2436;
       background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
       box-shadow: 0 10px 24px #0004;
+
+      /* keep card height behavior stable */
+      display: flex;
+      flex-direction: column;
     }
     .coco-head{
       display:flex;
@@ -146,6 +150,7 @@ const about = aboutBySlug[slug];
       justify-content:space-between;
       gap: 12px;
       margin-bottom: 10px;
+      flex: 0 0 auto;
     }
     .coco-title{ font-weight: 700; color:#e8eefc; }
     .coco-sub{ font-size: .92rem; color:#b0bedc; opacity:.9; margin-top:2px; }
@@ -165,6 +170,7 @@ const about = aboutBySlug[slug];
       flex-wrap:wrap;
       gap: 8px;
       margin: 10px 0 12px;
+      flex: 0 0 auto;
     }
     .coco-tab{
       border: 1px solid #2a3652;
@@ -182,20 +188,53 @@ const about = aboutBySlug[slug];
       color:#27d07d;
       font-weight: 700;
     }
+
+    /* ✅ FIX: make chips wrap into multiple lines and keep the box fixed */
     .coco-grid{
-      display:flex;
-      flex-wrap:wrap;
+      flex: 0 0 auto;
+      display: grid;
+
+      /* multi-line responsive wrapping */
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 8px;
+
+      /* fixed height so the overall card does not resize per category */
+      height: clamp(140px, 22vh, 220px);
+      overflow: auto;
+      padding: 2px;
+
+      border-radius: 12px;
+      border: 1px solid #1e2436;
+      background: rgba(0,0,0,.12);
+
+      scroll-behavior: smooth;
     }
+
     .coco-chip{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+
+      padding: 7px 10px;
+      border-radius: 999px;
+
       border:1px solid #2a3652;
       background:#0f1625;
       color:#e8eefc;
-      border-radius: 999px;
-      padding: 6px 10px;
       font-size: .86rem;
+
+      /* prevent long labels from breaking layout */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .coco-chip.dim{ opacity:.55; }
+
+    /* optional: nicer scrollbar on webkit */
+    .coco-grid::-webkit-scrollbar{ height: 10px; width: 10px; }
+    .coco-grid::-webkit-scrollbar-thumb{ background: #1f2a44; border-radius: 999px; }
+    .coco-grid::-webkit-scrollbar-track{ background: transparent; }
 
     /* Pose explain box */
     .pose-card{
@@ -344,6 +383,7 @@ const about = aboutBySlug[slug];
       .coco-search{ flex: 1 1 auto; width: 100%; }
     }
   </style>
+
 
   <div class="wrap">
     <h1>{cfg.title}</h1>

@@ -18,20 +18,106 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const cfg = demos(slug);
 const title = cfg.title;
-const description = cfg.subtitle ?? '';
+const description = cfg.subtitle ?? "";
+
+// --- Per-demo info (front) ---
+const infoBySlug: Record<string, {
+  title: string;
+  what: string[];
+  detects: string[];
+  notes: string[];
+}> = {
+  yolo: {
+    title: "Object detection (YOLO)",
+    what: [
+      "Live video stream with bounding boxes overlay.",
+      "Labels can include class name (COCO) and confidence.",
+      "FPS indicator reflects the decoded video frames in your browser.",
+    ],
+    detects: [
+      "People, vehicles (car, bus, truck…), animals, everyday objects…",
+      "Model follows the COCO 80-class taxonomy (see overlay-classmap.js).",
+    ],
+    notes: [
+      "If the backend sends only class IDs, the UI maps them via window.overlayClassMap.",
+      "Boxes are drawn client-side from WebSocket messages (/ws/dets).",
+    ],
+  },
+
+  pose: {
+    title: "Pose estimation (YOLO-Pose)",
+    what: [
+      "Live stream with skeleton overlay (17 keypoints).",
+      "Lines connect keypoints using a skeleton edge list.",
+      "Overlay is stabilized (linger) to reduce blinking.",
+    ],
+    detects: [
+      "Human keypoints (nose, eyes, shoulders, elbows, wrists, hips, knees, ankles…).",
+      "Multiple people supported if provided in the WS payload.",
+    ],
+    notes: [
+      "Keypoints are drawn client-side from WebSocket messages (/ws/pose).",
+      "Smoothing/linger is handled in viewer.js (POSE_LINGER_MS).",
+    ],
+  },
+
+  chang: {
+    title: "Arabic text line selector (Chang)",
+    what: [
+      "Live stream showing Arabic text.",
+      "The demo highlights/selects a line in the text (line selector).",
+    ],
+    detects: [
+      "Text line selection/segmentation (visual selection on the stream).",
+    ],
+    notes: [
+      "This demo runs in ‘no-WS overlay’ mode: annotations are expected in the video stream itself.",
+      "Startup can be slower; viewer.js uses more WHEP retries for chang.",
+    ],
+  },
+
+  // Optional (kept harmless even if you only cared about video)
+  price: {
+    title: "House price estimation (ML)",
+    what: [
+      "Form-based demo that sends inputs to the pricing API.",
+      "Shows predicted price and an interval when available.",
+    ],
+    detects: [
+      "Not a vision demo: predicts housing price from structured features.",
+    ],
+    notes: [
+      "Uses /scripts/prices.js for client-side logic and validation.",
+      "Debug panel can restart the demo and check /healthz.",
+    ],
+  },
+};
+
+const info = infoBySlug[slug];
 ---
 
 <SiteLayout {title} {description}>
   <ConsentModal demoId={cfg.demoId} ttlSeconds={600} />
 
   <style>
-    body {
+    :global(body) {
       margin: 0;
       background: radial-gradient(ellipse at top, #0b0d12 0%, #06070d 100%);
       color: #e8eefc;
       font-family: system-ui, sans-serif;
     }
-    .wrap { max-width: 920px; margin: 64px auto; padding: 0 24px; }
+
+    /* Wider demo pages (without touching other pages) */
+    :global(main.page) {
+      max-width: 1400px;
+    }
+
+    .wrap {
+      max-width: 1280px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
     h1 { font-size: 1.9rem; font-weight: 600; letter-spacing: .3px; }
 
     .card{
@@ -45,9 +131,70 @@ const description = cfg.subtitle ?? '';
     }
     .card:hover { transform: translateY(-2px); box-shadow: 0 14px 30px #0006; }
 
-    /* video stack (yolo/pose) */
-    .stack { position:relative; width:100%; aspect-ratio:16/9; min-height:320px; background:#000; border-radius:12px; overflow:hidden; }
-    .stack video, .stack canvas, #yolo-loading { position:absolute; inset:0; width:100%; height:100%; display:block; border-radius:12px; }
+    /* video stack (yolo/pose/chang) */
+    .stack {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: clamp(380px, 60vh, 780px);
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .stack video,
+    .stack canvas,
+    #yolo-loading {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+    }
+    .stack video,
+    .stack canvas { display:block; }
+
+    /* Loading overlay styling + state binding to viewer.js classes */
+    #yolo-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e8eefc;
+      background: radial-gradient(ellipse at center, rgba(20,26,39,.85), rgba(0,0,0,.65));
+    }
+    #yolo-root.ready #yolo-loading { display: none; }
+    #yolo-root.loading #yolo-loading { display: flex; }
+    #yolo-root.stopped #yolo-loading { display: flex; }
+
+    /* Info block (About this demo) */
+    .info{
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      border: 1px solid #1e2436;
+      background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
+      box-shadow: 0 10px 24px #0004;
+    }
+    .info-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px 18px;
+      margin-top: 10px;
+    }
+    .info h2{ margin:0 0 10px; }
+    .info h3{
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .info ul{
+      margin: 0;
+      padding-left: 18px;
+      color: #b0bedc;
+    }
+    .info li{ margin: 6px 0; }
+    .info details{ margin-top: 10px; }
+    .info summary{ cursor:pointer; color:#cfe7ff; }
 
     /* form grid (price) */
     form{
@@ -116,7 +263,7 @@ const description = cfg.subtitle ?? '';
       padding:8px 10px;
       box-shadow:0 10px 22px #000a;
       z-index:50;
-      min-width: 160px;      /* smaller + compact */
+      min-width: 160px;
     }
 
     /* Header row inside panel */
@@ -137,7 +284,7 @@ const description = cfg.subtitle ?? '';
       width:22px;
       height:22px;
       border-radius:999px;
-      border:1px solid #1f2937;
+      border:1px solid #1f2a44;
       background:#020617;
       color:#e5e7eb;
       display:flex;
@@ -168,18 +315,61 @@ const description = cfg.subtitle ?? '';
       color:#e5e7eb;
       font-size:.76rem;
       cursor:pointer;
-      white-space:nowrap;        /* keep one-line labels */
+      white-space:nowrap;
     }
 
     .debug-chip-btn[disabled] {
       opacity:.45;
       cursor:default;
     }
+
+    @media (max-width: 640px) {
+      .wrap { margin: 24px auto; }
+      .stack { min-height: 280px; }
+    }
   </style>
 
   <div class="wrap">
     <h1>{cfg.title}</h1>
     <p>{cfg.subtitle}</p>
+
+    {info && (
+      <div class="info">
+        <h2>About this demo</h2>
+
+        <div class="info-grid">
+          <div>
+            <h3>What you see</h3>
+            <ul>
+              {info.what.map(x => <li>{x}</li>)}
+            </ul>
+          </div>
+
+          <div>
+            <h3>What it can detect</h3>
+            <ul>
+              {info.detects.map(x => <li>{x}</li>)}
+            </ul>
+          </div>
+
+          <div>
+            <h3>Notes</h3>
+            <ul>
+              {info.notes.map(x => <li>{x}</li>)}
+            </ul>
+
+            {slug === "yolo" && (
+              <details>
+                <summary>COCO classes source</summary>
+                <div style="opacity:.85; margin-top:8px;">
+                  Defined in <code>/public/scripts/overlay-classmap.js</code>
+                </div>
+              </details>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
 
     {cfg.kind === 'video' ? (
       <div class="card">
@@ -243,7 +433,8 @@ const description = cfg.subtitle ?? '';
               type="button"
               id="price-debug-toggle"
               style="background:#1f2937;border:1px solid #374151;color:#e5e7eb;
-                    border-radius:999px;font-size:.8rem;padding:4px 10px;cursor:pointer;">
+                    border-radius:999px;font-size:.8rem;padding:4px 10px;cursor:pointer;"
+            >
               Debug
             </button>
           </div>
@@ -399,17 +590,17 @@ const description = cfg.subtitle ?? '';
   )}
 
   {cfg.kind !== 'video' && (
-  <>
-    <script type="module" src="/scripts/prices.js" is:inline></script>
-    <script is:inline>
-      const t = document.getElementById('price-debug-toggle');
-      const p = document.getElementById('price-debug-panel');
-      if (t && p) {
-        t.addEventListener('click', () => {
-          p.style.display = p.style.display === 'none' || !p.style.display ? 'block' : 'none';
-        });
-      }
-    </script>
-  </>
+    <>
+      <script type="module" src="/scripts/prices.js" is:inline></script>
+      <script is:inline>
+        const t = document.getElementById('price-debug-toggle');
+        const p = document.getElementById('price-debug-panel');
+        if (t && p) {
+          t.addEventListener('click', () => {
+            p.style.display = p.style.display === 'none' || !p.style.display ? 'block' : 'none';
+          });
+        }
+      </script>
+    </>
   )}
 </SiteLayout>

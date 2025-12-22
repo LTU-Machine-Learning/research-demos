@@ -24,44 +24,36 @@ It’s designed for **lab / kiosk / demo-room setups**: one web frontend, a smal
 
 ## High-level architecture
 
-The platform separates **video transport** from **inference** and from **UI rendering**:
+Vision Hub separates **video transport** (MediaMTX) from **inference** (demos) and from **UI rendering** (browser + canvas overlay).
 
-
-         ┌───────────────────────┐
-         │        UI (Astro)      │  http://<host>:4321
-         │  /projects /demo/...   │
-         └───────────┬───────────┘
-                     │
-                     │ controls (start/stop/status + consent)
-                     ▼
-            ┌───────────────────┐
-            │ Orchestrator API  │  http://<host>:8090
-            │ /demos/<id>/...   │
-            └───────────┬───────┘
-                        │ starts/stops demo containers
-                        │
-  ┌─────────────────────┼──────────────────────────┐
-  │                     │                          │
-  ▼                     ▼                          ▼
-
-
-┌─────────────┐ ┌──────────────┐ ┌────────────────┐
-│ Capture │ │ YOLO / Pose │ │ Chang pipeline │
-│ (USB cam → │ │ (decode → AI │ │ (ONNX/C++ Qt) │
-│ RTSP) │ │ → WS overlay) │ │ → annotated RTSP │
-└──────┬───────┘ └──────┬───────┘ └───────┬────────┘
-│ │ │
-│ RTSP (input) │ RTSP input + WS data │ RTSP output
-▼ ▼ ▼
-┌─────────────────────────────────┐
-│ MediaMTX │
-│ RTSP ↔ WebRTC (WHEP) ↔ HLS │
-└─────────────────────────────────┘
-│
-│ WebRTC WHEP (low-latency preview)
-▼
-Browser <video> + canvas overlay
-
+```
+                    UI (Astro)                         http://<host>:4321
+              /projects  /demo/<id>  /docs
+                          |
+                          | start/stop/status + consent + heartbeat
+                          v
+                Orchestrator API                        http://<host>:8090
+                 /demos/<id>/start|stop|status
+                          |
+                          | starts / stops demo containers
+                          v
+  +-----------------------+---------------------------+-----------------------+
+  |                       |                           |                       |
+  |                       |                           |                       |
+Capture               YOLO / Pose                 Chang demo             Price demo
+(USB cam -> RTSP)     (RTSP in + WS out)          (Arabic line detection) (tabular ML)
+  |                       |                           |                       |
+  | RTSP publish          | RTSP subscribe            | RTSP publish/relay    | HTTP (FastAPI)
+  v                       v                           v                       v
+                    MediaMTX (video hub)              (still goes via UI)
+            RTSP  <->  WebRTC (WHEP)  <->  HLS
+                          |
+                          | WHEP (low-latency playback)
+                          v
+                 Browser <video> + <canvas> overlay
+                 - Boxes: WS detections -> canvas
+                 - Pose:  WS keypoints  -> canvas
+```
 
 ---
 

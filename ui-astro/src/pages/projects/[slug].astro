@@ -18,10 +18,14 @@ const title = `${project.title} – Vision Hub`;
 const description = project.description ?? 'Real-time AI demo';
 const isHttpUrl = (u: unknown): u is string =>
   typeof u === 'string' && /^https?:\/\//i.test(u);
+
+// show video only if it's a non-empty string
+const hasVideo = typeof project.video === "string" && project.video.trim().length > 0;
 ---
 
 <SiteLayout {title} {description}>
   <ConsentModal demoId={demoId} />
+
   <style>
     body {
       margin: 0;
@@ -29,6 +33,7 @@ const isHttpUrl = (u: unknown): u is string =>
       color: #e8eefc;
       font: 18px/1.6 system-ui, Segoe UI, Roboto, Arial;
     }
+
     .project-detail-wrap {
       max-width: 900px;
       margin: 48px auto 0 auto;
@@ -37,47 +42,157 @@ const isHttpUrl = (u: unknown): u is string =>
       border-radius: 24px;
       box-shadow: 0 8px 32px #0005;
     }
-    .project-detail-links { text-align: center; margin-top: 32px; }
+
+    /* ===== Top bar (back/github + demo CTA) ===== */
+    .project-detail-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      text-align: center;
+      margin-top: 28px;
+    }
+
     .project-detail-links a {
-      color: #5aa4ff; font-weight: 600; text-decoration: none;
-      margin: 0 18px; font-size: 1.1rem; transition: color .18s;
+      color: #5aa4ff;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 1.05rem;
+      transition: color .18s;
     }
-    .project-detail-links a:hover { color: #27d07d; text-decoration: underline; }
-    .project-detail-title { text-align: center; font-size: 2.2rem; margin: 0 0 8px 0; letter-spacing: -1px; }
+    .project-detail-links a:hover {
+      color: #27d07d;
+      text-decoration: underline;
+    }
+
+    /* ===== Demo buttons (top + bottom) ===== */
+    .demo-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+
+      color: #081120;
+      font-weight: 800;
+      font-size: 1.05rem;
+      text-decoration: none;
+
+      padding: 10px 18px;
+      border-radius: 14px;
+
+      background: linear-gradient(120deg, #27d07d 0%, #1fb86b 100%);
+      box-shadow: 0 10px 26px #0004;
+
+      border: 1px solid #27d07d55;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .demo-cta:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      text-decoration: none;
+    }
+    .demo-cta[aria-busy="true"],
+    .demo-cta[aria-disabled="true"] {
+      opacity: .78;
+      pointer-events: none;
+      transform: none;
+      filter: none;
+    }
+
+    /* spinner inside button */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(8,17,32,.35);
+      border-top-color: rgba(8,17,32,.95);
+      animation: spin 0.9s linear infinite;
+      display: none;
+      flex: 0 0 auto;
+    }
+    .demo-cta.loading .spinner { display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .project-detail-title {
+      text-align: center;
+      font-size: 2.2rem;
+      margin: 18px 0 8px 0;
+      letter-spacing: -1px;
+    }
+
     .project-detail-img {
-      display: block; margin: 24px auto 18px auto; width: 100%; max-width: 480px;
-      border-radius: 16px; box-shadow: 0 2px 12px #0003;
+      display: block;
+      margin: 24px auto 18px auto;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #0003;
     }
-    .project-detail-desc { text-align: center; color: #b0bedc; margin-bottom: 24px; font-size: 1.15rem; }
+
+    .project-detail-desc {
+      text-align: center;
+      color: #b0bedc;
+      margin-bottom: 24px;
+      font-size: 1.15rem;
+    }
+
     .project-detail-section { margin: 32px 0 18px 0; }
     .project-detail-section h3 { color: #5aa4ff; font-size: 1.15rem; margin-bottom: 10px; }
+
     .project-detail-video {
-      display: block; margin: 0 auto 18px auto; width: 100%; max-width: 600px;
-      border-radius: 14px; box-shadow: 0 2px 12px #0003;
+      display: block;
+      margin: 0 auto 18px auto;
+      width: 100%;
+      max-width: 600px;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px #0003;
     }
+
     .project-detail-list {
-      background: #181c28; border-radius: 12px; padding: 16px 20px; margin: 0 auto 18px auto;
-      max-width: 600px; color: #b0bedc; font-size: 1rem;
+      background: #181c28;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 0 auto 18px auto;
+      max-width: 600px;
+      color: #b0bedc;
+      font-size: 1rem;
     }
     .project-detail-list b { color: #5aa4ff; }
-    .project-detail-demo { text-align: center; margin-top: 32px; }
-    .project-detail-demo a {
-      color: #27d07d; font-weight: bold; font-size: 1.15rem; text-decoration: none;
-      padding: 10px 24px; border-radius: 12px; background: #132342;
-      box-shadow: 0 2px 12px #0002; transition: background .18s, color .18s;
+    .project-detail-list a { color:#5aa4ff; text-decoration:none; font-weight:600; }
+    .project-detail-list a:hover { color:#27d07d; text-decoration:underline; }
+
+    .project-detail-demo {
+      text-align: center;
+      margin-top: 32px;
     }
-    .project-detail-demo a[aria-busy="true"] { opacity: .7; pointer-events: none; }
-    .project-detail-demo a:hover { background: #27d07d; color: #081120; }
+
+    /* old loader hidden (kept for compatibility if you want) */
+    #loader { display:none !important; }
+
+    @media (max-width: 520px){
+      .project-detail-wrap { margin-top: 32px; border-radius: 18px; }
+      .demo-cta { width: 100%; }
+      .project-detail-links { gap: 10px; }
+    }
   </style>
 
   <div class="project-detail-wrap">
     <div class="project-detail-links">
       <a href="/projects">← Back to all projects</a>
+
       {project.repo && (
         <a href={project.repo} target="_blank" rel="noreferrer noopener">
           Source code on GitHub
         </a>
       )}
+
+      {/* NEW: top CTA */}
+      <a class="demo-cta live-demo-btn" href="#" role="button" data-demo={demoId} aria-label="Try the live demo">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="label">Try the live demo →</span>
+      </a>
     </div>
 
     <h1 class="project-detail-title">{project.title}</h1>
@@ -96,7 +211,8 @@ const isHttpUrl = (u: unknown): u is string =>
     <img src={project.image} alt={project.title} class="project-detail-img" />
     <div class="project-detail-desc">{project.description}</div>
 
-    {project.video && (
+    {/* Show video only if available */}
+    {hasVideo && (
       <div class="project-detail-section">
         <h3>Demo video</h3>
         <video src={project.video} controls class="project-detail-video"></video>
@@ -151,15 +267,20 @@ const isHttpUrl = (u: unknown): u is string =>
       </div>
     )}
 
+    {/* Bottom CTA remains (same behavior + spinner) */}
     <div class="project-detail-demo">
-      <a id="live-demo-btn" href="#" role="button" data-demo={demoId}>Try the live demo →</a>
+      <a class="demo-cta live-demo-btn" href="#" role="button" data-demo={demoId} aria-label="Try the live demo">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="label">Try the live demo →</span>
+      </a>
       <span id="loader" style="margin-left:12px; display:none;">starting…</span>
     </div>
 
     <script type="module">
-      const btn    = document.getElementById('live-demo-btn');
-      const loader = document.getElementById('loader');
-      const demoId = btn.dataset.demo;
+      const buttons = Array.from(document.querySelectorAll('.live-demo-btn'));
+      if (!buttons.length) console.warn("[projects] no demo buttons found");
+
+      const demoId = buttons[0]?.dataset?.demo || "";
 
       const absolutizeHttp = (endpoint) => {
         if (!endpoint) return "";
@@ -204,10 +325,8 @@ const isHttpUrl = (u: unknown): u is string =>
         const resp = await fetch(`${ORCH}/consent?demo=${encodeURIComponent(id)}`, {
           method: 'POST'
         });
-        if (!resp.ok) {
-          throw new Error(`consent error: ${resp.status}`);
-        }
-        const data = await resp.json(); 
+        if (!resp.ok) throw new Error(`consent error: ${resp.status}`);
+        const data = await resp.json();
         setConsent(id, data);
         return data;
       }
@@ -215,16 +334,22 @@ const isHttpUrl = (u: unknown): u is string =>
       // ---------- Fetch helpers avec headers ----------
       function apiHeaders(consentToken) {
         return {
-          "X-Consent-Token": consentToken,   // consent token (expires)
-          "x-token": ORCH_TOKEN              // existing API token (static)
+          "X-Consent-Token": consentToken,
+          "x-token": ORCH_TOKEN
         };
       }
 
+      function setLoading(on) {
+        for (const b of buttons) {
+          if (!b) continue;
+          b.setAttribute('aria-busy', on ? 'true' : 'false');
+          b.setAttribute('aria-disabled', on ? 'true' : 'false');
+          b.classList.toggle('loading', !!on);
+        }
+      }
+
       async function startDemo() {
-        btn.setAttribute('aria-busy', 'true');
-        btn.setAttribute('disabled', 'true');
-        loader.style.display = 'inline';
-        loader.textContent = 'starting…';
+        setLoading(true);
 
         const statusURL = `${ORCH}/demos/${demoId}/status`;
         const startURL  = `${ORCH}/demos/${demoId}/start?wait=1&timeout=90`;
@@ -235,13 +360,13 @@ const isHttpUrl = (u: unknown): u is string =>
 
           try { await fetch(statusURL, { method: 'GET', headers }); } catch {}
 
-          // lancer la démo
           let r = await fetch(startURL, { method: 'POST', headers });
           if (r.status === 401) {
             clearConsent(demoId);
             const fresh = await ensureConsent(demoId);
             r = await fetch(startURL, { method: 'POST', headers: apiHeaders(fresh.token) });
           }
+
           if (!r.ok) {
             const msg = await r.text().catch(()=> '');
             throw new Error(msg || `HTTP ${r.status}`);
@@ -250,31 +375,27 @@ const isHttpUrl = (u: unknown): u is string =>
           location.href = `/demo/${demoId}`;
         } catch (err) {
           alert('Failed to start demo: ' + (err?.message || err));
-          btn.removeAttribute('aria-busy');
-          btn.removeAttribute('disabled');
-          loader.style.display = 'none';
+          setLoading(false);
         }
       }
 
-      // ---------- passive expiration: if TTL passes, clear the token ----------
+      // ---------- passive expiration ----------
       setInterval(() => {
         const c = getConsent(demoId);
         if (!c) return;
         if (Date.now() >= c.expiresAt) clearConsent(demoId);
       }, 60_000);
 
-      btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-          const ask = window[`askConsent_${demoId}`];
-          const ok  = typeof ask === 'function' ? await ask() : true;
-          if (ok) startDemo();
-        } catch {}
-      });
+      for (const btn of buttons) {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try {
+            const ask = window[`askConsent_${demoId}`];
+            const ok  = typeof ask === 'function' ? await ask() : true;
+            if (ok) startDemo();
+          } catch {}
+        });
+      }
     </script>
-
-
-
-
   </div>
 </SiteLayout>

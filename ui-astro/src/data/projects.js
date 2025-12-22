@@ -1,144 +1,143 @@
 export default [
   {
     slug: 'yolo',
-    title: 'YOLO Object Detection',
-    description: 'Real-time object detection using YOLOv8. Detects multiple objects in live video streams with high speed and accuracy.',
+    title: 'Object Detection',
+    description:
+      'Point the camera at everyday objects and watch them get detected live (labels + boxes) in real time.',
     image: '/images/yolo-demo.jpg',
     author: {
       name: 'Tom Burellier',
       url: 'https://github.com/balmine',
-      role: 'Maintainer'
+      role: 'Maintainer',
     },
     upstreams: [
-     { name: 'Ultralytics YOLOv8', url: 'https://github.com/ultralytics/ultralytics', role: 'Inference (object detection)' },
-     { name: 'PyTorch',            url: 'https://pytorch.org/',                        role: 'DL backend' },
-     { name: 'OpenCV',             url: 'https://opencv.org/',                         role: 'Drawing & JPEG' },
-     { name: 'PyAV',               url: 'https://pyav.org/',                           role: 'RTSP low-latency' },
-     { name: 'FFmpeg',             url: 'https://ffmpeg.org/',                         role: 'H.264 encode + RTSP' },
-     { name: 'MediaMTX',           url: 'https://github.com/bluenviron/mediamtx',      role: 'RTSP/WebRTC/HLS' },
-     { name: 'Flask + flask-sock', url: 'https://flask.palletsprojects.com/',          role: 'HTTP + WebSocket' }
-   ],
+      { name: 'Ultralytics YOLOv8', url: 'https://github.com/ultralytics/ultralytics', role: 'Detection model (YOLO)' },
+      { name: 'PyTorch',            url: 'https://pytorch.org/',                        role: 'Model runtime (training/inference)' },
+      { name: 'OpenCV',             url: 'https://opencv.org/',                         role: 'Image utilities & drawing' },
+      { name: 'FFmpeg',             url: 'https://ffmpeg.org/',                         role: 'Video encoding/packaging' },
+      { name: 'MediaMTX',           url: 'https://github.com/bluenviron/mediamtx',      role: 'WebRTC/RTSP streaming hub' },
+      { name: 'Flask + flask-sock', url: 'https://flask.palletsprojects.com/',          role: 'Backend API + WebSocket overlay' },
+      { name: 'PyAV',               url: 'https://pyav.org/',                           role: 'Low-latency video decode (RTSP)' },
+    ],
     history: [
-      { date: '2025-09-05', event: 'First prototype: USB cam → FFmpeg → RTSP (UDP), baseline H.264 no B-frames' },
-      { date: '2025-09-10', event: 'Switched to Ultralytics YOLOv8n; added FP16 on GPU where available' },
-      { date: '2025-09-14', event: 'Integrated MediaMTX; added WebRTC (WHEP) path for sub-second preview' },
-      { date: '2025-09-16', event: 'Added PyAV low-latency decode (fflags=nobuffer, rc-lookahead=0, etc.)' },
-      { date: '2025-03-20', event: 'WebSocket overlay for boxes + class labels; MJPEG debug endpoint' },
-      { date: '2025-06-28', event: 'Dockerized end-to-end stack; orchestrator API to start/stop demos on demand' },
+      { date: '2025-09', event: 'First end-to-end “live detection” demo working on the lab camera feed.' },
+      { date: '2025-10', event: 'Added WebRTC live preview so the stream starts quickly in the browser.' },
+      { date: '2025-11', event: 'Improved overlay and class labels for a clearer “what is detected” UX.' },
+      { date: '2025-12', event: 'Orchestrator integration: start/stop the demo on demand from the UI.' },
     ],
     video: '/videos/yolo-demo.mp4',
-    demoUrl: '/demo/yolo'
+    demoUrl: '/demo/yolo',
   },
+
   {
     slug: 'pose',
-    title: 'YOLO Pose Estimation',
-    description: 'Human pose estimation using YOLOv8-pose. Tracks keypoints and skeletons in real time.',
-    image: '/images/pose-demo.jpg',
-    author: { 
-      name: 'Tom Burellier', 
-      url: 'https://github.com/balmine', 
-      role: 'Maintainer' 
-    },
-   upstreams: [
-      { name: 'Ultralytics YOLOv8', url: 'https://github.com/ultralytics/ultralytics', role: 'Inference (object detection)' },
-      { name: 'PyTorch',            url: 'https://pytorch.org/',                        role: 'DL backend' },
-      { name: 'OpenCV',             url: 'https://opencv.org/',                         role: 'Drawing & JPEG' },
-      { name: 'PyAV',               url: 'https://pyav.org/',                           role: 'RTSP low-latency' },
-      { name: 'FFmpeg',             url: 'https://ffmpeg.org/',                         role: 'H.264 encode + RTSP' },
-      { name: 'MediaMTX',           url: 'https://github.com/bluenviron/mediamtx',      role: 'RTSP/WebRTC/HLS' },
-      { name: 'Flask + flask-sock', url: 'https://flask.palletsprojects.com/',          role: 'HTTP + WebSocket' }
-    ],
-    history: [
-      { date: '2025-09-05', event: 'First prototype: USB cam → FFmpeg → RTSP (UDP), baseline H.264 no B-frames' },
-      { date: '2025-09-10', event: 'Switched to Ultralytics YOLOv8n; added FP16 on GPU where available' },
-      { date: '2025-09-14', event: 'Integrated MediaMTX; added WebRTC (WHEP) path for sub-second preview' },
-      { date: '2025-09-16', event: 'Added PyAV low-latency decode (fflags=nobuffer, rc-lookahead=0, etc.)' },
-      { date: '2025-03-20', event: 'WebSocket overlay for boxes + class labels; MJPEG debug endpoint' },
-      { date: '2025-06-28', event: 'Dockerized end-to-end stack; orchestrator API to start/stop demos on demand' },
-    ],
-    video: '/videos/pose-demo.mp4',
-  demoUrl: '/demo/pose'
-  },
-  {
-    slug: 'chang',
-    title: "Chang's ONNX Pose Pipeline",
+    title: 'Pose Estimation',
     description:
-      'Real-time human pose estimation using a C++/ONNX Runtime pipeline (uimain), fed by a low-latency RTSP stream and re-published as an annotated H.264 stream via MediaMTX.',
-    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+      'See a live “skeleton” overlay that tracks body joints and movement for each person in the camera view.',
+    image: '/images/pose-demo.jpg',
     author: {
       name: 'Tom Burellier',
       url: 'https://github.com/balmine',
-      role: 'Integrator (Vision Hub)',
+      role: 'Maintainer',
+    },
+    upstreams: [
+      { name: 'Ultralytics YOLOv8', url: 'https://github.com/ultralytics/ultralytics', role: 'Pose model (keypoints + people)' },
+      { name: 'PyTorch',            url: 'https://pytorch.org/',                        role: 'Model runtime (inference)' },
+      { name: 'OpenCV',             url: 'https://opencv.org/',                         role: 'Image utilities & optional drawing' },
+      { name: 'FFmpeg',             url: 'https://ffmpeg.org/',                         role: 'Video encoding/packaging' },
+      { name: 'MediaMTX',           url: 'https://github.com/bluenviron/mediamtx',      role: 'WebRTC/RTSP streaming hub' },
+      { name: 'Flask + flask-sock', url: 'https://flask.palletsprojects.com/',          role: 'Backend API + WebSocket keypoints' },
+      { name: 'PyAV',               url: 'https://pyav.org/',                           role: 'Low-latency video decode (RTSP)' },
+    ],
+    history: [
+      { date: '2025-09', event: 'First live skeleton overlay tracking multiple people in real time.' },
+      { date: '2025-10', event: 'Smoother, clearer keypoint rendering for better readability.' },
+      { date: '2025-12', event: 'Orchestrator integration: one-click start from Vision Hub.' },
+    ],
+    video: '/videos/pose-demo.mp4',
+    demoUrl: '/demo/pose',
+  },
+
+  {
+    slug: 'chang',
+    title: "Cross-platform Pose Pipeline (ONNX / C++)",
+    description:
+      'A compact demo showcasing how vision models can be packaged and deployed across different platforms — from YOLO to ONNX runtime, inside a C++/Qt application.',
+    image: '/images/chang-demo.jpg',
+    author: {
+      name: 'Tom Burellier',
+      url: 'https://github.com/balmine',
+      role: 'Vision Hub integration',
     },
     contributors: ['Chang'],
-    repo: 'https://github.com/chang/idk',
+    repo: 'https://github.com/LTU-Machine-Learning/project_nep',
     upstreams: [
       {
-        name: 'uimain ONNX pose demo',
-        url: 'https://github.com/…', // optional: fill real URL if you want
-        role: 'Base C++ ONNX pose pipeline',
+        name: 'uimain (C++/Qt demo)',
+        url: 'https://github.com/…',
+        role: 'C++/Qt application & pipeline',
       },
       {
         name: 'ONNX Runtime',
         url: 'https://onnxruntime.ai/',
-        role: 'Inference backend (CPU / CUDA)',
+        role: 'Inference runtime (portable across platforms)',
       },
       {
         name: 'FFmpeg',
         url: 'https://ffmpeg.org/',
-        role: 'RTSP ingest + UDP MPEG-TS + H.264 re-encode',
+        role: 'Video ingest & re-encode for streaming',
       },
       {
         name: 'MediaMTX',
         url: 'https://github.com/bluenviron/mediamtx',
-        role: 'RTSP/WebRTC hub for annotated stream',
+        role: 'WebRTC/RTSP streaming hub (annotated output)',
       },
       {
-        name: 'CUDA / NVIDIA stack',
+        name: 'NVIDIA / CUDA',
         url: 'https://developer.nvidia.com/',
-        role: 'Hardware acceleration for ONNX Runtime',
+        role: 'Optional acceleration (when available)',
       },
     ],
     history: [
       {
-        date: '2025-12-09',
-        event:
-          'First working integration: RTSP cam → FFmpeg (copy) → UDP → uimain (ONNX) → UDP → FFmpeg → MediaMTX (chang_annot).',
+        date: '2025-12',
+        event: 'Integrated into Vision Hub as a live demo stream (start/stop from the UI).',
       },
       {
-        date: '2025-12-09',
-        event:
-          'Added health endpoint and orchestration via Vision Hub API (start/stop through /demos/chang).',
+        date: '2025-12',
+        event: 'Documented the deployment goal: distill models → export to ONNX → run in a portable C++/Qt pipeline.',
       },
     ],
-    video: '', // optional: add when you have a recording
+    video: '',
     demoUrl: '/demo/chang',
   },
+
   {
-  slug: 'price',
-  title: 'House Price Estimation (Sweden / Luleå demo)',
-  description: 'Tabular ML pipeline (LightGBM + FastAPI) that estimates home prices and returns prediction intervals. Trained on a Sweden-wide dataset; easily swappable to Luleå/Norrbotten when data access is granted.',
-  image: '/images/price-demo.jpg',
-  author: {
-    name: 'Tom Burellier',
-    url: 'https://github.com/balmine',
-    role: 'Maintainer'
+    slug: 'price',
+    title: 'House Price Estimation',
+    description:
+      'Fill a few fields and get an instant price estimate with a confidence range (Sweden dataset; demo-focused).',
+    image: '/images/price-demo.jpg',
+    author: {
+      name: 'Tom Burellier',
+      url: 'https://github.com/balmine',
+      role: 'Maintainer',
+    },
+    upstreams: [
+      { name: 'LightGBM',        url: 'https://lightgbm.readthedocs.io/', role: 'Regression model (tabular ML)' },
+      { name: 'scikit-learn',    url: 'https://scikit-learn.org/',        role: 'Preprocessing & pipelines' },
+      { name: 'Pandas + NumPy',  url: 'https://pandas.pydata.org/',       role: 'Data preparation' },
+      { name: 'FastAPI',         url: 'https://fastapi.tiangolo.com/',    role: 'Prediction API (/predict)' },
+      { name: 'Uvicorn',         url: 'https://www.uvicorn.org/',         role: 'API server runtime' },
+      { name: 'Docker',          url: 'https://www.docker.com/',          role: 'Containerized deployment' },
+      { name: 'Astro (UI)',      url: 'https://astro.build/',             role: 'Web interface integration' },
+    ],
+    history: [
+      { date: '2025-10', event: 'First working API returning an estimate and a confidence interval.' },
+      { date: '2025-10', event: 'Improved feature handling for more stable predictions from partial inputs.' },
+      { date: '2025-12', event: 'Connected to Vision Hub UI (form demo) for quick interactive testing.' },
+    ],
+    video: '',
+    demoUrl: '/demo/price',
   },
-  upstreams: [
-    { name: 'LightGBM',        url: 'https://lightgbm.readthedocs.io/',            role: 'Gradient boosting regressor' },
-    { name: 'scikit-learn',    url: 'https://scikit-learn.org/',                   role: 'Pipelines, preprocessing, CV' },
-    { name: 'Pandas + NumPy',  url: 'https://pandas.pydata.org/',                  role: 'Data wrangling' },
-    { name: 'FastAPI',         url: 'https://fastapi.tiangolo.com/',               role: 'Serving /predict' },
-    { name: 'Uvicorn',         url: 'https://www.uvicorn.org/',                    role: 'ASGI server' },
-    { name: 'Docker',          url: 'https://www.docker.com/',                     role: 'Containerized deployment' },
-    { name: 'Astro (UI)',      url: 'https://astro.build/',                        role: 'Frontend integration' }
-  ],
-  history: [
-    { date: '2025-10-14', event: 'Initial data ingestion (Kaggle SwedenHousingPrices.csv)' },
-    { date: '2025-10-15', event: 'Baseline LightGBM pipeline + quantile bands; model artifacts exported' },
-    { date: '2025-10-16', event: 'FastAPI container online; /predict returns price and PI (P10–P90)' }
-  ],
-  video: '',
-  demoUrl: '/demo/price'
-}
 ];

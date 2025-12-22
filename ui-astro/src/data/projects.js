@@ -60,22 +60,22 @@ export default [
 
   {
     slug: 'chang',
-    title: "Cross-platform Pose Pipeline (ONNX / C++)",
+    title: "Arabic Line Detection (ONNX / C++)",
     description:
-      'A compact demo showcasing how vision models can be packaged and deployed across different platforms — from YOLO to ONNX runtime, inside a C++/Qt application.',
-    image: '/images/chang-demo.jpg',
+      "Detects and highlights lines of Arabic text. (Made by the ML group at LTU)",
+    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     author: {
       name: 'Tom Burellier',
       url: 'https://github.com/balmine',
       role: 'Vision Hub integration',
     },
     contributors: ['Chang'],
-    repo: 'https://github.com/LTU-Machine-Learning/project_nep',
+    repo: 'https://github.com/chang/idk',
     upstreams: [
       {
         name: 'uimain (C++/Qt demo)',
-        url: 'https://github.com/…',
-        role: 'C++/Qt application & pipeline',
+        url: 'https://github.com/…', // optional: fill real URL if you want
+        role: 'C++/Qt application & line-detection pipeline',
       },
       {
         name: 'ONNX Runtime',
@@ -85,12 +85,12 @@ export default [
       {
         name: 'FFmpeg',
         url: 'https://ffmpeg.org/',
-        role: 'Video ingest & re-encode for streaming',
+        role: 'Video ingest + re-encode for streaming',
       },
       {
         name: 'MediaMTX',
         url: 'https://github.com/bluenviron/mediamtx',
-        role: 'WebRTC/RTSP streaming hub (annotated output)',
+        role: 'WebRTC/RTSP hub for the annotated output stream',
       },
       {
         name: 'NVIDIA / CUDA',
@@ -101,16 +101,17 @@ export default [
     history: [
       {
         date: '2025-12',
-        event: 'Integrated into Vision Hub as a live demo stream (start/stop from the UI).',
+        event: 'Integrated as a live Vision Hub demo: camera → line detection → annotated stream in the browser.',
       },
       {
         date: '2025-12',
-        event: 'Documented the deployment goal: distill models → export to ONNX → run in a portable C++/Qt pipeline.',
+        event: 'Defined roadmap: keep line detection robust, then add text extraction (OCR) on top of detected lines.',
       },
     ],
     video: '',
     demoUrl: '/demo/chang',
   },
+
 
   {
     slug: 'price',

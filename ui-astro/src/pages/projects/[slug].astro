@@ -43,7 +43,7 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
       box-shadow: 0 8px 32px #0005;
     }
 
-    /* ===== Top bar (back/github + demo CTA) ===== */
+    /* ===== Top bar (links only) ===== */
     .project-detail-links {
       display: flex;
       align-items: center;
@@ -54,26 +54,27 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
       margin-top: 28px;
     }
 
-    .project-detail-links a {
+    /* Only style normal links as blue (NOT the CTA button) */
+    .project-detail-links a:not(.demo-cta) {
       color: #5aa4ff;
       font-weight: 600;
       text-decoration: none;
       font-size: 1.05rem;
       transition: color .18s;
     }
-    .project-detail-links a:hover {
+    .project-detail-links a:not(.demo-cta):hover {
       color: #27d07d;
       text-decoration: underline;
     }
 
-    /* ===== Demo buttons (top + bottom) ===== */
+    /* ===== Demo buttons (mid + bottom) ===== */
     .demo-cta {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
 
-      color: #081120;
+      color: #081120 !important; /* force (avoid link styles) */
       font-weight: 800;
       font-size: 1.05rem;
       text-decoration: none;
@@ -131,6 +132,17 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
       box-shadow: 0 2px 12px #0003;
     }
 
+    /* Mid CTA placement (between image and description) */
+    .project-cta-mid{
+      display:flex;
+      justify-content:center;
+      margin: 12px 0 18px;
+    }
+    .project-cta-mid .demo-cta{
+      min-width: 260px;
+      padding: 12px 22px;
+    }
+
     .project-detail-desc {
       text-align: center;
       color: #b0bedc;
@@ -175,6 +187,7 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
       .project-detail-wrap { margin-top: 32px; border-radius: 18px; }
       .demo-cta { width: 100%; }
       .project-detail-links { gap: 10px; }
+      .project-cta-mid .demo-cta{ width: 100%; min-width: 0; }
     }
   </style>
 
@@ -187,12 +200,6 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
           Source code on GitHub
         </a>
       )}
-
-      {/* NEW: top CTA */}
-      <a class="demo-cta live-demo-btn" href="#" role="button" data-demo={demoId} aria-label="Try the live demo">
-        <span class="spinner" aria-hidden="true"></span>
-        <span class="label">Try the live demo →</span>
-      </a>
     </div>
 
     <h1 class="project-detail-title">{project.title}</h1>
@@ -209,6 +216,15 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
     )}
 
     <img src={project.image} alt={project.title} class="project-detail-img" />
+
+    {/* NEW: mid CTA between image and description */}
+    <div class="project-cta-mid">
+      <a class="demo-cta live-demo-btn" href="#" role="button" data-demo={demoId} aria-label="Try the live demo">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="label">Try the live demo →</span>
+      </a>
+    </div>
+
     <div class="project-detail-desc">{project.description}</div>
 
     {/* Show video only if available */}

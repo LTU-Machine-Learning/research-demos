@@ -111,7 +111,7 @@ export default [
           'Added health endpoint and orchestration via Vision Hub API (start/stop through /demos/chang).',
       },
     ],
-    video: '/videos/chang-demo.mp4', // optional: add when you have a recording
+    video: '', // optional: add when you have a recording
     demoUrl: '/demo/chang',
   },
   {
@@ -138,7 +138,7 @@ export default [
     { date: '2025-10-15', event: 'Baseline LightGBM pipeline + quantile bands; model artifacts exported' },
     { date: '2025-10-16', event: 'FastAPI container online; /predict returns price and PI (P10–P90)' }
   ],
-  video: '/videos/price-demo.mp4',
+  video: '',
   demoUrl: '/demo/price'
 }
 ];

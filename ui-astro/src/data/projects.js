@@ -115,9 +115,9 @@ export default [
 
   {
     slug: 'price',
-    title: 'House Price Estimation',
+    title: 'House Price Estimation (Luleå, Sweden)',
     description:
-      'Fill a few fields and get an instant price estimate with a confidence range (Sweden dataset; demo-focused).',
+      'Get an instant price estimate for a home in Luleå from a few details (area, rooms, location, etc.), with an uncertainty range. Data thanks to Booli.',
     image: '/images/price-demo.jpg',
     author: {
       name: 'Tom Burellier',
@@ -125,20 +125,25 @@ export default [
       role: 'Maintainer',
     },
     upstreams: [
-      { name: 'LightGBM',        url: 'https://lightgbm.readthedocs.io/', role: 'Regression model (tabular ML)' },
-      { name: 'scikit-learn',    url: 'https://scikit-learn.org/',        role: 'Preprocessing & pipelines' },
-      { name: 'Pandas + NumPy',  url: 'https://pandas.pydata.org/',       role: 'Data preparation' },
-      { name: 'FastAPI',         url: 'https://fastapi.tiangolo.com/',    role: 'Prediction API (/predict)' },
-      { name: 'Uvicorn',         url: 'https://www.uvicorn.org/',         role: 'API server runtime' },
-      { name: 'Docker',          url: 'https://www.docker.com/',          role: 'Containerized deployment' },
-      { name: 'Astro (UI)',      url: 'https://astro.build/',             role: 'Web interface integration' },
+      // ✅ This is the “thanks” that will show on the project page
+      { name: 'Booli',          url: 'https://www.booli.se/',                role: 'Sold-market dataset provider — thanks for the data' },
+
+      { name: 'LightGBM',       url: 'https://lightgbm.readthedocs.io/',     role: 'Price model' },
+      { name: 'scikit-learn',   url: 'https://scikit-learn.org/',            role: 'Preprocessing pipeline' },
+      { name: 'Pandas + NumPy', url: 'https://pandas.pydata.org/',           role: 'Data preparation' },
+      { name: 'FastAPI',        url: 'https://fastapi.tiangolo.com/',        role: 'Prediction API' },
+      { name: 'Uvicorn',        url: 'https://www.uvicorn.org/',             role: 'API server' },
+      { name: 'Docker',         url: 'https://www.docker.com/',              role: 'Deployment' },
+      { name: 'Astro (UI)',     url: 'https://astro.build/',                 role: 'Frontend' },
     ],
     history: [
-      { date: '2025-10', event: 'First working API returning an estimate and a confidence interval.' },
-      { date: '2025-10', event: 'Improved feature handling for more stable predictions from partial inputs.' },
-      { date: '2025-12', event: 'Connected to Vision Hub UI (form demo) for quick interactive testing.' },
+      // More “visitor-friendly milestones” (not devlog)
+      { date: '2025-10', event: 'Built the first interactive demo: enter a few home details → get an estimate.' },
+      { date: '2025-11', event: 'Added prediction intervals so users can see a realistic price range, not just a single number.' },
+      { date: '2025-12', event: 'Improved the Luleå coverage using sold-market data (thanks to Booli) and deployed it in Vision Hub.' },
     ],
     video: '',
     demoUrl: '/demo/price',
   },
+
 ];

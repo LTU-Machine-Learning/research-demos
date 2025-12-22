@@ -42,6 +42,9 @@ export function createContainOverlay({ video, canvas }) {
     return { cw, ch, vw, vh, dx, dy, dw, dh };
   }
 
+  // ---- small utils (label placement) ----
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
   function drawOnce() {
     if (!syncCanvasSizeToVideo()) return;
     const geom = computeDrawRect();
@@ -60,6 +63,7 @@ export function createContainOverlay({ video, canvas }) {
 
     ctx.lineWidth = 2;
     ctx.font = '12px system-ui';
+    ctx.textBaseline = 'top';
 
     for (const b of BOXES) {
       const x = dx + (b.x || 0) * sx;
@@ -71,11 +75,35 @@ export function createContainOverlay({ video, canvas }) {
       ctx.strokeRect(x, y, w, h);
 
       if (b.label) {
-        const pad = 3, tw = ctx.measureText(b.label).width;
+        const padX = 3;
+        const padY = 2;
+        const gap  = 3;
+
+        const tw = Math.ceil(ctx.measureText(b.label).width);
+        const textH = 12;                 // matches ctx.font
+        const boxW  = tw + padX * 2;
+        const boxH  = textH + padY * 2;
+
+        // Prefer label above the box
+        let lx = x;
+        let ly = y - gap - boxH;
+
+        // If it would go out at the top, flip below the box
+        if (ly < 0) {
+          ly = y + h + gap;
+        }
+
+        // Clamp inside canvas (avoid left/right overflow)
+        lx = clamp(lx, 0, cw - boxW);
+
+        // Clamp vertical too (avoid bottom overflow in extreme cases)
+        ly = clamp(ly, 0, ch - boxH);
+
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(x, y - 16, tw + pad * 2, 16);
+        ctx.fillRect(lx, ly, boxW, boxH);
+
         ctx.fillStyle = '#00ff00';
-        ctx.fillText(b.label, x + pad, y - 4);
+        ctx.fillText(b.label, lx + padX, ly + padY);
       }
     }
   }

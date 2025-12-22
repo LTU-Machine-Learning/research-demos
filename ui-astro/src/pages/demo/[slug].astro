@@ -20,94 +20,38 @@ const cfg = demos(slug);
 const title = cfg.title;
 const description = cfg.subtitle ?? "";
 
-// --- Per-demo info (front) ---
-const infoBySlug: Record<string, {
-  title: string;
-  what: string[];
-  detects: string[];
-  notes: string[];
-}> = {
+// UX-first "About" blurbs (short, readable)
+const aboutBySlug: Record<string, { blurb: string; future?: string }> = {
   yolo: {
-    title: "Object detection (YOLO)",
-    what: [
-      "Live video stream with bounding boxes overlay.",
-      "Labels can include class name (COCO) and confidence.",
-      "FPS indicator reflects the decoded video frames in your browser.",
-    ],
-    detects: [
-      "People, vehicles (car, bus, truck…), animals, everyday objects…",
-      "Model follows the COCO 80-class taxonomy (see overlay-classmap.js).",
-    ],
-    notes: [
-      "If the backend sends only class IDs, the UI maps them via window.overlayClassMap.",
-      "Boxes are drawn client-side from WebSocket messages (/ws/dets).",
-    ],
+    blurb: "This live demo highlights detected objects directly on the video feed as you move in front of the camera.",
   },
-
   pose: {
-    title: "Pose estimation (YOLO-Pose)",
-    what: [
-      "Live stream with skeleton overlay (17 keypoints).",
-      "Lines connect keypoints using a skeleton edge list.",
-      "Overlay is stabilized (linger) to reduce blinking.",
-    ],
-    detects: [
-      "Human keypoints (nose, eyes, shoulders, elbows, wrists, hips, knees, ankles…).",
-      "Multiple people supported if provided in the WS payload.",
-    ],
-    notes: [
-      "Keypoints are drawn client-side from WebSocket messages (/ws/pose).",
-      "Smoothing/linger is handled in viewer.js (POSE_LINGER_MS).",
-    ],
+    blurb: "This live demo tracks people and draws a simple skeleton on top of the video in real time.",
   },
-
   chang: {
-    title: "Arabic text line selector (Chang)",
-    what: [
-      "Live stream showing Arabic text.",
-      "The demo highlights/selects a line in the text (line selector).",
-    ],
-    detects: [
-      "Text line selection/segmentation (visual selection on the stream).",
-    ],
-    notes: [
-      "This demo runs in ‘no-WS overlay’ mode: annotations are expected in the video stream itself.",
-      "Startup can be slower; viewer.js uses more WHEP retries for chang.",
-    ],
+    blurb: "This live demo highlights a detected line of Arabic text on the stream.",
+    future: "Future work: extract the selected text after line detection (OCR).",
   },
-
-  // Optional (kept harmless even if you only cared about video)
   price: {
-    title: "House price estimation (ML)",
-    what: [
-      "Form-based demo that sends inputs to the pricing API.",
-      "Shows predicted price and an interval when available.",
-    ],
-    detects: [
-      "Not a vision demo: predicts housing price from structured features.",
-    ],
-    notes: [
-      "Uses /scripts/prices.js for client-side logic and validation.",
-      "Debug panel can restart the demo and check /healthz.",
-    ],
+    blurb: "Fill the form to estimate a housing price and view a predicted range.",
   },
 };
 
-const info = infoBySlug[slug];
+const about = aboutBySlug[slug];
 ---
 
 <SiteLayout {title} {description}>
   <ConsentModal demoId={cfg.demoId} ttlSeconds={600} />
 
   <style>
-    :global(body) {
+    body {
       margin: 0;
       background: radial-gradient(ellipse at top, #0b0d12 0%, #06070d 100%);
       color: #e8eefc;
       font-family: system-ui, sans-serif;
     }
 
-    /* Wider demo pages (without touching other pages) */
+    /* keep your wider page override */
     :global(main.page) {
       max-width: 1400px;
     }
@@ -141,19 +85,16 @@ const info = infoBySlug[slug];
       border-radius: 14px;
       overflow: hidden;
     }
-    .stack video,
-    .stack canvas,
-    #yolo-loading {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 14px;
+    .stack video, .stack canvas, #yolo-loading {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      border-radius:14px;
     }
-    .stack video,
-    .stack canvas { display:block; }
 
-    /* Loading overlay styling + state binding to viewer.js classes */
+    /* Loading overlay UX */
     #yolo-loading {
       display: flex;
       align-items: center;
@@ -167,7 +108,7 @@ const info = infoBySlug[slug];
     #yolo-root.loading #yolo-loading { display: flex; }
     #yolo-root.stopped #yolo-loading { display: flex; }
 
-    /* Info block (About this demo) */
+    /* About block (short, readable) */
     .info{
       margin-top: 18px;
       padding: 16px 18px;
@@ -176,25 +117,98 @@ const info = infoBySlug[slug];
       background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
       box-shadow: 0 10px 24px #0004;
     }
-    .info-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 14px 18px;
-      margin-top: 10px;
+    .info h2{ margin:0 0 8px; font-size: 1.05rem; }
+    .info-blurb{
+      margin:0;
+      color:#cfe0ff;
+      opacity:.92;
+      line-height: 1.45;
     }
-    .info h2{ margin:0 0 10px; }
-    .info h3{
-      margin: 0 0 8px;
-      font-size: 1rem;
+    .info-future{
+      margin:10px 0 0;
+      color:#b0bedc;
+      opacity:.85;
+      font-size: .95rem;
     }
-    .info ul{
-      margin: 0;
-      padding-left: 18px;
-      color: #b0bedc;
+
+    /* COCO browser (YOLO) */
+    .coco-card{
+      margin-top: 14px;
+      padding: 14px 14px 16px;
+      border-radius: 16px;
+      border: 1px solid #1e2436;
+      background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
+      box-shadow: 0 10px 24px #0004;
     }
-    .info li{ margin: 6px 0; }
-    .info details{ margin-top: 10px; }
-    .info summary{ cursor:pointer; color:#cfe7ff; }
+    .coco-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .coco-title{ font-weight: 700; color:#e8eefc; }
+    .coco-sub{ font-size: .92rem; color:#b0bedc; opacity:.9; margin-top:2px; }
+    .coco-search{
+      flex: 0 1 360px;
+      background:#0f1625;
+      color:#e8eefc;
+      border:1px solid #2a3652;
+      border-radius: 12px;
+      padding: 9px 12px;
+      outline:none;
+    }
+    .coco-search:focus{ border-color:#2f82ff; box-shadow:0 0 0 3px #2f82ff22; }
+
+    .coco-tabs{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px;
+      margin: 10px 0 12px;
+    }
+    .coco-tab{
+      border: 1px solid #2a3652;
+      background:#0f1625;
+      color:#cfe7ff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .85rem;
+      cursor:pointer;
+      user-select:none;
+    }
+    .coco-tab.active{
+      border-color:#27d07d66;
+      background:#0f1e1a;
+      color:#27d07d;
+      font-weight: 700;
+    }
+    .coco-grid{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px;
+    }
+    .coco-chip{
+      border:1px solid #2a3652;
+      background:#0f1625;
+      color:#e8eefc;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .86rem;
+    }
+    .coco-chip.dim{ opacity:.55; }
+
+    /* Pose explain box */
+    .pose-card{
+      margin-top: 14px;
+      padding: 14px 14px 16px;
+      border-radius: 16px;
+      border: 1px solid #1e2436;
+      background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
+      box-shadow: 0 10px 24px #0004;
+    }
+    .pose-title{ font-weight: 700; color:#e8eefc; margin-bottom: 6px; }
+    .pose-text{ color:#cfe0ff; opacity:.92; line-height: 1.45; }
+    .pose-hint{ margin-top: 10px; color:#b0bedc; opacity:.85; font-size:.92rem; }
 
     /* form grid (price) */
     form{
@@ -326,6 +340,8 @@ const info = infoBySlug[slug];
     @media (max-width: 640px) {
       .wrap { margin: 24px auto; }
       .stack { min-height: 280px; }
+      .coco-head{ flex-direction: column; align-items: stretch; }
+      .coco-search{ flex: 1 1 auto; width: 100%; }
     }
   </style>
 
@@ -333,41 +349,13 @@ const info = infoBySlug[slug];
     <h1>{cfg.title}</h1>
     <p>{cfg.subtitle}</p>
 
-    {info && (
+    {about && (
       <div class="info">
         <h2>About this demo</h2>
-
-        <div class="info-grid">
-          <div>
-            <h3>What you see</h3>
-            <ul>
-              {info.what.map(x => <li>{x}</li>)}
-            </ul>
-          </div>
-
-          <div>
-            <h3>What it can detect</h3>
-            <ul>
-              {info.detects.map(x => <li>{x}</li>)}
-            </ul>
-          </div>
-
-          <div>
-            <h3>Notes</h3>
-            <ul>
-              {info.notes.map(x => <li>{x}</li>)}
-            </ul>
-
-            {slug === "yolo" && (
-              <details>
-                <summary>COCO classes source</summary>
-                <div style="opacity:.85; margin-top:8px;">
-                  Defined in <code>/public/scripts/overlay-classmap.js</code>
-                </div>
-              </details>
-            )}
-          </div>
-        </div>
+        <p class="info-blurb">{about.blurb}</p>
+        {about.future && (
+          <p class="info-future"><b>Future:</b> {about.future}</p>
+        )}
       </div>
     )}
 
@@ -424,6 +412,40 @@ const info = infoBySlug[slug];
             <span>Loading live stream…</span>
           </div>
         </div>
+
+        {slug === "yolo" && (
+          <div class="coco-card" id="coco-card">
+            <div class="coco-head">
+              <div>
+                <div class="coco-title">Detectable objects</div>
+                <div class="coco-sub">Browse the 80 COCO classes used by the demo.</div>
+              </div>
+              <input
+                id="coco-q"
+                class="coco-search"
+                type="search"
+                placeholder="Search (e.g. person, chair, phone…)"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="coco-tabs" id="coco-tabs"></div>
+            <div class="coco-grid" id="coco-grid"></div>
+          </div>
+        )}
+
+        {slug === "pose" && (
+          <div class="pose-card">
+            <div class="pose-title">What the skeleton means</div>
+            <div class="pose-text">
+              The dots are <b>body keypoints</b> (like shoulders, elbows, wrists, hips, knees, ankles).
+              Lines connect these points to form a simple skeleton so you can see posture and movement.
+            </div>
+            <div class="pose-hint">
+              Tip: move closer to the camera for more stable keypoints.
+            </div>
+          </div>
+        )}
       </div>
     ) : (
       <div class="card">
@@ -586,6 +608,76 @@ const info = infoBySlug[slug];
           });
         })();
       </script>
+
+      {slug === "yolo" && (
+        <script is:inline>
+          (function () {
+            const map = window.overlayClassMap || null;
+            if (!map) return;
+
+            const all = Object.keys(map).map(k => map[k]).filter(Boolean);
+            const set = new Set(all);
+
+            // UX categories: "Common" first, then other groups.
+            const CATS = [
+              { id: "common",   label: "Common",   items: ["person","chair","couch","potted plant","tv","laptop","mouse","keyboard","cell phone","book","bottle","cup","remote","backpack","handbag"] },
+              { id: "vehicles", label: "Vehicles", items: ["bicycle","car","motorcycle","bus","train","truck","boat","airplane"] },
+              { id: "animals",  label: "Animals",  items: ["bird","cat","dog","horse","sheep","cow","elephant","bear","zebra","giraffe"] },
+              { id: "kitchen",  label: "Kitchen",  items: ["bowl","fork","knife","spoon","banana","apple","sandwich","orange","broccoli","carrot","hot dog","pizza","donut","cake","wine glass"] },
+              { id: "home",     label: "Home",     items: ["bed","dining table","toilet","sink","refrigerator","microwave","oven","toaster"] },
+              { id: "sports",   label: "Sports",   items: ["sports ball","frisbee","skis","snowboard","kite","baseball bat","baseball glove","skateboard","surfboard","tennis racket"] },
+              { id: "other",    label: "Other",    items: [] },
+            ];
+
+            for (const c of CATS) c.items = c.items.filter(x => set.has(x));
+
+            const used = new Set(CATS.flatMap(c => c.items));
+            CATS.find(c => c.id === "other").items = all.filter(x => !used.has(x));
+
+            const tabs = document.getElementById("coco-tabs");
+            const grid = document.getElementById("coco-grid");
+            const q    = document.getElementById("coco-q");
+            if (!tabs || !grid || !q) return;
+
+            let active = "common";
+
+            const renderTabs = () => {
+              tabs.innerHTML = CATS.map(c => {
+                const on = c.id === active ? "active" : "";
+                return `<button type="button" class="coco-tab ${on}" data-cat="${c.id}">${c.label}</button>`;
+              }).join("");
+            };
+
+            const renderGrid = () => {
+              const qq = (q.value || "").toLowerCase().trim();
+
+              let items = [];
+              if (qq) {
+                items = all.filter(x => x.toLowerCase().includes(qq));
+              } else {
+                const cat = CATS.find(c => c.id === active) || CATS[0];
+                items = cat.items.slice();
+              }
+
+              grid.innerHTML = items.map(name => `<span class="coco-chip">${name}</span>`).join("");
+              if (!items.length) grid.innerHTML = `<span class="coco-chip dim">No match</span>`;
+            };
+
+            tabs.addEventListener("click", (e) => {
+              const btn = e.target.closest(".coco-tab");
+              if (!btn) return;
+              active = btn.getAttribute("data-cat") || "common";
+              renderTabs();
+              renderGrid();
+            });
+
+            q.addEventListener("input", () => renderGrid());
+
+            renderTabs();
+            renderGrid();
+          })();
+        </script>
+      )}
     </>
   )}
 

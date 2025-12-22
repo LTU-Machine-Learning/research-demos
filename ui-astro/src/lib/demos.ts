@@ -9,15 +9,15 @@ type DemoCfg = {
   orch?: string;   // e.g. ":8090"
   token?: string;
   demoId: string;
-  wsKind?: "boxes" | "pose" | "none";  
+  wsKind?: "boxes" | "pose" | "none";
   kind?: "video" | "form";  // UI kind
 };
 
 export default function demos(slug: string): DemoCfg {
   const map: Record<string, DemoCfg> = {
     yolo: {
-      title: "Demo – YOLO (WebRTC + Canvas)",
-      subtitle: "‘cam’ stream via WebRTC with Canvas overlay.",
+      title: "Demo — Object detection",
+      subtitle: "Live camera feed with detected objects highlighted on the video.",
       transport: "whep",
       cam: ":8889/cam/whep",     // base stream
       ws:  ":6002/ws/dets",      // WebSocket sends detection boxes
@@ -27,9 +27,10 @@ export default function demos(slug: string): DemoCfg {
       demoId: "yolo",
       kind: "video",
     },
+
     pose: {
-      title: "Demo – YOLO Pose",
-      subtitle: "‘cam’ stream via WebRTC with pose skeleton overlay.",
+      title: "Demo — Pose estimation",
+      subtitle: "Live camera feed with a real-time skeleton overlay.",
       transport: "whep",
       cam: ":8889/cam/whep",     // same video feed as above
       ws:  ":6001/ws/pose",      // WebSocket sends only pose keypoints
@@ -39,20 +40,20 @@ export default function demos(slug: string): DemoCfg {
       demoId: "pose",
       kind: "video",
     },
+
     price: {
-      title: "Demo – Price Estimation",
-      subtitle: "Interactive estimation form (FastAPI) – no video stream.",
+      title: "Demo — House price estimation",
+      subtitle: "Interactive form that estimates a price range from your inputs.",
       transport: "mjpeg",   // placeholder; no video used for this demo
       orch: ":8090",
       token: "dev-token",
       demoId: "price",
-      kind: "form",  
-
+      kind: "form",
     },
 
     chang: {
-      title: "Demo – Chang Pose Pipeline",
-      subtitle: "Server-side ONNX pose pipeline, streamed via WebRTC from ‘chang_annot’.",
+      title: "Demo — Arabic line selector",
+      subtitle: "Live stream that highlights a detected line of Arabic text.",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot/whep",
@@ -61,15 +62,14 @@ export default function demos(slug: string): DemoCfg {
       token: "dev-token",
       demoId: "chang",
       kind: "video",
-      ws: '',
+      ws: "",
       wsKind: "none",
     },
-
   };
 
   return map[slug] ?? {
-    title: `Demo – ${slug}`,
-    subtitle: "Generic video stream",
+    title: `Demo — ${slug}`,
+    subtitle: "Live demo page",
     transport: "whep",
     cam: `:8889/${slug}/whep`,
     ws:  `:6000/ws/${slug}`,

@@ -65,16 +65,16 @@ export default [
       "Detects and highlights lines of Arabic text. (Made by the ML group at LTU)",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     author: {
-      name: 'Tom Burellier',
-      url: 'https://github.com/balmine',
-      role: 'Vision Hub integration',
+      name: 'Chang Liu',
+      url: 'https://github.com/ChangLiuCat',
+      role: 'Container Creation',
     },
-    contributors: ['Chang'],
-    repo: 'https://github.com/chang/idk',
+    contributors: ['Tom Burellier'],
+    repo: 'https://github.com/LTU-Machine-Learning/project_nep',
     upstreams: [
       {
         name: 'uimain (C++/Qt demo)',
-        url: 'https://github.com/…', // optional: fill real URL if you want
+        url: 'https://github.com/LTU-Machine-Learning/project_nep/', // optional: fill real URL if you want
         role: 'C++/Qt application & line-detection pipeline',
       },
       {

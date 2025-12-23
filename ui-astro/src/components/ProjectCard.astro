@@ -18,14 +18,8 @@ const { image, title, description, href, credit } = Astro.props;
   <h2>{title}</h2>
   <p>{description}</p>
 
-  {credit?.text && (
-    <p class="proj-credit">
-      {credit.url ? (
-        <a href={credit.url} target="_blank" rel="noreferrer">{credit.text}</a>
-      ) : (
-        credit.text
-      )}
-    </p>
+  {credit && (
+    <p class="proj-credit">{credit}</p>
   )}
   <span class="proj-card-cta">See details & demo →</span>
 </a>

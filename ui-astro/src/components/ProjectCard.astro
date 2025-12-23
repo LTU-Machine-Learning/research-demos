@@ -4,7 +4,7 @@ export interface Props {
   title: string;
   description: string;
   href: string;
-  credit?: { text: string; url?: string };
+  credit?: string;
 }
 
 const { image, title, description, href, credit } = Astro.props;

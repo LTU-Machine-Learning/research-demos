@@ -74,6 +74,12 @@ DEMOS: Dict[str, Dict] = {
         "health_url": "http://chang-demo:7000/healthz",
         "needs": ["mediamtx", "capture"],
     },
+    "chang_ctw-11n-swin": {
+        "service": "chang-demo_ctw-11n-swin",
+        "url": None,  # we'll set a browser URL later
+        "health_url": "http://chang-demo_ctw-11n-swin:7001/healthz",
+        "needs": ["mediamtx", "capture"],
+    },
     "price": {
         "service": "price-api",
         "url": None,
@@ -110,6 +116,7 @@ def _browser_url_for(demo_id: str) -> Optional[str]:
     if demo_id == "pose": return f"{PUBLIC_BASE_GPU}:6001/"
     if demo_id == "price": return f"{PUBLIC_BASE_NO_GPU}:8080/healthz"
     if demo_id == "chang": return f"{PUBLIC_BASE_GPU}:7000/healthz"
+    if demo_id == "chang_ctw-11n-swin": return f"{PUBLIC_BASE_GPU}:7001/healthz"
     return None
 
 # ================== FASTAPI / CORS ==================

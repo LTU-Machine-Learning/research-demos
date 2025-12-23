@@ -112,6 +112,56 @@ export default [
     demoUrl: '/demo/chang',
   },
 
+  {
+    slug: 'chang_ctw-11n-swin',
+    title: "Arabic Line Detection (ONNX / C++)",
+    description:
+      "Detects and highlights lines of Arabic text. (Made by the ML group at LTU) TODO REWRITE /SRC/DATA/PROJECTS",
+    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    author: {
+      name: 'Chang Liu',
+      url: 'https://github.com/ChangLiuCat',
+      role: 'Container and Demo Creation',
+    },
+    contributors: ['Tom Burellier'],
+    repo: 'https://github.com/LTU-Machine-Learning/project_nep',
+    upstreams: [
+      {
+        name: 'uimain (C++/Qt demo)',
+        url: 'https://github.com/LTU-Machine-Learning/project_nep/', // optional: fill real URL if you want
+        role: 'C++/Qt application & line-detection pipeline',
+      },
+      {
+        name: 'ONNX Runtime',
+        url: 'https://onnxruntime.ai/',
+        role: 'Inference runtime (portable across platforms)',
+      },
+      {
+        name: 'FFmpeg',
+        url: 'https://ffmpeg.org/',
+        role: 'Video ingest + re-encode for streaming',
+      },
+      {
+        name: 'MediaMTX',
+        url: 'https://github.com/bluenviron/mediamtx',
+        role: 'WebRTC/RTSP hub for the annotated output stream',
+      },
+      {
+        name: 'NVIDIA / CUDA',
+        url: 'https://developer.nvidia.com/',
+        role: 'Optional acceleration (when available)',
+      },
+    ],
+    history: [
+      {
+        date: '2025-12',
+        event: 'Integrated as a live Vision Hub demo: camera → line detection → annotated stream in the browser.',
+      },
+    ],
+    video: '',
+    demoUrl: '/demo/chang_ctw-11n-swin',
+  },
+
 
   {
     slug: 'price',

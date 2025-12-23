@@ -5,6 +5,7 @@ export default [
     description:
       'Point the camera at everyday objects and watch them get detected live (labels + boxes) in real time.',
     image: '/images/yolo-demo.jpg',
+    credit: "Ultralytics",
     author: {
       name: 'Tom Burellier',
       url: 'https://github.com/balmine',
@@ -35,6 +36,7 @@ export default [
     description:
       'See a live “skeleton” overlay that tracks body joints and movement for each person in the camera view.',
     image: '/images/pose-demo.jpg',
+    credit: "Ultralytics",
     author: {
       name: 'Tom Burellier',
       url: 'https://github.com/balmine',
@@ -62,8 +64,9 @@ export default [
     slug: 'chang',
     title: "Arabic Line Detection (ONNX / C++)",
     description:
-      "Detects and highlights lines of Arabic text. (Made by the ML group at LTU)",
+      "Detects and highlights lines of Arabic text.",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',
       url: 'https://github.com/ChangLiuCat',
@@ -118,6 +121,7 @@ export default [
     description:
       "Detects and highlights lines of Arabic text. (Made by the ML group at LTU) TODO REWRITE /SRC/DATA/PROJECTS",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',
       url: 'https://github.com/ChangLiuCat',
@@ -169,6 +173,7 @@ export default [
     description:
       'Get an instant price estimate for a home in Luleå from a few details (area, rooms, location, etc.), with an uncertainty range. Data thanks to Booli.',
     image: '/images/price-demo.jpg',
+    credit: "Made by the ML group",
     author: {
       name: 'Tom Burellier',
       url: 'https://github.com/balmine',

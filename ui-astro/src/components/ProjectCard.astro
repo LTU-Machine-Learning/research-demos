@@ -4,9 +4,10 @@ export interface Props {
   title: string;
   description: string;
   href: string;
+  credit?: { text: string; url?: string };
 }
 
-const { image, title, description, href } = Astro.props;
+const { image, title, description, href, credit } = Astro.props;
 ---
 
 <a href={href} class="proj-card" aria-label={`Open project ${title}`}>
@@ -16,6 +17,16 @@ const { image, title, description, href } = Astro.props;
 
   <h2>{title}</h2>
   <p>{description}</p>
+
+  {credit?.text && (
+    <p class="proj-credit">
+      {credit.url ? (
+        <a href={credit.url} target="_blank" rel="noreferrer">{credit.text}</a>
+      ) : (
+        credit.text
+      )}
+    </p>
+  )}
   <span class="proj-card-cta">See details & demo →</span>
 </a>
 

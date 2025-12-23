@@ -65,6 +65,21 @@ export default function demos(slug: string): DemoCfg {
       ws: "",
       wsKind: "none",
     },
+
+    "chang_ctw-11n-swin": {
+      title: "Demo — Arabic line selector",
+      subtitle: "Live stream that highlights a detected line of Arabic text.",
+      transport: "whep",
+      // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
+      cam: ":8889/chang_annot_ctw-11n-swin/whep",
+      // No WebSocket overlay for now – we just play the annotated video
+      orch: ":8090",
+      token: "dev-token",
+      demoId: "chang_ctw-11n-swin",
+      kind: "video",
+      ws: "",
+      wsKind: "none",
+    },
   };
 
   return map[slug] ?? {

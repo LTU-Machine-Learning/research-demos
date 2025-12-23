@@ -439,7 +439,7 @@ function drawPoseFrame() {
   }
 
   // For the chang pipeline, everything is longer → small grace period
-  if (DEMO_ID === "chang") {
+  if (DEMO_ID === "chang" || DEMO_ID === "chang_ctw-11n-swin") {
     log("grace delay for chang pipeline…");
     await sleep(1500);
   }
@@ -453,7 +453,7 @@ function drawPoseFrame() {
 
   // chang pipeline is slower to expose /chang_annot/whep → more retries + longer delay
   const whepOpts =
-    DEMO_ID === "chang"
+    DEMO_ID === "chang" || DEMO_ID === "chang_ctw-11n-swin"
       ? { maxTries: 10, delayMs: 1500 }   // ≈ up to 15 s total
       : { maxTries: 2,  delayMs: 800 };   // yolo / pose are quick
 

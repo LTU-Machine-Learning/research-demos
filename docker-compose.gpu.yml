@@ -1,8 +1,8 @@
 services:
   yolo:
     environment:
-      - gpus=1
-      # - NVIDIA_VISIBLE_DEVICES=all
+      # - gpus=1
+      - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     deploy:
       resources:
@@ -10,13 +10,13 @@ services:
           devices:
               - capabilities: [gpu]
     devices:
-      - "device=0"
-      # - "nvidia.com/gpu=all"
+      # - "device=0"
+      - "nvidia.com/gpu=all"
 
   pose:
     environment:
-      - gpus=1
-      # - NVIDIA_VISIBLE_DEVICES=all
+      # - gpus=1
+      - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     deploy:
       resources:
@@ -24,5 +24,5 @@ services:
           devices:
               - capabilities: [gpu]
     devices:
-      - "device=0"
-      # - "nvidia.com/gpu=all"
+      # - "device=0"
+      - "nvidia.com/gpu=all"

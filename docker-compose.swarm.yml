@@ -86,7 +86,8 @@ services:
       - DRAW_ON_VIDEO=1
       - KP_THR=0.25
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-      - NVIDIA_VISIBLE_DEVICES=all
+      - gpus=1
+      # - NVIDIA_VISIBLE_DEVICES=all
     ports:
       - target: 6000
         published: 6001

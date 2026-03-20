@@ -166,7 +166,7 @@ services:
       - RTSP_TRANSPORT=udp
       - DRAW_ON_VIDEO=1
       - KP_THR=0.25
-      - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
+      # - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - target: 6000
@@ -194,7 +194,7 @@ services:
       - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot
       - UIMAIN_OUTPUT_PORT=12346
       - HEALTH_PORT=7000
-      - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
+      # - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
     ports:
       - target: 7000
@@ -230,7 +230,7 @@ services:
       - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_ctw-11n-swin
       - UIMAIN_OUTPUT_PORT=12346
       - HEALTH_PORT=7001
-      - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
+      # - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
     ports:
       - target: 7001

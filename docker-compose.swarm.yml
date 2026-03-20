@@ -54,7 +54,8 @@ services:
       - DRAW_LABELS=1
       - MODEL=${MODEL:-yolov8n.pt}
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-      - NVIDIA_VISIBLE_DEVICES=all
+      - gpus=1
+      # - NVIDIA_VISIBLE_DEVICES=all
     ports:
       - target: 6000
         published: 6000

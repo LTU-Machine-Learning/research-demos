@@ -205,8 +205,8 @@ services:
           - node.labels.gpu == true
       restart_policy:
         condition: any
-        delay: 2s
-        max_attempts: 0
+        delay: 10s
+        max_attempts: 3
       update_config:
         order: start-first
         parallelism: 1
@@ -241,8 +241,8 @@ services:
           - node.labels.gpu == true
       restart_policy:
         condition: any
-        delay: 2s
-        max_attempts: 0
+        delay: 10s
+        max_attempts: 3
       update_config:
         order: start-first
         parallelism: 1

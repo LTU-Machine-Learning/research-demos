@@ -134,7 +134,7 @@ services:
       - IMG_SIZE=${IMG_SIZE:-640}
       - DRAW_LABELS=1
       - MODEL=${MODEL:-yolov8n.pt}
-      - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
+      # - NVIDIA_VISIBLE_DEVICES=MIG-a9f45d7b-d898-5aa5-afa7-f815daa3b81c
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - target: 6000

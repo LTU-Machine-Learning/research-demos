@@ -81,7 +81,7 @@ DEMOS: Dict[str, Dict] = {
         "needs": ["mediamtx", "capture"],
     },
     "chang_TEST": {
-        "service": "chang-demo_TEST",
+        "service": "chang-demo_test",
         "url": None,  # we'll set a browser URL later
         "health_url": "http://chang-demo_TEST:7002/healthz",
         "needs": ["mediamtx", "capture"],

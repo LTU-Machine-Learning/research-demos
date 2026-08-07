@@ -5,7 +5,7 @@ WORKDIR /root/chang-demo
 COPY run_demo.py /root/chang-demo/run_demo.py
 
 ENV CAMERA_RTSP=rtsp://192.168.10.2:8554/cam \
-    OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_TEST \
+    OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_test \
     UIMAIN_OUTPUT_PORT=12346
 
 # If curl is not present in arch-demo, install it (example for Debian/Ubuntu):

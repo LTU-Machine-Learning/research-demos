@@ -26,7 +26,7 @@ UDP_OUT_URL = (
 )
 
 # RTSP endpoint to publish annotated output back to mediamtx
-OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot")
+OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot_test")
 
 # Paths for uimain
 UIMAIN_WORKDIR = "/root/project_nep/cside"

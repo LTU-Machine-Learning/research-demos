@@ -53,38 +53,38 @@ services:
         delay: 2s
     init: true
 
-  price-api:
-    image: vision-hub/price-api:latest
-    networks:
-      hub:
-        aliases: [price-api]
-    environment:
-      - TZ=Europe/Stockholm
-      - MODEL_DIR=/app/model
-      - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321,http://ui-astro:4321,http://api:8090
-    ports:
-      - target: 8080
-        published: 8080
-        protocol: tcp
-    volumes:
-      - /srv/vision-hub/model:/app/model:ro
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 5s
-    deploy:
-      placement:
-        constraints:
-          - node.labels.gpu == true
-      restart_policy:
-        condition: any
-      update_config:
-        order: start-first
-        parallelism: 1
-        delay: 2s
-    init: true
+  # price-api:
+  #   image: vision-hub/price-api:latest
+  #   networks:
+  #     hub:
+  #       aliases: [price-api]
+  #   environment:
+  #     - TZ=Europe/Stockholm
+  #     - MODEL_DIR=/app/model
+  #     - ALLOW_ORIGINS=http://localhost:4321,http://127.0.0.1:4321,http://192.168.10.2:4321,http://ui-astro:4321,http://api:8090
+  #   ports:
+  #     - target: 8080
+  #       published: 8080
+  #       protocol: tcp
+  #   volumes:
+  #     - /srv/vision-hub/model:/app/model:ro
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 10
+  #     start_period: 5s
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - node.labels.gpu == true
+  #     restart_policy:
+  #       condition: any
+  #     update_config:
+  #       order: start-first
+  #       parallelism: 1
+  #       delay: 2s
+  #   init: true
 
   api:
     image: api:local
@@ -256,7 +256,7 @@ services:
         max-file: "3"
     init: true
 
-  chang-demo_TEST:
+  chang-demo_test:
     image: chang-demo_test:local
     networks:
       hub:

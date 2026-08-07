@@ -257,10 +257,10 @@ services:
     init: true
 
   chang-demo_TEST:
-    image: chang-demo_TEST:local
+    image: chang-demo_test:local
     networks:
       hub:
-        aliases: [chang-demo_TEST]
+        aliases: [chang-demo_test]
     environment:
       - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
       - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_TEST

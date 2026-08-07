@@ -167,7 +167,7 @@ export default [
   },
 
 {
-    slug: 'chang_TEST',
+    slug: 'chang_test',
     title: "Arabic Line Detection (ONNX / C++)",
     description:
       "TESTING new model",
@@ -214,7 +214,7 @@ export default [
       },
     ],
     video: '',
-    demoUrl: '/demo/chang_TEST',
+    demoUrl: '/demo/chang_test',
   },
 
   {

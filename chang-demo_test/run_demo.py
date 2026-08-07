@@ -30,7 +30,7 @@ OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot_tes
 
 # Paths for uimain
 UIMAIN_WORKDIR = "/root/project_nep/cside"
-UIMAIN_MODEL = "backends/yolov8-onnx-cpp/checkpoints/stephen-arab-12n-seg.onnx"
+UIMAIN_MODEL = "backends/yolov8-onnx-cpp/checkpoints/latin-int8-swin.onnx"
 
 # ========= COLORS / LOG HELPERS =========
 

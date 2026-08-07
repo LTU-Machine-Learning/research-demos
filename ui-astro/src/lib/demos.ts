@@ -80,6 +80,21 @@ export default function demos(slug: string): DemoCfg {
       ws: "",
       wsKind: "none",
     },
+
+    "chang_TEST": {
+      title: "Demo — TEST",
+      subtitle: "Live stream that TEST",
+      transport: "whep",
+      // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
+      cam: ":8889/chang_annot_TEST/whep",
+      // No WebSocket overlay for now – we just play the annotated video
+      orch: ":8090",
+      token: "dev-token",
+      demoId: "chang_TEST",
+      kind: "video",
+      ws: "",
+      wsKind: "none",
+    },
   };
 
   return map[slug] ?? {

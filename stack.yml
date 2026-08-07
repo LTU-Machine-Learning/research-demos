@@ -256,3 +256,38 @@ services:
         max-file: "3"
     init: true
 
+  chang-demo_TEST:
+    image: chang-demo_TEST:local
+    networks:
+      hub:
+        aliases: [chang-demo_TEST]
+    environment:
+      - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
+      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_TEST
+      - UIMAIN_OUTPUT_PORT=12346
+      - HEALTH_PORT=7002
+      - NVIDIA_VISIBLE_DEVICES=MIG-926c23ec-8b06-5190-9939-e8e45358a0bb
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    ports:
+      - target: 7003
+        published: 7003
+    deploy:
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 3
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+      labels: {}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    init: true
+

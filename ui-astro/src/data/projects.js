@@ -9,7 +9,7 @@ export default [
     author: {
       name: 'Tom Burellier',
       url: 'https://github.com/balmine',
-      role: 'Maintainer',
+      role: 'Demo Maintainer',
     },
     upstreams: [
       { name: 'Ultralytics YOLOv8', url: 'https://github.com/ultralytics/ultralytics', role: 'Detection model (YOLO)' },
@@ -34,7 +34,7 @@ export default [
     slug: 'pose',
     title: 'Pose Estimation',
     description:
-      'See a live “skeleton” overlay that tracks body joints and movement for each person in the camera view.',
+      'See a live pose (“skeleton”) overlay that tracks body joints and movement for each person in the camera view.',
     image: '/images/pose-demo.jpg',
     credit: "Ultralytics",
     author: {
@@ -43,7 +43,7 @@ export default [
       role: 'Maintainer',
     },
     upstreams: [
-      { name: 'Ultralytics YOLOv8', url: 'https://github.com/ultralytics/ultralytics', role: 'Pose model (keypoints + people)' },
+      { name: 'Ultralytics YOLOv8', url: 'https://github.com/ultralytics/ultralytics',  role: 'Pose model (keypoints + people)' },
       { name: 'PyTorch',            url: 'https://pytorch.org/',                        role: 'Model runtime (inference)' },
       { name: 'OpenCV',             url: 'https://opencv.org/',                         role: 'Image utilities & optional drawing' },
       { name: 'FFmpeg',             url: 'https://ffmpeg.org/',                         role: 'Video encoding/packaging' },
@@ -62,7 +62,7 @@ export default [
 
   {
     slug: 'chang',
-    title: "Arabic Line Detection (ONNX / C++)",
+    title: "Arabic Line Detection",
     description:
       "Detects and highlights lines of Arabic text.",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
@@ -70,7 +70,7 @@ export default [
     author: {
       name: 'Chang Liu',
       url: 'https://github.com/ChangLiuCat',
-      role: 'Container Creation',
+      role: 'ML model training and Demo Integration',
     },
     contributors: ['Tom Burellier'],
     repo: 'https://github.com/LTU-Machine-Learning/project_nep',
@@ -119,15 +119,15 @@ export default [
     slug: 'chang_ctw-11n-swin',
     title: "Arabic Line Detection (ONNX / C++)",
     description:
-      "Detects and highlights lines of Arabic text. (Made by the ML group at LTU) TODO REWRITE /SRC/DATA/PROJECTS",
-    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+      "Detects and highlights characters in the image",
+    image: '/images/chang-demo.jpg', // TODO change image
     credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',
       url: 'https://github.com/ChangLiuCat',
-      role: 'Container and Demo Creation',
+      role: 'ML model training and Demo Integration',
     },
-    contributors: ['Tom Burellier'],
+    contributors: ['Tom Burellier', 'Killian Murphy'],
     repo: 'https://github.com/LTU-Machine-Learning/project_nep',
     upstreams: [
       {
@@ -166,6 +166,56 @@ export default [
     demoUrl: '/demo/chang_ctw-11n-swin',
   },
 
+{
+    slug: 'chang_TEST',
+    title: "Arabic Line Detection (ONNX / C++)",
+    description:
+      "TESTING new model",
+    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    credit: "Made by the ML group",
+    author: {
+      name: 'Chang Liu',
+      url: 'https://github.com/ChangLiuCat',
+      role: 'ML model training and Demo Integration',
+    },
+    contributors: ['Killian Murphy'],
+    repo: 'https://github.com/LTU-Machine-Learning/project_nep',
+    upstreams: [
+      {
+        name: 'uimain (C++/Qt demo)',
+        url: 'https://github.com/LTU-Machine-Learning/project_nep/', // optional: fill real URL if you want
+        role: 'C++/Qt application & line-detection pipeline',
+      },
+      {
+        name: 'ONNX Runtime',
+        url: 'https://onnxruntime.ai/',
+        role: 'Inference runtime (portable across platforms)',
+      },
+      {
+        name: 'FFmpeg',
+        url: 'https://ffmpeg.org/',
+        role: 'Video ingest + re-encode for streaming',
+      },
+      {
+        name: 'MediaMTX',
+        url: 'https://github.com/bluenviron/mediamtx',
+        role: 'WebRTC/RTSP hub for the annotated output stream',
+      },
+      {
+        name: 'NVIDIA / CUDA',
+        url: 'https://developer.nvidia.com/',
+        role: 'Optional acceleration (when available)',
+      },
+    ],
+    history: [
+      {
+        date: '2026-08',
+        event: 'Integrated as a live Vision Hub demo: camera → line detection → annotated stream in the browser.',
+      },
+    ],
+    video: '',
+    demoUrl: '/demo/chang_TEST',
+  },
 
   {
     slug: 'price',
@@ -182,7 +232,6 @@ export default [
     upstreams: [
       // ✅ This is the “thanks” that will show on the project page
       { name: 'Booli',          url: 'https://www.booli.se/',                role: 'Sold-market dataset provider — thanks for the data' },
-
       { name: 'LightGBM',       url: 'https://lightgbm.readthedocs.io/',     role: 'Price model' },
       { name: 'scikit-learn',   url: 'https://scikit-learn.org/',            role: 'Preprocessing pipeline' },
       { name: 'Pandas + NumPy', url: 'https://pandas.pydata.org/',           role: 'Data preparation' },

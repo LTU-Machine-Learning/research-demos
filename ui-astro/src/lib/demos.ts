@@ -90,7 +90,7 @@ export default function demos(slug: string): DemoCfg {
       // No WebSocket overlay for now – we just play the annotated video
       orch: ":8090",
       token: "dev-token",
-      demoId: "chang_test",
+      demoId: "chang_TEST",
       kind: "video",
       ws: "",
       wsKind: "none",

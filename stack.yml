@@ -265,12 +265,12 @@ services:
       - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
       - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_test
       - UIMAIN_OUTPUT_PORT=12346
-      - HEALTH_PORT=7003
+      - HEALTH_PORT=7002
       - NVIDIA_VISIBLE_DEVICES=MIG-926c23ec-8b06-5190-9939-e8e45358a0bb
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
     ports:
-      - target: 7003
-        published: 7003
+      - target: 7002
+        published: 7002
     deploy:
       placement:
         constraints:

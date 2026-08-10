@@ -26,7 +26,7 @@ UDP_OUT_URL = (
 )
 
 # RTSP endpoint to publish annotated output back to mediamtx
-OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot_test")
+OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot_3")
 
 # Paths for uimain
 UIMAIN_WORKDIR = "/root/project_nep/cside"
@@ -262,7 +262,7 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 def start_health_server():
     global health_server
-    port = int(os.getenv("HEALTH_PORT", "7002"))
+    port = int(os.getenv("HEALTH_PORT", "7003"))
     server = HTTPServer(("0.0.0.0", port), HealthHandler)
     th = threading.Thread(target=server.serve_forever, daemon=True)
     th.start()

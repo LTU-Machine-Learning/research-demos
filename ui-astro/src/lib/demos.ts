@@ -81,6 +81,21 @@ export default function demos(slug: string): DemoCfg {
       wsKind: "none",
     },
 
+    "chang_3": {
+      title: "Demo - Chang numba 3",
+      subtitle: "Live stream that test",
+      transport: "whep",
+      // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
+      cam: ":8889/chang_annot_3/whep",
+      // No WebSocket overlay for now – we just play the annotated video
+      orch: ":8090",
+      token: "dev-token",
+      demoId: "chang_3",
+      kind: "video",
+      ws: "",
+      wsKind: "none",
+    },
+
     "chang_test": {
       title: "Demo — test",
       subtitle: "Live stream that test",

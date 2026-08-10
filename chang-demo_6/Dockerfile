@@ -5,13 +5,13 @@ WORKDIR /root/chang-demo
 COPY run_demo.py /root/chang-demo/run_demo.py
 
 ENV CAMERA_RTSP=rtsp://192.168.10.2:8554/cam \
-    OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_ctw-11n-swin \
+    OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_6 \
     UIMAIN_OUTPUT_PORT=12346
 
 # If curl is not present in arch-demo, install it (example for Debian/Ubuntu):
 # RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
-  CMD curl -fsS http://127.0.0.1:7001/healthz || exit 1
+  CMD curl -fsS http://127.0.0.1:7006/healthz || exit 1
 
 ENTRYPOINT ["/usr/bin/env", "python3", "/root/chang-demo/run_demo.py"]

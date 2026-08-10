@@ -26,11 +26,11 @@ UDP_OUT_URL = (
 )
 
 # RTSP endpoint to publish annotated output back to mediamtx
-OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot_ctw-11n-swin")
+OUTPUT_RTSP = os.getenv("OUTPUT_RTSP", "rtsp://192.168.10.2:8554/chang_annot_2")
 
 # Paths for uimain
 UIMAIN_WORKDIR = "/root/project_nep/cside"
-UIMAIN_MODEL = "backends/yolov8-onnx-cpp/checkpoints/ctw-11n-swin.onnx"
+UIMAIN_MODEL = "backends/yolov8-onnx-cpp/checkpoints/latin-int8-swin.onnx"
 
 # ========= COLORS / LOG HELPERS =========
 
@@ -42,16 +42,16 @@ COLOR_INFO = "\033[96m"    # cyan
 COLOR_BOLD = "\033[1m"
 
 def log_info(msg: str):
-    print(f"{COLOR_INFO}[chang-demo_ctw-11n-swin]{COLOR_RESET} {msg}", flush=True)
+    print(f"{COLOR_INFO}[chang-demo]{COLOR_RESET} {msg}", flush=True)
 
 def log_ok(msg: str):
-    print(f"{COLOR_OK}[chang-demo_ctw-11n-swin][OK]{COLOR_RESET} {msg}", flush=True)
+    print(f"{COLOR_OK}[chang-demo][OK]{COLOR_RESET} {msg}", flush=True)
 
 def log_warn(msg: str):
-    print(f"{COLOR_WARN}[chang-demo_ctw-11n-swin][WARN]{COLOR_RESET} {msg}", flush=True)
+    print(f"{COLOR_WARN}[chang-demo][WARN]{COLOR_RESET} {msg}", flush=True)
 
 def log_err(msg: str):
-    print(f"{COLOR_ERR}[chang-demo_ctw-11n-swin][ERROR]{COLOR_RESET} {msg}", flush=True)
+    print(f"{COLOR_ERR}[chang-demo][ERROR]{COLOR_RESET} {msg}", flush=True)
 
 # ========= GLOBAL STATE =========
 
@@ -262,7 +262,7 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 def start_health_server():
     global health_server
-    port = int(os.getenv("HEALTH_PORT", "7001"))
+    port = int(os.getenv("HEALTH_PORT", "7002"))
     server = HTTPServer(("0.0.0.0", port), HealthHandler)
     th = threading.Thread(target=server.serve_forever, daemon=True)
     th.start()

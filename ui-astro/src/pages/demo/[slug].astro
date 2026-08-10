@@ -12,11 +12,13 @@ export async function getStaticPaths() {
     { params: { slug: 'pose' } },
     { params: { slug: 'price' } },
     { params: { slug: 'chang' } },
-    { params: { slug: 'chang_ctw-11n-swin' } },
-    { params: { slug: 'chang_test' } },
+    { params: { slug: 'chang_1' } },
+    { params: { slug: 'chang_2' } },
     { params: { slug: 'chang_3' } },
     { params: { slug: 'chang_4' } },
     { params: { slug: 'chang_5' } },
+    { params: { slug: 'chang_6' } },
+    { params: { slug: 'chang_7' } },
   ];
 }
 
@@ -37,12 +39,12 @@ const aboutBySlug: Record<string, { blurb: string; future?: string }> = {
     blurb: "This live demo highlights a detected line of Arabic text on the stream.",
     future: "Future work: extract the selected text after line detection (OCR).",
   },
-  "chang_ctw-11n-swin": {
-    blurb: "This live demo highlights Characters in the image.",
+  "chang_1": {
+    blurb: "This live demo number 1.",
     future: "Future work: extract the selected text after character detection (OCR).",
   },
-  "chang_test": {
-    blurb: "This live demo highlights SOMETHING (TODO CHANGE IN SLUG).",
+  "chang_2": {
+    blurb: "This live demo number 2.",
     future: "Future work: extract the selected text after line detection (OCR).",
   },
   "chang_3": {
@@ -54,6 +56,14 @@ const aboutBySlug: Record<string, { blurb: string; future?: string }> = {
     future: "Future work: extract the selected text after line detection (OCR).",
   },
   "chang_5": {
+    blurb: "This live demo number 5.",
+    future: "Future work: extract the selected text after line detection (OCR).",
+  },
+  "chang_6": {
+    blurb: "This live demo number 4.",
+    future: "Future work: extract the selected text after line detection (OCR).",
+  },
+  "chang_7": {
     blurb: "This live demo number 5.",
     future: "Future work: extract the selected text after line detection (OCR).",
   },

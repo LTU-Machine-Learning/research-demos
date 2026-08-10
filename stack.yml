@@ -220,14 +220,14 @@ services:
         max-file: "3"
     init: true
   
-  chang-demo_ctw-11n-swin:
-    image: chang-demo_ctw-11n-swin:local
+  chang-demo_1:
+    image: chang-demo_1:local
     networks:
       hub:
-        aliases: [chang-demo_ctw-11n-swin]
+        aliases: [chang-demo_1]
     environment:
       - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
-      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_ctw-11n-swin
+      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_1
       - UIMAIN_OUTPUT_PORT=12346
       - HEALTH_PORT=7001
       - NVIDIA_VISIBLE_DEVICES=MIG-926c23ec-8b06-5190-9939-e8e45358a0bb
@@ -256,14 +256,14 @@ services:
         max-file: "3"
     init: true
 
-  chang-demo_test:
-    image: chang-demo_test:local
+  chang-demo_2:
+    image: chang-demo_2:local
     networks:
       hub:
-        aliases: [chang-demo_test]
+        aliases: [chang-demo_2]
     environment:
       - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
-      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_test
+      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_2
       - UIMAIN_OUTPUT_PORT=12346
       - HEALTH_PORT=7002
       - NVIDIA_VISIBLE_DEVICES=MIG-926c23ec-8b06-5190-9939-e8e45358a0bb
@@ -364,9 +364,6 @@ services:
         max-file: "3"
     init: true
 
-
-
-
   chang-demo_5:
     image: chang-demo_5:local
     networks:
@@ -382,6 +379,76 @@ services:
     ports:
       - target: 7005
         published: 7005
+    deploy:
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 3
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+      labels: {}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    init: true
+
+  chang-demo_6:
+    image: chang-demo_6:local
+    networks:
+      hub:
+        aliases: [chang-demo_6]
+    environment:
+      - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
+      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_6
+      - UIMAIN_OUTPUT_PORT=12346
+      - HEALTH_PORT=7006
+      - NVIDIA_VISIBLE_DEVICES=MIG-926c23ec-8b06-5190-9939-e8e45358a0bb
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    ports:
+      - target: 7006
+        published: 7006
+    deploy:
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 3
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+      labels: {}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    init: true
+
+  chang-demo_7:
+    image: chang-demo_7:local
+    networks:
+      hub:
+        aliases: [chang-demo_7]
+    environment:
+      - CAMERA_RTSP=rtsp://192.168.10.2:8554/cam
+      - OUTPUT_RTSP=rtsp://192.168.10.2:8554/chang_annot_7
+      - UIMAIN_OUTPUT_PORT=12346
+      - HEALTH_PORT=7007
+      - NVIDIA_VISIBLE_DEVICES=MIG-926c23ec-8b06-5190-9939-e8e45358a0bb
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    ports:
+      - target: 7007
+        published: 7007
     deploy:
       placement:
         constraints:

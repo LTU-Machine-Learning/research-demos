@@ -66,20 +66,36 @@ export default function demos(slug: string): DemoCfg {
       wsKind: "none",
     },
 
-    "chang_ctw-11n-swin": {
+    "chang_1": {
       title: "Demo — Arabic line selector",
       subtitle: "Live stream that highlights a detected line of Arabic text.",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
-      cam: ":8889/chang_annot_ctw-11n-swin/whep",
+      cam: ":8889/chang_annot_1/whep",
       // No WebSocket overlay for now – we just play the annotated video
       orch: ":8090",
       token: "dev-token",
-      demoId: "chang_ctw-11n-swin",
+      demoId: "chang_1",
       kind: "video",
       ws: "",
       wsKind: "none",
     },
+
+    "chang_2": {
+      title: "Demo Chang 2",
+      subtitle: "Live stream that 2",
+      transport: "whep",
+      // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
+      cam: ":8889/chang_annot_2/whep",
+      // No WebSocket overlay for now – we just play the annotated video
+      orch: ":8090",
+      token: "dev-token",
+      demoId: "chang_2",
+      kind: "video",
+      ws: "",
+      wsKind: "none",
+    },
+  };
 
     "chang_3": {
       title: "Demo - Chang numba 3",
@@ -126,21 +142,35 @@ export default function demos(slug: string): DemoCfg {
       wsKind: "none",
     },
 
-    "chang_test": {
-      title: "Demo — test",
-      subtitle: "Live stream that test",
+    "chang_6": {
+      title: "Demo - Chang numba 6",
+      subtitle: "Live stream that 6",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
-      cam: ":8889/chang_annot_test/whep",
+      cam: ":8889/chang_annot_6/whep",
       // No WebSocket overlay for now – we just play the annotated video
       orch: ":8090",
       token: "dev-token",
-      demoId: "chang_test",
+      demoId: "chang_6",
       kind: "video",
       ws: "",
       wsKind: "none",
     },
-  };
+
+    "chang_7": {
+      title: "Demo - Chang numba 7",
+      subtitle: "Live stream that 7",
+      transport: "whep",
+      // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
+      cam: ":8889/chang_annot_7/whep",
+      // No WebSocket overlay for now – we just play the annotated video
+      orch: ":8090",
+      token: "dev-token",
+      demoId: "chang_7",
+      kind: "video",
+      ws: "",
+      wsKind: "none",
+    },
 
   return map[slug] ?? {
     title: `Demo — ${slug}`,

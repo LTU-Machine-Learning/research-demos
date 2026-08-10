@@ -116,7 +116,7 @@ export default [
   },
 
   {
-    slug: 'chang_ctw-11n-swin',
+    slug: 'chang_1',
     title: "Arabic Line Detection (ONNX / C++)",
     description:
       "Detects and highlights characters in the image",
@@ -163,11 +163,11 @@ export default [
       },
     ],
     video: '',
-    demoUrl: '/demo/chang_ctw-11n-swin',
+    demoUrl: '/demo/chang_1',
   },
 
 {
-    slug: 'chang_test',
+    slug: 'chang_2',
     title: "Arabic Line Detection (ONNX / C++)",
     description:
       "TESTING new model",
@@ -214,9 +214,9 @@ export default [
       },
     ],
     video: '',
-    demoUrl: '/demo/chang_test',
+    demoUrl: '/demo/chang_2',
   },
-  
+
 {
     slug: 'chang_3',
     title: "Chang demo number 3",
@@ -368,6 +368,108 @@ export default [
     ],
     video: '',
     demoUrl: '/demo/chang_5',
+  },
+
+{
+    slug: 'chang_6',
+    title: "Chang demo number 6",
+    description:
+      "New demo",
+    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    credit: "Made by the ML group",
+    author: {
+      name: 'Chang Liu',
+      url: 'https://github.com/ChangLiuCat',
+      role: 'ML model training and Demo Integration',
+    },
+    contributors: ['Killian Murphy'],
+    repo: 'https://github.com/LTU-Machine-Learning/project_nep',
+    upstreams: [
+      {
+        name: 'uimain (C++/Qt demo)',
+        url: 'https://github.com/LTU-Machine-Learning/project_nep/', // optional: fill real URL if you want
+        role: 'C++/Qt application & line-detection pipeline',
+      },
+      {
+        name: 'ONNX Runtime',
+        url: 'https://onnxruntime.ai/',
+        role: 'Inference runtime (portable across platforms)',
+      },
+      {
+        name: 'FFmpeg',
+        url: 'https://ffmpeg.org/',
+        role: 'Video ingest + re-encode for streaming',
+      },
+      {
+        name: 'MediaMTX',
+        url: 'https://github.com/bluenviron/mediamtx',
+        role: 'WebRTC/RTSP hub for the annotated output stream',
+      },
+      {
+        name: 'NVIDIA / CUDA',
+        url: 'https://developer.nvidia.com/',
+        role: 'Optional acceleration (when available)',
+      },
+    ],
+    history: [
+      {
+        date: '2026-08',
+        event: 'Integrated as a live Vision Hub demo: camera → line detection → annotated stream in the browser.',
+      },
+    ],
+    video: '',
+    demoUrl: '/demo/chang_6',
+  },
+
+{
+    slug: 'chang_7',
+    title: "Chang demo number 7",
+    description:
+      "New demo",
+    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    credit: "Made by the ML group",
+    author: {
+      name: 'Chang Liu',
+      url: 'https://github.com/ChangLiuCat',
+      role: 'ML model training and Demo Integration',
+    },
+    contributors: ['Killian Murphy'],
+    repo: 'https://github.com/LTU-Machine-Learning/project_nep',
+    upstreams: [
+      {
+        name: 'uimain (C++/Qt demo)',
+        url: 'https://github.com/LTU-Machine-Learning/project_nep/', // optional: fill real URL if you want
+        role: 'C++/Qt application & line-detection pipeline',
+      },
+      {
+        name: 'ONNX Runtime',
+        url: 'https://onnxruntime.ai/',
+        role: 'Inference runtime (portable across platforms)',
+      },
+      {
+        name: 'FFmpeg',
+        url: 'https://ffmpeg.org/',
+        role: 'Video ingest + re-encode for streaming',
+      },
+      {
+        name: 'MediaMTX',
+        url: 'https://github.com/bluenviron/mediamtx',
+        role: 'WebRTC/RTSP hub for the annotated output stream',
+      },
+      {
+        name: 'NVIDIA / CUDA',
+        url: 'https://developer.nvidia.com/',
+        role: 'Optional acceleration (when available)',
+      },
+    ],
+    history: [
+      {
+        date: '2026-08',
+        event: 'Integrated as a live Vision Hub demo: camera → line detection → annotated stream in the browser.',
+      },
+    ],
+    video: '',
+    demoUrl: '/demo/chang_7',
   },
 
   {

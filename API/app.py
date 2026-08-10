@@ -74,16 +74,16 @@ DEMOS: Dict[str, Dict] = {
         "health_url": "http://chang-demo:7000/healthz",
         "needs": ["mediamtx", "capture"],
     },
-    "chang_ctw-11n-swin": {
-        "service": "chang-demo_ctw-11n-swin",
+    "chang_1": {
+        "service": "chang-demo_1",
         "url": None,  # we'll set a browser URL later
-        "health_url": "http://chang-demo_ctw-11n-swin:7001/healthz",
+        "health_url": "http://chang-demo_1:7001/healthz",
         "needs": ["mediamtx", "capture"],
     },
-    "chang_test": {
-        "service": "chang-demo_test",
+    "chang_2": {
+        "service": "chang-demo_2",
         "url": None,  # we'll set a browser URL later
-        "health_url": "http://chang-demo_test:7002/healthz",
+        "health_url": "http://chang-demo_2:7002/healthz",
         "needs": ["mediamtx", "capture"],
     },
     "chang_3": {
@@ -102,6 +102,18 @@ DEMOS: Dict[str, Dict] = {
         "service": "chang-demo_5",
         "url": None,  # we'll set a browser URL later
         "health_url": "http://chang-demo_5:7005/healthz",
+        "needs": ["mediamtx", "capture"],
+    },
+    "chang_6": {
+        "service": "chang-demo_6",
+        "url": None,  # we'll set a browser URL later
+        "health_url": "http://chang-demo_6:7006/healthz",
+        "needs": ["mediamtx", "capture"],
+    },
+    "chang_7": {
+        "service": "chang-demo_7",
+        "url": None,  # we'll set a browser URL later
+        "health_url": "http://chang-demo_7:7007/healthz",
         "needs": ["mediamtx", "capture"],
     },
     "price": {
@@ -141,6 +153,12 @@ def _browser_url_for(demo_id: str) -> Optional[str]:
     if demo_id == "price": return f"{PUBLIC_BASE_NO_GPU}:8080/healthz"
     if demo_id == "chang": return f"{PUBLIC_BASE_GPU}:7000/healthz"
     if demo_id == "chang_ctw-11n-swin": return f"{PUBLIC_BASE_GPU}:7001/healthz"
+    if demo_id == "chang_demo": return f"{PUBLIC_BASE_GPU}:7002/healthz"
+    if demo_id == "chang_3": return f"{PUBLIC_BASE_GPU}:7003/healthz"
+    if demo_id == "chang_4": return f"{PUBLIC_BASE_GPU}:7004/healthz"
+    if demo_id == "chang_5": return f"{PUBLIC_BASE_GPU}:7005/healthz"
+    if demo_id == "chang_6": return f"{PUBLIC_BASE_GPU}:7006/healthz"
+    if demo_id == "chang_7": return f"{PUBLIC_BASE_GPU}:7007/healthz"
     return None
 
 # ================== FASTAPI / CORS ==================

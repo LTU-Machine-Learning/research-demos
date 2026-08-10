@@ -16,6 +16,7 @@ export async function getStaticPaths() {
     { params: { slug: 'chang_test' } },
     { params: { slug: 'chang_3' } },
     { params: { slug: 'chang_4' } },
+    { params: { slug: 'chang_5' } },
   ];
 }
 
@@ -40,6 +41,10 @@ const aboutBySlug: Record<string, { blurb: string; future?: string }> = {
     blurb: "This live demo highlights Characters in the image.",
     future: "Future work: extract the selected text after character detection (OCR).",
   },
+  "chang_test": {
+    blurb: "This live demo highlights SOMETHING (TODO CHANGE IN SLUG).",
+    future: "Future work: extract the selected text after line detection (OCR).",
+  },
   "chang_3": {
     blurb: "This live demo number 3.",
     future: "Future work: extract the selected text after line detection (OCR).",
@@ -48,8 +53,8 @@ const aboutBySlug: Record<string, { blurb: string; future?: string }> = {
     blurb: "This live demo number 4.",
     future: "Future work: extract the selected text after line detection (OCR).",
   },
-  "chang_test": {
-    blurb: "This live demo highlights SOMETHING (TODO CHANGE IN SLUG).",
+  "chang_5": {
+    blurb: "This live demo number 5.",
     future: "Future work: extract the selected text after line detection (OCR).",
   },
   price: {

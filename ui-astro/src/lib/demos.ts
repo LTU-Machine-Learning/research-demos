@@ -83,7 +83,7 @@ export default function demos(slug: string): DemoCfg {
 
     "chang_3": {
       title: "Demo - Chang numba 3",
-      subtitle: "Live stream that test",
+      subtitle: "Live stream that 3",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot_3/whep",

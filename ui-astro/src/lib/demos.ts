@@ -95,7 +95,6 @@ export default function demos(slug: string): DemoCfg {
       ws: "",
       wsKind: "none",
     },
-  };
 
     "chang_3": {
       title: "Demo - Chang numba 3",

@@ -170,6 +170,7 @@ export default function demos(slug: string): DemoCfg {
       ws: "",
       wsKind: "none",
     },
+  };
 
   return map[slug] ?? {
     title: `Demo — ${slug}`,

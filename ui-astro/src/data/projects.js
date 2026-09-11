@@ -67,18 +67,11 @@ export default [
       "Detects and highlights lines of Arabic text.",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     credit: "Made by the ML group",
-    author: [
-    {
+    author: {
       name: 'Chang Liu',
       url: 'https://github.com/ChangLiuCat',
       role: 'ML model training and Demo Integration',
     },
-    {
-      name: 'Stephan M. Unter',
-      url: 'https://github.com/ChangLiuCat',
-      role: 'ML model training',
-    },
-  ],
     contributors: ['Tom Burellier'],
     repo: 'https://github.com/LTU-Machine-Learning/project_nep',
     upstreams: [

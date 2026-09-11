@@ -62,16 +62,23 @@ export default [
 
   {
     slug: 'chang',
-    title: "Arabic Line Detection",
+    title: "ML group — Arabic line detector",
     description:
       "Detects and highlights lines of Arabic text.",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     credit: "Made by the ML group",
-    author: {
+    author: [
+    {
       name: 'Chang Liu',
       url: 'https://github.com/ChangLiuCat',
       role: 'ML model training and Demo Integration',
     },
+    {
+      name: 'Stephan M. Unter',
+      url: 'https://github.com/ChangLiuCat',
+      role: 'ML model training',
+    },
+  ],
     contributors: ['Tom Burellier'],
     repo: 'https://github.com/LTU-Machine-Learning/project_nep',
     upstreams: [
@@ -117,7 +124,7 @@ export default [
 
   {
     slug: 'chang_1',
-    title: "Arabic Line Detection (ONNX / C++)",
+    title: "ML group — Chinese character detector",
     description:
       "Detects and highlights characters in the image",
     image: '/images/chang-demo.jpg', // TODO change image
@@ -168,9 +175,9 @@ export default [
 
 {
     slug: 'chang_2',
-    title: "Arabic Line Detection (ONNX / C++)",
+    title: "ML group — Latin character detector",
     description:
-      "TESTING new model",
+      "Detects and highlights latin characters.",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {
@@ -270,9 +277,9 @@ export default [
 
 {
     slug: 'chang_4',
-    title: "Chang demo number 4",
+    title: "ML group — drone based car detector",
     description:
-      "New demo",
+      "Detects and highlights cars in a snowy environment",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {
@@ -321,9 +328,9 @@ export default [
 
 {
     slug: 'chang_5',
-    title: "Chang demo number 5",
+    title: "ML group — General purpose text line detector",
     description:
-      "New demo",
+      "Detects and highlights lines of text in any script",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {
@@ -372,9 +379,9 @@ export default [
 
 {
     slug: 'chang_6',
-    title: "Chang demo number 6",
+    title: "YOLO — YOLOv8n segmentation model",
     description:
-      "New demo",
+      "Segments (per pixel annotation) objects in the image and highlights them with different colors",
     image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {

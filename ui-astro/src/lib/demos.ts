@@ -16,7 +16,7 @@ type DemoCfg = {
 export default function demos(slug: string): DemoCfg {
   const map: Record<string, DemoCfg> = {
     yolo: {
-      title: "Demo — Object detection",
+      title: "YOLO — Object detection",
       subtitle: "Live camera feed with detected objects highlighted on the video.",
       transport: "whep",
       cam: ":8889/cam/whep",     // base stream
@@ -29,8 +29,8 @@ export default function demos(slug: string): DemoCfg {
     },
 
     pose: {
-      title: "Demo — Pose estimation",
-      subtitle: "Live camera feed with a real-time skeleton overlay.",
+      title: "YOLO — Pose estimation",
+      subtitle: "Live camera feed with a real-time pose (~skeleton) overlay.",
       transport: "whep",
       cam: ":8889/cam/whep",     // same video feed as above
       ws:  ":6001/ws/pose",      // WebSocket sends only pose keypoints
@@ -52,8 +52,8 @@ export default function demos(slug: string): DemoCfg {
     },
 
     chang: {
-      title: "Demo — Arabic line selector",
-      subtitle: "Live stream that highlights a detected line of Arabic text.",
+      title: "ML group — Arabic line detector",
+      subtitle: "Live stream that highlights detected lines of Arabic text.",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot/whep",
@@ -67,8 +67,8 @@ export default function demos(slug: string): DemoCfg {
     },
 
     "chang_1": {
-      title: "Demo — Arabic line selector",
-      subtitle: "Live stream that highlights a detected line of Arabic text.",
+      title: "ML group — Chinese character detector",
+      subtitle: "Live stream that highlights detected Chinese characters.",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot_1/whep",
@@ -82,8 +82,8 @@ export default function demos(slug: string): DemoCfg {
     },
 
     "chang_2": {
-      title: "Demo Chang 2",
-      subtitle: "Live stream that 2",
+      title: "ML group — Latin character detector",
+      subtitle: "Live stream that highlights detected Latin characters.",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot_2/whep",
@@ -96,24 +96,24 @@ export default function demos(slug: string): DemoCfg {
       wsKind: "none",
     },
 
-    "chang_3": {
-      title: "Demo - Chang numba 3",
-      subtitle: "Live stream that 3",
-      transport: "whep",
-      // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
-      cam: ":8889/chang_annot_3/whep",
-      // No WebSocket overlay for now – we just play the annotated video
-      orch: ":8090",
-      token: "dev-token",
-      demoId: "chang_3",
-      kind: "video",
-      ws: "",
-      wsKind: "none",
-    },
+    // "chang_3": {
+    //   title: "ML group — Chang numba 3",
+    //   subtitle: "Live stream that 3",
+    //   transport: "whep",
+    //   // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
+    //   cam: ":8889/chang_annot_3/whep",
+    //   // No WebSocket overlay for now – we just play the annotated video
+    //   orch: ":8090",
+    //   token: "dev-token",
+    //   demoId: "chang_3",
+    //   kind: "video",
+    //   ws: "",
+    //   wsKind: "none",
+    // },
 
     "chang_4": {
-      title: "Demo - Chang numba 4",
-      subtitle: "Live stream that 4",
+      title: "ML group — drone based car detector",
+      subtitle: "Live stream that detects cars in a snowy environment",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot_4/whep",
@@ -127,8 +127,8 @@ export default function demos(slug: string): DemoCfg {
     },
 
     "chang_5": {
-      title: "Demo - Chang numba 5",
-      subtitle: "Live stream that 5",
+      title: "ML group — General purpose text line detector",
+      subtitle: "Live stream that detects lines of text in any script",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot_5/whep",
@@ -142,8 +142,8 @@ export default function demos(slug: string): DemoCfg {
     },
 
     "chang_6": {
-      title: "Demo - Chang numba 6",
-      subtitle: "Live stream that 6",
+      title: "YOLO — YOLOv8n segmentation model",
+      subtitle: "Live stream that segments (per pixel annotation) objects in the image and highlights them with different colors",
       transport: "whep",
       // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
       cam: ":8889/chang_annot_6/whep",
@@ -156,21 +156,21 @@ export default function demos(slug: string): DemoCfg {
       wsKind: "none",
     },
 
-    "chang_7": {
-      title: "Demo - Chang numba 7",
-      subtitle: "Live stream that 7",
-      transport: "whep",
-      // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
-      cam: ":8889/chang_annot_7/whep",
-      // No WebSocket overlay for now – we just play the annotated video
-      orch: ":8090",
-      token: "dev-token",
-      demoId: "chang_7",
-      kind: "video",
-      ws: "",
-      wsKind: "none",
-    },
-  };
+  //   "chang_7": {
+  //     title: "ML group — Chang numba 7",
+  //     subtitle: "Live stream that 7",
+  //     transport: "whep",
+  //     // This assumes mediamtx exposes your OUTPUT_RTSP path as WHEP at /chang_annot/whep
+  //     cam: ":8889/chang_annot_7/whep",
+  //     // No WebSocket overlay for now – we just play the annotated video
+  //     orch: ":8090",
+  //     token: "dev-token",
+  //     demoId: "chang_7",
+  //     kind: "video",
+  //     ws: "",
+  //     wsKind: "none",
+  //   },
+  // };
 
   return map[slug] ?? {
     title: `Demo — ${slug}`,

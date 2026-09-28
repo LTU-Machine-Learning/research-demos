@@ -62,7 +62,7 @@
 
   // Populate the image selector
   imageIds.forEach((id) => {
-    pageSelect.add(new Option(ig, id));
+    pageSelect.add(new Option(results[id].LAY_IMG_FILE, id));
   });
 
   function populateDetectorSelect(imageId: string) {

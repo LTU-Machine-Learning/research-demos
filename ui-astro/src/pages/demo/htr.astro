@@ -1,7 +1,10 @@
-import SiteLayout from '../../layouts/SiteLayout.astro';
-import ConsentModal from '../../components/ConsentModal.astro';
-
-export const prerender = true;
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTR — Handwritten Text Recognition</title>
+</head>
+<body>
 
 <h1>HTR — Handwritten Text Recognition</h1>
 
@@ -96,7 +99,7 @@ export const prerender = true;
     const recognizerName = recognizerSelect.value;
 
     const imagePath =
-      `/images/htr/${encodeURIComponent(img.LAY_IMG_FILE)}`;
+      `/images/htr/${encodeURIComponent(imageId)}.jpg`;
 
     image.src = imagePath;
     image.alt = `Historical document: ${img.LAY_IMG_FILE}`;
@@ -316,3 +319,6 @@ export const prerender = true;
     }
   }
 </style>
+
+</body>
+</html>

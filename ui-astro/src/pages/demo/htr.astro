@@ -1,44 +1,245 @@
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HTR — Handwritten Text Recognition</title>
-</head>
-<body>
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import demos from "../../lib/demos";
 
-<h1>HTR — Handwritten Text Recognition</h1>
+const cfg = demos('htr');
+const title = cfg.title;
+const description = cfg.subtitle ?? "";
 
-<p class="subtitle">Select an image and compare outputs from different detection and recognition models.</p>
+const about = {
+  blurb: "This demo compares two detection models (HiSAM & YOLO) and three recognition models (English, Norwegian, Swedish) for handwritten text recognition on historical documents.",
+  future: "Future work: expand model selection and add confidence scores per line.",
+};
+---
 
-<form id="controls">
-  <label>
-    <span class="lab">Document</span>
-    <select id="page-select"></select>
-  </label>
+<SiteLayout {title} {description}>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at top, #0b0d12 0%, #06070d 100%);
+      color: #e8eefc;
+      font-family: system-ui, sans-serif;
+    }
 
-  <label>
-    <span class="lab">Line detector (M1)</span>
-    <select id="detector-select"></select>
-  </label>
+    :global(main.page) {
+      max-width: 1400px;
+    }
 
-  <label>
-    <span class="lab">Text recognizer (M2)</span>
-    <select id="recognizer-select"></select>
-  </label>
+    .wrap {
+      max-width: 1280px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
 
-  <label class="checkbox-label">
-    <input id="show-boxes" type="checkbox" checked />
-    <span>Show bounding boxes</span>
-  </label>
-</form>
+    h1 { font-size: 1.9rem; font-weight: 600; letter-spacing: .3px; }
 
-<div class="image-container">
-  <img id="page-image" alt="" />
-  <svg id="boxes" aria-hidden="true"></svg>
-</div>
+    .card {
+      background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
+      border: 1px solid #1e2436;
+      border-radius: 20px;
+      box-shadow: 0 10px 24px #0005;
+      padding: 32px;
+      margin-top: 32px;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 14px 30px #0006; }
 
-<h2>Recognized text</h2>
-<ol id="transcription"></ol>
+    .info {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      border: 1px solid #1e2436;
+      background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
+      box-shadow: 0 10px 24px #0004;
+    }
+    .info h2 { margin: 0 0 8px; font-size: 1.05rem; }
+    .info-blurb {
+      margin: 0;
+      color: #cfe0ff;
+      opacity: .92;
+      line-height: 1.45;
+    }
+    .info-future {
+      margin: 10px 0 0;
+      color: #b0bedc;
+      opacity: .85;
+      font-size: .95rem;
+    }
+
+    input, select {
+      background: #0f1625;
+      color: #e8eefc;
+      border: 1px solid #2a3652;
+      padding: 10px 12px;
+      border-radius: 10px;
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+    }
+    input:focus, select:focus {
+      border-color: #2f82ff;
+      box-shadow: 0 0 0 3px #2f82ff33;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: .95rem;
+      font-weight: 500;
+      position: relative;
+    }
+
+    /* --- HTR-specific --- */
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #controls .lab {
+      color: #e8eefc;
+    }
+
+    .checkbox-label {
+      flex-direction: row !important;
+      align-items: center;
+      gap: 8px !important;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #27d07d;
+      cursor: pointer;
+    }
+
+    .checkbox-label span {
+      color: #cfe0ff;
+      font-size: .95rem;
+    }
+
+    .image-container {
+      position: relative;
+      width: min(100%, 900px);
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #1e2436;
+      box-shadow: 0 10px 24px #0005;
+    }
+
+    #page-image {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    #boxes {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* --- Transcription --- */
+    h2 {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #e8eefc;
+    }
+
+    #transcription {
+      padding-left: 1.5rem;
+      color: #cfe0ff;
+      line-height: 1.65;
+    }
+
+    #transcription li {
+      margin-bottom: .35rem;
+      padding: .25rem .5rem;
+      border-radius: 6px;
+      transition: background .15s;
+    }
+
+    #transcription li:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .subtitle {
+      color: #b0bedc;
+      opacity: .85;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .wrap { margin: 24px auto; }
+
+      #controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      #controls select {
+        width: 100%;
+      }
+
+      .image-container {
+        width: 100%;
+      }
+    }
+  </style>
+
+  <div class="wrap">
+    <h1>{cfg.title}</h1>
+    <p>{cfg.subtitle}</p>
+
+    <div class="info">
+      <h2>About this demo</h2>
+      <p class="info-blurb">{about.blurb}</p>
+      <p class="info-future"><b>Future:</b> {about.future}</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Model Comparison</h3>
+
+      <form id="controls">
+        <label>
+          <span class="lab">Document</span>
+          <select id="page-select"></select>
+        </label>
+
+        <label>
+          <span class="lab">Line detector (M1)</span>
+          <select id="detector-select"></select>
+        </label>
+
+        <label>
+          <span class="lab">Text recognizer (M2)</span>
+          <select id="recognizer-select"></select>
+        </label>
+
+        <label class="checkbox-label">
+          <input id="show-boxes" type="checkbox" checked />
+          <span>Show bounding boxes</span>
+        </label>
+      </form>
+
+      <div class="image-container">
+        <img id="page-image" alt="" />
+        <svg id="boxes" aria-hidden="true"></svg>
+      </div>
+
+      <h2>Recognized text</h2>
+      <ol id="transcription"></ol>
+    </div>
+  </div>
+</SiteLayout>
 
 <script>
   import results from '../../data/htr_results.json';
@@ -187,138 +388,3 @@
     render();
   }
 </script>
-
-<style>
-  /* --- Base (matching [slug].astro dark theme) --- */
-  #controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-
-  #controls label {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: .95rem;
-    font-weight: 500;
-  }
-
-  #controls .lab {
-    color: #e8eefc;
-  }
-
-  #controls select,
-  #controls input {
-    background: #0f1625;
-    color: #e8eefc;
-    border: 1px solid #2a3652;
-    padding: 10px 12px;
-    border-radius: 10px;
-    outline: none;
-    transition: border .15s, box-shadow .15s;
-    font-size: .92rem;
-  }
-
-  #controls select:focus,
-  #controls input:focus {
-    border-color: #2f82ff;
-    box-shadow: 0 0 0 3px #2f82ff33;
-  }
-
-  .checkbox-label {
-    flex-direction: row !important;
-    align-items: center;
-    gap: 8px !important;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: #27d07d;
-    cursor: pointer;
-  }
-
-  .checkbox-label span {
-    color: #cfe0ff;
-  }
-
-  /* --- Image container --- */
-  .image-container {
-    position: relative;
-    width: min(100%, 900px);
-    background: #000;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid #1e2436;
-    box-shadow: 0 10px 24px #0005;
-  }
-
-  #page-image {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
-  #boxes {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-
-  /* --- Transcription --- */
-  h2 {
-    margin-top: 2rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #e8eefc;
-  }
-
-  #transcription {
-    padding-left: 1.5rem;
-    color: #cfe0ff;
-    line-height: 1.65;
-  }
-
-  #transcription li {
-    margin-bottom: .35rem;
-    padding: .25rem .5rem;
-    border-radius: 6px;
-    transition: background .15s;
-  }
-
-  #transcription li:hover {
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  .subtitle {
-    color: #b0bedc;
-    opacity: .85;
-    margin-bottom: 1.5rem;
-  }
-
-  /* --- Responsive --- */
-  @media (max-width: 640px) {
-    #controls {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    #controls select {
-      width: 100%;
-    }
-
-    .image-container {
-      width: 100%;
-    }
-  }
-</style>
-
-</body>
-</html>

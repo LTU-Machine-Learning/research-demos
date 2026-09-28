@@ -51,6 +51,16 @@ export default function demos(slug: string): DemoCfg {
       kind: "form",
     },
 
+    htr: {
+      title: "HTR — Handwritten Text Recognition",
+      subtitle: "Compare line detection and recognition models on historical handwritten documents. Precomputed results.",
+      transport: "mjpeg",   // placeholder; no video used for this demo
+      orch: ":8090",
+      token: "dev-token",
+      demoId: "htr",
+      kind: "form",
+    },
+
     chang: {
       title: "ML group — Arabic line detector",
       subtitle: "Live stream that highlights detected lines of Arabic text.",

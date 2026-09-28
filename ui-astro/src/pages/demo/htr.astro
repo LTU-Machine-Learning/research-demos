@@ -1,22 +1,26 @@
-<h1>HTR demo</h1>
+<h1>HTR — Handwritten Text Recognition</h1>
+
+<p class="subtitle">Select an image and compare outputs from different detection and recognition models.</p>
 
 <form id="controls">
-  <label for="page-select">Document</label>
-  <select id="page-select"></select>
-
-  <label for="detector-select">Line detector</label>
-  <select id="detector-select">
-    <option value="stored">Stored detection result</option>
-  </select>
-
-  <label for="recognizer-select">Text recognizer</label>
-  <select id="recognizer-select">
-    <option value="stored">Stored recognition result</option>
-  </select>
+  <label>
+    <span class="lab">Document</span>
+    <select id="page-select"></select>
+  </label>
 
   <label>
+    <span class="lab">Line detector (M1)</span>
+    <select id="detector-select"></select>
+  </label>
+
+  <label>
+    <span class="lab">Text recognizer (M2)</span>
+    <select id="recognizer-select"></select>
+  </label>
+
+  <label class="checkbox-label">
     <input id="show-boxes" type="checkbox" checked />
-    Show bounding boxes
+    <span>Show bounding boxes</span>
   </label>
 </form>
 
@@ -33,6 +37,10 @@
 
   const pageSelect =
     document.querySelector<HTMLSelectElement>('#page-select')!;
+  const detectorSelect =
+    document.querySelector<HTMLSelectElement>('#detector-select')!;
+  const recognizerSelect =
+    document.querySelector<HTMLSelectElement>('#recognizer-select')!;
   const showBoxes =
     document.querySelector<HTMLInputElement>('#show-boxes')!;
   const image =
@@ -42,38 +50,67 @@
   const transcription =
     document.querySelector<HTMLOListElement>('#transcription')!;
 
-  results.pages.forEach((page, index) => {
-    pageSelect.add(
-      new Option(page.layout_annotated_image, String(index))
-    );
+  const imageIds = Object.keys(results);
+
+  // Populate the image selector
+  imageIds.forEach((id) => {
+    pageSelect.add(new Option(results[id].LAY_IMG_FILE, id));
   });
 
+  function populateDetectorSelect(imageId: string) {
+    const img = results[imageId];
+    if (!img) return;
+    const m1Models = Object.keys(img.M1);
+    detectorSelect.replaceChildren();
+    m1Models.forEach((m1) => {
+      detectorSelect.add(new Option(m1, m1));
+    });
+  }
+
+  function populateRecognizerSelect(imageId: string, m1Name: string) {
+    const img = results[imageId];
+    if (!img) return;
+    const m1Data = img.M1[m1Name];
+    if (!m1Data) return;
+    const bboxKeys = Object.keys(m1Data);
+    if (bboxKeys.length === 0) return;
+    const firstBbox = m1Data[bboxKeys[0]];
+    const m2Models = Object.keys(firstBbox.M2);
+    recognizerSelect.replaceChildren();
+    m2Models.forEach((m2) => {
+      recognizerSelect.add(new Option(m2, m2));
+    });
+  }
+
   function render() {
-    const page = results.pages[Number(pageSelect.value)];
-    if (!page) return;
+    const imageId = pageSelect.value;
+    const img = results[imageId];
+    if (!img) return;
+
+    const detectorName = detectorSelect.value;
+    const recognizerName = recognizerSelect.value;
 
     const imagePath =
-      `/images/htr/${encodeURIComponent(page.layout_annotated_image)}`;
+      `/images/htr/${encodeURIComponent(img.LAY_IMG_FILE)}`;
 
     image.src = imagePath;
-    image.alt = `Historical document ${Number(pageSelect.value) + 1}`;
+    image.alt = `Historical document: ${img.LAY_IMG_FILE}`;
 
-    // reading_order contains line IDs. Use it to order the transcript.
-    const linesById = new Map(page.lines.map((line) => [line.id, line]));
-    const orderedLines = page.layout.reading_order.length
-      ? page.layout.reading_order
-          .map((id) => linesById.get(id))
-          .filter((line) => line !== undefined)
-      : page.lines;
+    // Get lines from the selected M1 model
+    const m1Data = img.M1[detectorName];
+    const lines = m1Data ? Object.values(m1Data) : [];
 
+    // Display transcription from the selected M2 model
     transcription.replaceChildren(
-      ...orderedLines.map((line) => {
+      ...lines.map((line: any) => {
         const item = document.createElement('li');
-        item.textContent = line.text;
+        item.textContent =
+          line.M2?.[recognizerName]?.text ?? '';
         return item;
       })
     );
 
+    // Draw bounding boxes
     function drawBoxes() {
       overlay.setAttribute(
         'viewBox',
@@ -83,7 +120,7 @@
 
       if (!showBoxes.checked) return;
 
-      for (const line of page.lines) {
+      for (const line of lines) {
         const [x1, y1, x2, y2] = line.box;
         const rect = document.createElementNS(
           'http://www.w3.org/2000/svg',
@@ -94,10 +131,11 @@
         rect.setAttribute('y', String(y1));
         rect.setAttribute('width', String(x2 - x1));
         rect.setAttribute('height', String(y2 - y1));
-        rect.setAttribute('fill', 'rgba(255, 190, 0, 0.12)');
-        rect.setAttribute('stroke', '#ffb000');
+        rect.setAttribute('fill', 'rgba(39, 208, 125, 0.10)');
+        rect.setAttribute('stroke', '#27d07d');
         rect.setAttribute('stroke-width', '2');
         rect.setAttribute('vector-effect', 'non-scaling-stroke');
+        rect.setAttribute('rx', '3');
         overlay.append(rect);
       }
     }
@@ -109,25 +147,107 @@
     }
   }
 
-  pageSelect.addEventListener('change', render);
+  function onImageChange() {
+    const imageId = pageSelect.value;
+    populateDetectorSelect(imageId);
+    populateRecognizerSelect(imageId, detectorSelect.value);
+    render();
+  }
+
+  function onDetectorChange() {
+    const imageId = pageSelect.value;
+    populateRecognizerSelect(imageId, detectorSelect.value);
+    render();
+  }
+
+  pageSelect.addEventListener('change', onImageChange);
+  detectorSelect.addEventListener('change', onDetectorChange);
+  recognizerSelect.addEventListener('change', render);
   showBoxes.addEventListener('change', render);
 
-  pageSelect.value = '0';
-  render();
+  // Initial load
+  if (imageIds.length > 0) {
+    pageSelect.value = imageIds[0];
+    populateDetectorSelect(imageIds[0]);
+    if (detectorSelect.options.length > 0) {
+      detectorSelect.value = detectorSelect.options[0].value;
+      populateRecognizerSelect(imageIds[0], detectorSelect.value);
+      if (recognizerSelect.options.length > 0) {
+        recognizerSelect.value = recognizerSelect.options[0].value;
+      }
+    }
+    render();
+  }
 </script>
 
 <style>
+  /* --- Base (matching [slug].astro dark theme) --- */
   #controls {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem;
+    align-items: flex-end;
+    gap: 1rem;
     margin-bottom: 1.5rem;
   }
 
+  #controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: .95rem;
+    font-weight: 500;
+  }
+
+  #controls .lab {
+    color: #e8eefc;
+  }
+
+  #controls select,
+  #controls input {
+    background: #0f1625;
+    color: #e8eefc;
+    border: 1px solid #2a3652;
+    padding: 10px 12px;
+    border-radius: 10px;
+    outline: none;
+    transition: border .15s, box-shadow .15s;
+    font-size: .92rem;
+  }
+
+  #controls select:focus,
+  #controls input:focus {
+    border-color: #2f82ff;
+    box-shadow: 0 0 0 3px #2f82ff33;
+  }
+
+  .checkbox-label {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px !important;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #27d07d;
+    cursor: pointer;
+  }
+
+  .checkbox-label span {
+    color: #cfe0ff;
+  }
+
+  /* --- Image container --- */
   .image-container {
     position: relative;
     width: min(100%, 900px);
+    background: #000;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #1e2436;
+    box-shadow: 0 10px 24px #0005;
   }
 
   #page-image {
@@ -142,5 +262,52 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
+  }
+
+  /* --- Transcription --- */
+  h2 {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #e8eefc;
+  }
+
+  #transcription {
+    padding-left: 1.5rem;
+    color: #cfe0ff;
+    line-height: 1.65;
+  }
+
+  #transcription li {
+    margin-bottom: .35rem;
+    padding: .25rem .5rem;
+    border-radius: 6px;
+    transition: background .15s;
+  }
+
+  #transcription li:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .subtitle {
+    color: #b0bedc;
+    opacity: .85;
+    margin-bottom: 1.5rem;
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 640px) {
+    #controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    #controls select {
+      width: 100%;
+    }
+
+    .image-container {
+      width: 100%;
+    }
   }
 </style>

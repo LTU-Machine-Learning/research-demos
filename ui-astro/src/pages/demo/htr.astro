@@ -263,7 +263,7 @@ const about = {
 
   // Populate the image selector
   imageIds.forEach((id) => {
-    pageSelect.add(new Option(results[id].LAY_IMG_FILE, id));
+    pageSelect.add(new Option(results[id].IMG_NAME, id));
   });
 
   function populateDetectorSelect(imageId: string) {
@@ -303,7 +303,7 @@ const about = {
       `/images/htr/${encodeURIComponent(imageId)}.jpg`;
 
     image.src = imagePath;
-    image.alt = `Historical document: ${img.LAY_IMG_FILE}`;
+    image.alt = `Historical document: ${img.IMG_NAME}`;
 
     // Get lines from the selected M1 model
     const m1Data = img.M1[detectorName];

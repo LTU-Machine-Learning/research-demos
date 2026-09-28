@@ -1,0 +1,146 @@
+<h1>HTR demo</h1>
+
+<form id="controls">
+  <label for="page-select">Document</label>
+  <select id="page-select"></select>
+
+  <label for="detector-select">Line detector</label>
+  <select id="detector-select">
+    <option value="stored">Stored detection result</option>
+  </select>
+
+  <label for="recognizer-select">Text recognizer</label>
+  <select id="recognizer-select">
+    <option value="stored">Stored recognition result</option>
+  </select>
+
+  <label>
+    <input id="show-boxes" type="checkbox" checked />
+    Show bounding boxes
+  </label>
+</form>
+
+<div class="image-container">
+  <img id="page-image" alt="" />
+  <svg id="boxes" aria-hidden="true"></svg>
+</div>
+
+<h2>Recognized text</h2>
+<ol id="transcription"></ol>
+
+<script>
+  import results from '../../data/results.json';
+
+  const pageSelect =
+    document.querySelector<HTMLSelectElement>('#page-select')!;
+  const showBoxes =
+    document.querySelector<HTMLInputElement>('#show-boxes')!;
+  const image =
+    document.querySelector<HTMLImageElement>('#page-image')!;
+  const overlay =
+    document.querySelector<SVGSVGElement>('#boxes')!;
+  const transcription =
+    document.querySelector<HTMLOListElement>('#transcription')!;
+
+  results.pages.forEach((page, index) => {
+    pageSelect.add(
+      new Option(page.layout_annotated_image, String(index))
+    );
+  });
+
+  function render() {
+    const page = results.pages[Number(pageSelect.value)];
+    if (!page) return;
+
+    const imagePath =
+      `/images/htr/${encodeURIComponent(page.layout_annotated_image)}`;
+
+    image.src = imagePath;
+    image.alt = `Historical document ${Number(pageSelect.value) + 1}`;
+
+    // reading_order contains line IDs. Use it to order the transcript.
+    const linesById = new Map(page.lines.map((line) => [line.id, line]));
+    const orderedLines = page.layout.reading_order.length
+      ? page.layout.reading_order
+          .map((id) => linesById.get(id))
+          .filter((line) => line !== undefined)
+      : page.lines;
+
+    transcription.replaceChildren(
+      ...orderedLines.map((line) => {
+        const item = document.createElement('li');
+        item.textContent = line.text;
+        return item;
+      })
+    );
+
+    function drawBoxes() {
+      overlay.setAttribute(
+        'viewBox',
+        `0 0 ${image.naturalWidth} ${image.naturalHeight}`
+      );
+      overlay.replaceChildren();
+
+      if (!showBoxes.checked) return;
+
+      for (const line of page.lines) {
+        const [x1, y1, x2, y2] = line.box;
+        const rect = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'rect'
+        );
+
+        rect.setAttribute('x', String(x1));
+        rect.setAttribute('y', String(y1));
+        rect.setAttribute('width', String(x2 - x1));
+        rect.setAttribute('height', String(y2 - y1));
+        rect.setAttribute('fill', 'rgba(255, 190, 0, 0.12)');
+        rect.setAttribute('stroke', '#ffb000');
+        rect.setAttribute('stroke-width', '2');
+        rect.setAttribute('vector-effect', 'non-scaling-stroke');
+        overlay.append(rect);
+      }
+    }
+
+    if (image.complete && image.naturalWidth) {
+      drawBoxes();
+    } else {
+      image.onload = drawBoxes;
+    }
+  }
+
+  pageSelect.addEventListener('change', render);
+  showBoxes.addEventListener('change', render);
+
+  pageSelect.value = '0';
+  render();
+</script>
+
+<style>
+  #controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .image-container {
+    position: relative;
+    width: min(100%, 900px);
+  }
+
+  #page-image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  #boxes {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+</style>

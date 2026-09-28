@@ -504,5 +504,30 @@ export default [
     video: '',
     demoUrl: '/demo/price',
   },
+  
+  {
+    slug: 'htr',
+    title: 'Handwritten Text Recognition in Historical Documents',
+    description:
+      'Compare line detection and recognition models on historical handwritten documents. Precomputed results.',
+    image: '/images/htr/035_321_001.jpg',
+    credit: "Made by the ML group",
+    author: {
+      name: 'Killian Murphy',
+      url: 'https://github.com/Serpoignet',
+      role: 'Integrator and Maintainer',
+    },
+    upstreams: [
+      // ✅ This is the “thanks” that will show on the project page
+      { name: 'Docker',         url: 'https://www.docker.com/',              role: 'Deployment' },
+      { name: 'Astro (UI)',     url: 'https://astro.build/',                 role: 'Frontend' },
+    ],
+    history: [
+      // More “visitor-friendly milestones” (not devlog)
+      { date: '2026-09', event: 'Integrated this demo as the first point and click demo.' },
+    ],
+    video: '',
+    demoUrl: '/demo/htr',
+  },
 
 ];

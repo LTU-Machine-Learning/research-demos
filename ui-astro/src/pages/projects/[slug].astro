@@ -13,6 +13,8 @@ if (!project) throw new Error('Project not found');
 
 // demo id your orchestrator expects ("yolo", "pose", …)
 const demoId = slug;
+const usesOrchestrator = project.usesOrchestrator ?? true;
+const demoUrl = project.demoUrl || `/demo/${slug}`;
 
 const title = `${project.title} – Vision Hub`;
 const description = project.description ?? 'Real-time AI demo';
@@ -219,7 +221,11 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
 
     {/* NEW: mid CTA between image and description */}
     <div class="project-cta-mid">
-      <a class="demo-cta live-demo-btn" href="#" role="button" data-demo={demoId} aria-label="Try the live demo">
+      <a class="demo-cta live-demo-btn" href="#" role="button"
+           data-demo={demoId}
+           data-orchestrator={String(usesOrchestrator)}
+           data-demo-url={demoUrl}
+           aria-label="Try the live demo">
         <span class="spinner" aria-hidden="true"></span>
         <span class="label">Try the live demo →</span>
       </a>
@@ -285,7 +291,11 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
 
     {/* Bottom CTA remains (same behavior + spinner) */}
     <div class="project-detail-demo">
-      <a class="demo-cta live-demo-btn" href="#" role="button" data-demo={demoId} aria-label="Try the live demo">
+      <a class="demo-cta live-demo-btn" href="#" role="button"
+           data-demo={demoId}
+           data-orchestrator={String(usesOrchestrator)}
+           data-demo-url={demoUrl}
+           aria-label="Try the live demo">
         <span class="spinner" aria-hidden="true"></span>
         <span class="label">Try the live demo →</span>
       </a>
@@ -297,6 +307,8 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
       if (!buttons.length) console.warn("[projects] no demo buttons found");
 
       const demoId = buttons[0]?.dataset?.demo || "";
+      const usesOrchestrator = buttons[0]?.dataset?.orchestrator !== "false";
+      const demoUrl = buttons[0]?.dataset?.demoUrl || `/demo/${demoId}`;
 
       const absolutizeHttp = (endpoint) => {
         if (!endpoint) return "";
@@ -367,6 +379,12 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
       async function startDemo() {
         setLoading(true);
 
+        // Static demos: just redirect — no orchestrator needed
+        if (!usesOrchestrator) {
+          location.href = demoUrl;
+          return;
+        }
+
         const statusURL = `${ORCH}/demos/${demoId}/status`;
         const startURL  = `${ORCH}/demos/${demoId}/start?wait=1&timeout=90`;
 
@@ -388,7 +406,7 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
             throw new Error(msg || `HTTP ${r.status}`);
           }
 
-          location.href = `/demo/${demoId}`;
+          location.href = demoUrl;
         } catch (err) {
           alert('Failed to start demo: ' + (err?.message || err));
           setLoading(false);
@@ -396,15 +414,21 @@ const hasVideo = typeof project.video === "string" && project.video.trim().lengt
       }
 
       // ---------- passive expiration ----------
-      setInterval(() => {
-        const c = getConsent(demoId);
-        if (!c) return;
-        if (Date.now() >= c.expiresAt) clearConsent(demoId);
-      }, 60_000);
+      if (usesOrchestrator) {
+        setInterval(() => {
+          const c = getConsent(demoId);
+          if (!c) return;
+          if (Date.now() >= c.expiresAt) clearConsent(demoId);
+        }, 60_000);
+      }
 
       for (const btn of buttons) {
         btn.addEventListener('click', async (e) => {
           e.preventDefault();
+          if (!usesOrchestrator) {
+            location.href = demoUrl;
+            return;
+          }
           try {
             const ask = window[`askConsent_${demoId}`];
             const ok  = typeof ask === 'function' ? await ask() : true;

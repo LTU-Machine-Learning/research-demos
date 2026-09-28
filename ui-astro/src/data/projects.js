@@ -1,3 +1,5 @@
+// Each project may optionally set `usesOrchestrator: false` when its demo
+// does not need the orchestrator (static page, just redirect).
 export default [
   {
     slug: 'yolo',
@@ -510,6 +512,7 @@ export default [
     title: 'Handwritten Text Recognition in Historical Documents',
     description:
       'Compare line detection and recognition models on historical handwritten documents. Precomputed results.',
+    usesOrchestrator: false,
     image: '/images/htr/035_321_001.jpg',
     credit: "Made by the ML group",
     author: {

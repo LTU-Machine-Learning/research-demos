@@ -377,7 +377,7 @@ export default [
     title: "YOLO — YOLOv8n segmentation model",
     description:
       "Segments (per pixel annotation) objects in the image and highlights them with different colors",
-    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    image: '/images/C6_Yolo_segmentation.png', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',

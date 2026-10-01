@@ -474,38 +474,38 @@ export default [
 //     demoUrl: '/demo/chang_7',
 //   },
 
-  {
-    slug: 'price',
-    title: 'House Price Estimation (Luleå, Sweden)',
-    description:
-      'Get an instant price estimate for a home in Luleå from a few details (area, rooms, location, etc.), with an uncertainty range. Data thanks to Booli.',
-    image: '/images/price-demo.jpg',
-    credit: "Made by the ML group",
-    author: {
-      name: 'Tom Burellier',
-      url: 'https://github.com/balmine',
-      role: 'Maintainer',
-    },
-    upstreams: [
-      // ✅ This is the “thanks” that will show on the project page
-      { name: 'Booli',          url: 'https://www.booli.se/',                role: 'Sold-market dataset provider — thanks for the data' },
-      { name: 'LightGBM',       url: 'https://lightgbm.readthedocs.io/',     role: 'Price model' },
-      { name: 'scikit-learn',   url: 'https://scikit-learn.org/',            role: 'Preprocessing pipeline' },
-      { name: 'Pandas + NumPy', url: 'https://pandas.pydata.org/',           role: 'Data preparation' },
-      { name: 'FastAPI',        url: 'https://fastapi.tiangolo.com/',        role: 'Prediction API' },
-      { name: 'Uvicorn',        url: 'https://www.uvicorn.org/',             role: 'API server' },
-      { name: 'Docker',         url: 'https://www.docker.com/',              role: 'Deployment' },
-      { name: 'Astro (UI)',     url: 'https://astro.build/',                 role: 'Frontend' },
-    ],
-    history: [
-      // More “visitor-friendly milestones” (not devlog)
-      { date: '2025-10', event: 'Built the first interactive demo: enter a few home details → get an estimate.' },
-      { date: '2025-11', event: 'Added prediction intervals so users can see a realistic price range, not just a single number.' },
-      { date: '2025-12', event: 'Improved the Luleå coverage using sold-market data (thanks to Booli) and deployed it in Vision Hub.' },
-    ],
-    video: '',
-    demoUrl: '/demo/price',
-  },
+  // {
+  //   slug: 'price',
+  //   title: 'House Price Estimation (Luleå, Sweden)',
+  //   description:
+  //     'Get an instant price estimate for a home in Luleå from a few details (area, rooms, location, etc.), with an uncertainty range. Data thanks to Booli.',
+  //   image: '/images/price-demo.jpg',
+  //   credit: "Made by the ML group",
+  //   author: {
+  //     name: 'Tom Burellier',
+  //     url: 'https://github.com/balmine',
+  //     role: 'Maintainer',
+  //   },
+  //   upstreams: [
+  //     // ✅ This is the “thanks” that will show on the project page
+  //     { name: 'Booli',          url: 'https://www.booli.se/',                role: 'Sold-market dataset provider — thanks for the data' },
+  //     { name: 'LightGBM',       url: 'https://lightgbm.readthedocs.io/',     role: 'Price model' },
+  //     { name: 'scikit-learn',   url: 'https://scikit-learn.org/',            role: 'Preprocessing pipeline' },
+  //     { name: 'Pandas + NumPy', url: 'https://pandas.pydata.org/',           role: 'Data preparation' },
+  //     { name: 'FastAPI',        url: 'https://fastapi.tiangolo.com/',        role: 'Prediction API' },
+  //     { name: 'Uvicorn',        url: 'https://www.uvicorn.org/',             role: 'API server' },
+  //     { name: 'Docker',         url: 'https://www.docker.com/',              role: 'Deployment' },
+  //     { name: 'Astro (UI)',     url: 'https://astro.build/',                 role: 'Frontend' },
+  //   ],
+  //   history: [
+  //     // More “visitor-friendly milestones” (not devlog)
+  //     { date: '2025-10', event: 'Built the first interactive demo: enter a few home details → get an estimate.' },
+  //     { date: '2025-11', event: 'Added prediction intervals so users can see a realistic price range, not just a single number.' },
+  //     { date: '2025-12', event: 'Improved the Luleå coverage using sold-market data (thanks to Booli) and deployed it in Vision Hub.' },
+  //   ],
+  //   video: '',
+  //   demoUrl: '/demo/price',
+  // },
   
   {
     slug: 'htr',

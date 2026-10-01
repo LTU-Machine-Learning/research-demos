@@ -51,7 +51,7 @@ const about = {
 
     .demo-layout {
       display: grid;
-      grid-template-columns: 12fr 9fr;
+      grid-template-columns: 5fr 4fr;
       gap: 0;
       margin-top: 0;
       align-items: start;
@@ -339,11 +339,18 @@ const about = {
   function populateDetectorSelect(imageId: string) {
     const img = results[imageId];
     if (!img) return;
+    const prev = detectorSelect.value;
     const m1Models = Object.keys(img.M1);
     detectorSelect.replaceChildren();
     m1Models.forEach((m1) => {
       detectorSelect.add(new Option(m1, m1));
     });
+    // Keep previous M1 if it exists for the new image, otherwise default to first
+    if (m1Models.includes(prev)) {
+      detectorSelect.value = prev;
+    } else if (m1Models.length > 0) {
+      detectorSelect.value = m1Models[0];
+    }
   }
 
   function populateRecognizerSelect(imageId: string, m1Name: string) {
@@ -353,12 +360,19 @@ const about = {
     if (!m1Data) return;
     const bboxKeys = Object.keys(m1Data);
     if (bboxKeys.length === 0) return;
+    const prev = recognizerSelect.value;
     const firstBbox = m1Data[bboxKeys[0]];
     const m2Models = Object.keys(firstBbox.M2);
     recognizerSelect.replaceChildren();
     m2Models.forEach((m2) => {
       recognizerSelect.add(new Option(m2, m2));
     });
+    // Keep previous M2 if it exists for the new M1, otherwise default to first
+    if (m2Models.includes(prev)) {
+      recognizerSelect.value = prev;
+    } else if (m2Models.length > 0) {
+      recognizerSelect.value = m2Models[0];
+    }
   }
 
   function drawBoxes(lines: any[]) {

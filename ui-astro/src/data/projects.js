@@ -67,7 +67,7 @@ export default [
     title: "ML group — Arabic line detector",
     description:
       "Detects and highlights lines of Arabic text.",
-    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    image: '/images/C0_Arab_line_detection.png', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',
@@ -173,7 +173,7 @@ export default [
     title: "ML group — Latin character detector",
     description:
       "Detects and highlights latin characters.",
-    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    image: '/images/C2_latin_character_detection.jpg', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',

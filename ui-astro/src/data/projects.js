@@ -122,7 +122,7 @@ export default [
     title: "ML group — Chinese character detector",
     description:
       "Detects and highlights characters in the image",
-    image: '/images/chang-demo.jpg', // TODO change image
+    image: '/images/C1_Chinese_char_detec.jpg', // TODO change image
     credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',
@@ -275,7 +275,7 @@ export default [
     title: "ML group — drone based car detector",
     description:
       "Detects and highlights cars in a snowy environment",
-    image: '/images/chang-demo.jpg', // put a real thumbnail when you have it
+    image: '/images/C4_Chinese_char_detec.png', // put a real thumbnail when you have it
     credit: "Made by the ML group",
     author: {
       name: 'Chang Liu',

@@ -2,6 +2,7 @@
     "035_321_001": {
         "IMG_NAME": "035_321_001.jpg",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".jpg",
         "LAY_IMG_FILE": "001_035_321_001_layout_annotated.jpg",
         "TXT_FILE": "001_035_321_001.txt",
         "M1": {
@@ -1022,6 +1023,7 @@
     "116_387_001": {
         "IMG_NAME": "116_387_001.jpg",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".jpg",
         "LAY_IMG_FILE": "002_116_387_001_layout_annotated.jpg",
         "TXT_FILE": "002_116_387_001.txt",
         "M1": {
@@ -2139,6 +2141,7 @@
     "071_163_004": {
         "IMG_NAME": "071_163_004.jpg",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".jpg",
         "LAY_IMG_FILE": "003_071_163_004_layout_annotated.jpg",
         "TXT_FILE": "003_071_163_004.txt",
         "M1": {
@@ -2971,6 +2974,7 @@
     "no-nb_digimanus_72702_0060": {
         "IMG_NAME": "no-nb_digimanus_72702_0060.jpg",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".jpg",
         "LAY_IMG_FILE": "004_no-nb_digimanus_72702_0060_layout_annotated.jpg",
         "TXT_FILE": "004_no-nb_digimanus_72702_0060.txt",
         "M1": {
@@ -3883,6 +3887,7 @@
     "no-nb_digimanus_72702_0100": {
         "IMG_NAME": "no-nb_digimanus_72702_0100.jpg",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".jpg",
         "LAY_IMG_FILE": "005_no-nb_digimanus_72702_0100_layout_annotated.jpg",
         "TXT_FILE": "005_no-nb_digimanus_72702_0100.txt",
         "M1": {
@@ -4752,6 +4757,7 @@
     "no-nb_digimanus_72702_0186": {
         "IMG_NAME": "no-nb_digimanus_72702_0186.jpg",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".jpg",
         "LAY_IMG_FILE": "006_no-nb_digimanus_72702_0186_layout_annotated.jpg",
         "TXT_FILE": "006_no-nb_digimanus_72702_0186.txt",
         "M1": {
@@ -5641,6 +5647,7 @@
     "G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00027_left": {
         "IMG_NAME": "Göteborgs_poliskammare_före_1900__A_II__1b__1869__30002022_00027_left.png",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".png",
         "LAY_IMG_FILE": "007_G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00027_left_layout_annotated.jpg",
         "TXT_FILE": "007_G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00027_left.txt",
         "M1": {
@@ -6901,6 +6908,7 @@
     "G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00028_left": {
         "IMG_NAME": "Göteborgs_poliskammare_före_1900__A_II__1b__1869__30002022_00028_left.png",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".png",
         "LAY_IMG_FILE": "008_G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00028_left_layout_annotated.jpg",
         "TXT_FILE": "008_G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00028_left.txt",
         "M1": {
@@ -8104,6 +8112,7 @@
     "G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00030_left": {
         "IMG_NAME": "Göteborgs_poliskammare_före_1900__A_II__1b__1869__30002022_00030_left.png",
         "IMG_DESC": "",
+        "IMG_FORMAT": ".png",
         "LAY_IMG_FILE": "009_G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00030_left_layout_annotated.jpg",
         "TXT_FILE": "009_G_teborgs_poliskammare_f_re_1900__A_II__1b__1869__30002022_00030_left.txt",
         "M1": {

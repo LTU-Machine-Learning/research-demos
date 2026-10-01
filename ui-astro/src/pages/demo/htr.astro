@@ -300,7 +300,7 @@ const about = {
     const recognizerName = recognizerSelect.value;
 
     const imagePath =
-      `/images/htr/${encodeURIComponent(imageId)}.jpg`;
+      `/images/htr/${encodeURIComponent(imageId)}.${img.IMG_FORMAT}`;
 
     image.src = imagePath;
     image.alt = `Historical document: ${img.IMG_NAME}`;

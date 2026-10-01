@@ -524,14 +524,14 @@ export default [
       // ✅ This is the “thanks” that will show on the project page
       { name: 'Wallenberg AI, Autonomous Systems and Software Programs (WASP)',          url: 'https://wasp-sweden.org/', role: 'Partial funding' },
       { name: 'Knut and Alice Wallenberg Foundation',     url: 'https://kaw.wallenberg.org/en',                           role: 'Partial funding' },
-      { name: 'Luleå University of Technology (LTU)',     url: 'ltu.se',                 role: 'Partial funding' },
-      { name: 'Kempestiftelserna grant CSMK23-0109',      url: 'https://www.kempe.com/', role: 'Partial funding' },
-      { name: 'Berzelius resource at the Swedish National Supercomputer Center',      url: 'https://hpc.pages.naiss.se/user-documentation/berzelius-docs/', role: 'Computation' },
-      { name: 'Killian Murphy', url:'https://github.com/Serpoignet', role: 'Integration into this demo space'}
+      { name: 'Luleå University of Technology (LTU)',     url: 'https://ltu.se/',                 role: 'Partial funding' },
+      { name: 'Kempestiftelserna grant CSMK23-0109',      url: 'https://www.kempe.com/',          role: 'Partial funding' },
+      { name: 'Berzelius resource at the Swedish National Supercomputer Center',                  url: 'https://hpc.pages.naiss.se/user-documentation/berzelius-docs/', role: 'Computation' },
+      { name: 'Killian Murphy', url:'https://github.com/Serpoignet',                              role: 'Integration into this demo space'}
     ],
     history: [
       // More “visitor-friendly milestones” (not devlog)
-      { date: '2026-09', event: 'Integrated this demo as the first point and click demo.' },
+      { date: '2026-09', event: 'Integrated this demo as the first point and click demo of this platform.' },
     ],
     video: '',
     demoUrl: '/demo/htr',

@@ -162,6 +162,32 @@ const about = {
       font-size: .95rem;
     }
 
+    .opacity-label {
+      flex-direction: column;
+      gap: 6px;
+      font-size: .95rem;
+      font-weight: 500;
+    }
+
+    .opacity-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .opacity-val {
+      color: #cfe0ff;
+      font-size: .85rem;
+      min-width: 2.5rem;
+      text-align: right;
+    }
+
+    #text-opacity {
+      width: 100px;
+      accent-color: #27d07d;
+      cursor: pointer;
+    }
+
     .image-container {
       position: relative;
       width: 100%;
@@ -291,6 +317,19 @@ const about = {
           <input id="show-boxes" type="checkbox" checked />
           <span>Show bounding boxes</span>
         </label>
+
+        <label class="checkbox-label">
+          <input id="show-text" type="checkbox" />
+          <span>Show text on boxes</span>
+        </label>
+
+        <label class="opacity-label">
+          <span class="lab">Opacity</span>
+          <div class="opacity-row">
+            <input id="text-opacity" type="range" min="0" max="100" value="100" />
+            <span id="opacity-val" class="opacity-val">100%</span>
+          </div>
+        </label>
       </form>
 
       <div class="demo-layout">
@@ -321,6 +360,12 @@ const about = {
     document.querySelector<HTMLSelectElement>('#recognizer-select')!;
   const showBoxes =
     document.querySelector<HTMLInputElement>('#show-boxes')!;
+  const showText =
+    document.querySelector<HTMLInputElement>('#show-text')!;
+  const textOpacity =
+    document.querySelector<HTMLInputElement>('#text-opacity')!;
+  const opacityVal =
+    document.querySelector<HTMLSpanElement>('#opacity-val')!;
   const image =
     document.querySelector<HTMLImageElement>('#page-image')!;
   const overlay =
@@ -375,7 +420,7 @@ const about = {
     }
   }
 
-  function drawBoxes(lines: any[]) {
+  function drawBoxes(lines: any[], recognizerName: string) {
     overlay.setAttribute(
       'viewBox',
       `0 0 ${image.naturalWidth} ${image.naturalHeight}`
@@ -384,23 +429,61 @@ const about = {
 
     if (!showBoxes.checked) return;
 
+    const op = Number(textOpacity.value) / 100;
+    const withText = showText.checked;
+
     for (const line of lines) {
       const [x1, y1, x2, y2] = line.box;
-      const rect = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'rect'
-      );
+      const w = x2 - x1;
+      const h = y2 - y1;
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
+      // Opacity from slider (only when text overlay is active)
+      if (withText) {
+        g.setAttribute('opacity', String(op));
+      }
+
+      // Bounding-box rect
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       rect.setAttribute('x', String(x1));
       rect.setAttribute('y', String(y1));
-      rect.setAttribute('width', String(x2 - x1));
-      rect.setAttribute('height', String(y2 - y1));
-      rect.setAttribute('fill', 'rgba(39, 208, 125, 0.10)');
-      rect.setAttribute('stroke', '#27d07d');
-      rect.setAttribute('stroke-width', '2');
+      rect.setAttribute('width', String(w));
+      rect.setAttribute('height', String(h));
+
+      if (withText) {
+        rect.setAttribute('fill', 'rgba(255,255,255,0.85)');
+        rect.setAttribute('stroke', '#ffffff');
+        rect.setAttribute('stroke-width', '1.5');
+      } else {
+        rect.setAttribute('fill', 'rgba(39,208,125,0.10)');
+        rect.setAttribute('stroke', '#27d07d');
+        rect.setAttribute('stroke-width', '2');
+      }
       rect.setAttribute('vector-effect', 'non-scaling-stroke');
       rect.setAttribute('rx', '3');
-      overlay.append(rect);
+      g.append(rect);
+
+      // Text inside the box
+      if (withText) {
+        const text = line.M2?.[recognizerName]?.text ?? '';
+        const charCount = Math.max(text.length, 1);
+        // Font size proportional to box height, capped so text fits width
+        const fontSize = Math.min(h * 0.62, (w / charCount) / 0.52);
+        const clipped = Math.max(fontSize, h * 0.18);
+
+        const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textEl.setAttribute('x', String(x1 + w / 2));
+        textEl.setAttribute('y', String(y1 + h / 2));
+        textEl.setAttribute('font-size', String(clipped));
+        textEl.setAttribute('fill', '#0d1b2a');
+        textEl.setAttribute('text-anchor', 'middle');
+        textEl.setAttribute('dominant-baseline', 'central');
+        textEl.setAttribute('font-family', 'system-ui, sans-serif');
+        textEl.textContent = text;
+        g.append(textEl);
+      }
+
+      overlay.append(g);
     }
   }
 
@@ -434,13 +517,13 @@ const about = {
       image.src = imagePath;
       image.alt = `Historical document: ${img.IMG_NAME}`;
 
-      image.onload = () => drawBoxes(lines);
+      image.onload = () => drawBoxes(lines, recognizerName);
       if (image.complete && image.naturalWidth) {
-        drawBoxes(lines);  // already cached, fire immediately
+        drawBoxes(lines, recognizerName);  // already cached, fire immediately
       }
     } else {
       // Same image, different model: draw immediately
-      drawBoxes(lines);
+      drawBoxes(lines, recognizerName);
     }
   }
 
@@ -461,6 +544,11 @@ const about = {
   detectorSelect.addEventListener('change', onDetectorChange);
   recognizerSelect.addEventListener('change', render);
   showBoxes.addEventListener('change', render);
+  showText.addEventListener('change', render);
+  textOpacity.addEventListener('input', () => {
+    opacityVal.textContent = textOpacity.value + '%';
+    render();
+  });
 
   // Initial load
   if (imageIds.length > 0) {

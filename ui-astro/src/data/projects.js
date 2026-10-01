@@ -509,21 +509,25 @@ export default [
   
   {
     slug: 'htr',
-    title: 'Handwritten Text Recognition in Historical Documents',
+    title: 'ML group — Handwritten Text Recognition in Historical Documents',
     description:
-      'Compare line detection and recognition models on historical handwritten documents. Precomputed results.',
+      'Compare line detection and recognition models on historical handwritten documents (precomputed results).',
     usesOrchestrator: false,
     image: '/images/htr/035_321_001.jpg',
     credit: "Made by the ML group",
     author: {
-      name: 'Killian Murphy',
-      url: 'https://github.com/Serpoignet',
-      role: 'Integrator and Maintainer',
+      name: 'Gayan H. Pathirage, Stephan M. Unter, Simon Corbillé and Elisa H. Barney Smith',
+      url: 'https://blog.sbb.berlin/hip2026/',
+      role: 'Generalization of Text Line Segmentation for HTR in Historical Documents',
     },
     upstreams: [
       // ✅ This is the “thanks” that will show on the project page
-      { name: 'Docker',         url: 'https://www.docker.com/',              role: 'Deployment' },
-      { name: 'Astro (UI)',     url: 'https://astro.build/',                 role: 'Frontend' },
+      { name: 'Wallenberg AI, Autonomous Systems and Software Programs (WASP)',          url: 'https://wasp-sweden.org/', role: 'Partial funding' },
+      { name: 'Knut and Alice Wallenberg Foundation',     url: 'https://kaw.wallenberg.org/en',                           role: 'Partial funding' },
+      { name: 'Luleå University of Technology (LTU)',     url: 'ltu.se',                 role: 'Partial funding' },
+      { name: 'Kempestiftelserna grant CSMK23-0109',      url: 'https://www.kempe.com/', role: 'Partial funding' },
+      { name: 'Berzelius resource at the Swedish National Supercomputer Center',      url: 'https://hpc.pages.naiss.se/user-documentation/berzelius-docs/', role: 'Computation' },
+      { name: 'Killian Murphy', url:'https://github.com/Serpoignet', role: 'Integration into this demo space'}
     ],
     history: [
       // More “visitor-friendly milestones” (not devlog)

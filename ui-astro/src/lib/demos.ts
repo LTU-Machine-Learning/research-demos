@@ -52,8 +52,8 @@ export default function demos(slug: string): DemoCfg {
     },
 
     htr: {
-      title: "HTR — Handwritten Text Recognition",
-      subtitle: "Compare line detection and recognition models on historical handwritten documents. Precomputed results.",
+      title: "ML group  — Handwritten Text Recognition (HTR)",
+      subtitle: "Compare line detection and recognition models on historical handwritten documents (precomputed results).",
       transport: "mjpeg",   // placeholder; no video used for this demo
       orch: ":8090",
       token: "dev-token",

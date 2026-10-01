@@ -260,6 +260,7 @@ const about = {
     document.querySelector<HTMLOListElement>('#transcription')!;
 
   const imageIds = Object.keys(results);
+  let lastImageId = '';
 
   // Populate the image selector
   imageIds.forEach((id) => {
@@ -291,6 +292,35 @@ const about = {
     });
   }
 
+  function drawBoxes(lines: any[]) {
+    overlay.setAttribute(
+      'viewBox',
+      `0 0 ${image.naturalWidth} ${image.naturalHeight}`
+    );
+    overlay.replaceChildren();
+
+    if (!showBoxes.checked) return;
+
+    for (const line of lines) {
+      const [x1, y1, x2, y2] = line.box;
+      const rect = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'rect'
+      );
+
+      rect.setAttribute('x', String(x1));
+      rect.setAttribute('y', String(y1));
+      rect.setAttribute('width', String(x2 - x1));
+      rect.setAttribute('height', String(y2 - y1));
+      rect.setAttribute('fill', 'rgba(39, 208, 125, 0.10)');
+      rect.setAttribute('stroke', '#27d07d');
+      rect.setAttribute('stroke-width', '2');
+      rect.setAttribute('vector-effect', 'non-scaling-stroke');
+      rect.setAttribute('rx', '3');
+      overlay.append(rect);
+    }
+  }
+
   function render() {
     const imageId = pageSelect.value;
     const img = results[imageId];
@@ -299,33 +329,9 @@ const about = {
     const detectorName = detectorSelect.value;
     const recognizerName = recognizerSelect.value;
 
-    const imagePath =
-      `/images/htr/${encodeURIComponent(img.IMG_NAME)}`;
-
-    // Ligne 305 : détecter si l'image a vraiment changé
-    const imageChanged = image.src !== imagePath;
-    // Lignes 307-310 : ne setter src que si nécessaire
-    if (imageChanged) {  
-      image.src = imagePath;
-    }
-    // Lignes 356-365 : deux chemins distincts
-    if (imageChanged) {  
-      image.onload = drawBoxes;              
-      // nouvelle image → attendre onload  
-      if (image.complete && image.naturalWidth) {    
-        drawBoxes();                     
-        // déjà en cache → immédiat  
-      }
-    } else {  
-        drawBoxes();
-        // même image → immédiat
-    }
-
-    image.alt = `Historical document: ${img.IMG_NAME}`;
-
     // Get lines from the selected M1 model
     const m1Data = img.M1[detectorName];
-    const lines = m1Data ? Object.values(m1Data) : [];
+    const lines: any[] = m1Data ? Object.values(m1Data) : [];
 
     // Display transcription from the selected M2 model
     transcription.replaceChildren(
@@ -337,40 +343,21 @@ const about = {
       })
     );
 
-    // Draw bounding boxes
-    function drawBoxes() {
-      overlay.setAttribute(
-        'viewBox',
-        `0 0 ${image.naturalWidth} ${image.naturalHeight}`
-      );
-      overlay.replaceChildren();
+    // Only reload the image when the document actually changes
+    if (imageId !== lastImageId) {
+      lastImageId = imageId;
+      const imagePath =
+        `/images/htr/${encodeURIComponent(img.IMG_NAME)}`;
+      image.src = imagePath;
+      image.alt = `Historical document: ${img.IMG_NAME}`;
 
-      if (!showBoxes.checked) return;
-
-      for (const line of lines) {
-        const [x1, y1, x2, y2] = line.box;
-        const rect = document.createElementNS(
-          'http://www.w3.org/2000/svg',
-          'rect'
-        );
-
-        rect.setAttribute('x', String(x1));
-        rect.setAttribute('y', String(y1));
-        rect.setAttribute('width', String(x2 - x1));
-        rect.setAttribute('height', String(y2 - y1));
-        rect.setAttribute('fill', 'rgba(39, 208, 125, 0.10)');
-        rect.setAttribute('stroke', '#27d07d');
-        rect.setAttribute('stroke-width', '2');
-        rect.setAttribute('vector-effect', 'non-scaling-stroke');
-        rect.setAttribute('rx', '3');
-        overlay.append(rect);
+      image.onload = () => drawBoxes(lines);
+      if (image.complete && image.naturalWidth) {
+        drawBoxes(lines);  // already cached, fire immediately
       }
-    }
-
-    if (image.complete && image.naturalWidth) {
-      drawBoxes();
     } else {
-      image.onload = drawBoxes;
+      // Same image, different model: draw immediately
+      drawBoxes(lines);
     }
   }
 

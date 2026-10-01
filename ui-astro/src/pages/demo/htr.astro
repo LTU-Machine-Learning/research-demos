@@ -302,7 +302,25 @@ const about = {
     const imagePath =
       `/images/htr/${encodeURIComponent(img.IMG_NAME)}`;
 
-    image.src = imagePath;
+    // Ligne 305 : détecter si l'image a vraiment changé
+    const imageChanged = image.src !== imagePath;
+    // Lignes 307-310 : ne setter src que si nécessaire
+    if (imageChanged) {  
+      image.src = imagePath;
+    }
+    // Lignes 356-365 : deux chemins distincts
+    if (imageChanged) {  
+      image.onload = drawBoxes;              
+      // nouvelle image → attendre onload  
+      if (image.complete && image.naturalWidth) {    
+        drawBoxes();                     
+        // déjà en cache → immédiat  
+      }
+    } else {  
+        drawBoxes();
+        // même image → immédiat
+    }
+
     image.alt = `Historical document: ${img.IMG_NAME}`;
 
     // Get lines from the selected M1 model

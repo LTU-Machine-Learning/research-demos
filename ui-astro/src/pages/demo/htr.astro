@@ -44,6 +44,46 @@ const about = {
     }
     .card:hover { transform: translateY(-2px); box-shadow: 0 14px 30px #0006; }
 
+    /* ---- HTR: wider card + side-by-side layout ---- */
+    .card.wide {
+      max-width: min(95vw, 1500px);
+    }
+
+    .demo-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin-top: 0;
+      align-items: start;
+    }
+
+    .demo-image-col {
+      min-width: 0;
+    }
+
+    .demo-text-col {
+      min-width: 0;
+      padding-left: 2rem;
+      max-height: 70vh;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .demo-text-col h2 {
+      margin-top: 0;
+    }
+
+    .demo-text-col::-webkit-scrollbar {
+      width: 8px;
+    }
+    .demo-text-col::-webkit-scrollbar-thumb {
+      background: #1f2a44;
+      border-radius: 999px;
+    }
+    .demo-text-col::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
     .info {
       margin-top: 18px;
       padding: 16px 18px;
@@ -124,7 +164,7 @@ const about = {
 
     .image-container {
       position: relative;
-      width: min(100%, 900px);
+      width: 100%;
       background: #000;
       border-radius: 14px;
       overflow: hidden;
@@ -146,22 +186,28 @@ const about = {
       pointer-events: none;
     }
 
-    /* --- Transcription --- */
+    /* --- Transcription (side panel) --- */
     h2 {
-      margin-top: 2rem;
-      font-size: 1.2rem;
+      margin-top: 0;
+      font-size: 1.1rem;
       font-weight: 600;
       color: #e8eefc;
+      position: sticky;
+      top: 0;
+      background: linear-gradient(165deg, #141a27 0%, #10131c 100%);
+      padding-bottom: .5rem;
+      z-index: 1;
     }
 
     #transcription {
-      padding-left: 1.5rem;
+      padding-left: 0;
       color: #cfe0ff;
-      line-height: 1.65;
+      line-height: 1.55;
+      font-size: .95rem;
     }
 
     #transcription li {
-      margin-bottom: .35rem;
+      margin-bottom: .3rem;
       padding: .25rem .5rem;
       border-radius: 6px;
       transition: background .15s;
@@ -177,6 +223,23 @@ const about = {
       margin-bottom: 1.5rem;
     }
 
+    @media (max-width: 900px) {
+      .demo-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .demo-text-col {
+        padding-left: 0;
+        padding-top: 1.5rem;
+        max-height: none;
+        overflow-y: visible;
+      }
+
+      .demo-text-col h2 {
+        position: static;
+      }
+    }
+
     @media (max-width: 640px) {
       .wrap { margin: 24px auto; }
 
@@ -189,8 +252,8 @@ const about = {
         width: 100%;
       }
 
-      .image-container {
-        width: 100%;
+      .card.wide {
+        max-width: 100%;
       }
     }
   </style>
@@ -205,7 +268,7 @@ const about = {
       <p class="info-future"><b>Future:</b> {about.future}</p>
     </div>
 
-    <div class="card">
+    <div class="card wide">
       <h3 style="margin-top:0;">Model Comparison</h3>
 
       <form id="controls">
@@ -230,13 +293,19 @@ const about = {
         </label>
       </form>
 
-      <div class="image-container">
-        <img id="page-image" alt="" />
-        <svg id="boxes" aria-hidden="true"></svg>
-      </div>
+      <div class="demo-layout">
+        <div class="demo-image-col">
+          <div class="image-container">
+            <img id="page-image" alt="" />
+            <svg id="boxes" aria-hidden="true"></svg>
+          </div>
+        </div>
 
-      <h2>Recognized text</h2>
-      <ol id="transcription"></ol>
+        <div class="demo-text-col">
+          <h2>Recognized text</h2>
+          <ol id="transcription"></ol>
+        </div>
+      </div>
     </div>
   </div>
 </SiteLayout>
